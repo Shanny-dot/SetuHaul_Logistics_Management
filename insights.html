@@ -149,23 +149,6 @@ textarea.sql{width:100%;min-height:150px;font-family:var(--mono);font-size:12.5p
   <div class="card kpi rv"><div class="v" data-to="7">0</div><div class="l">bad bookings the supplied indexes still allow</div><div class="s">finding F09</div></div>
 </div>
 
-<h2 class="sec-t" id="er">The entity model</h2>
-<p class="sec-p">Follow one shipment from the driver, through the vehicle, to a facility, a dock, a slot and an appointment. Hover a table to see its links, click it to open its rows, click a relationship to see the join and its data. FK values in the data grid are links — click one to jump to the row it points at.</p>
-<div class="card" style="padding:14px">
-  <div class="erbar"><span class="muted" style="font-size:13px">Follow one shipment</span><select id="ershp"></select><button class="btn pri" id="erfollow">▶ Follow it</button><button class="btn" id="erclear">Clear</button>
-    <span style="flex:1"></span><span class="muted" style="font-size:12px">Supporting tables:</span><span id="ersupp" class="ersupp"></span></div>
-  <div class="erlay"><div class="ersvgw"><svg id="ersvg" viewBox="0 0 1500 1070"></svg></div><aside class="erside" id="erside"></aside></div>
-</div>
-<div class="card" id="erdata" style="margin-top:14px"></div>
-
-<h2 class="sec-t" id="new-tables">Proposed database additions</h2>
-<p class="sec-p">What the supplied 18 tables cannot hold: the driver's language and consent, GPS positions and live trip status, the automated message series, holds and history for safe booking, and the commercial clocks (detention, e-way bill). Each table says why it is needed, what it links to, and when it lands. Click a box on the map to jump to its definition.</p>
-<div class="scfilter" id="scf"><button class="on" data-g="">All <b id="scall"></b></button></div>
-<div class="card" style="padding:12px;margin-bottom:14px"><svg id="scmap" viewBox="0 0 1200 600"></svg></div>
-<div class="scgrid" id="scgrid"></div>
-<h3 style="font-size:20px;margin:28px 0 10px">Changes to existing tables</h3>
-<div style="overflow:auto"><table class="t" id="sccols"></table></div>
-
 <h2 class="sec-t">Headline insights</h2>
 <p class="sec-p">Six questions a head of operations would ask about 4 August, answered from the data.</p>
 <div class="hl" id="hl"></div>
@@ -192,6 +175,23 @@ textarea.sql{width:100%;min-height:150px;font-family:var(--mono);font-size:12.5p
     <div class="qbar"><button class="btn pri" id="crun">▶ Run</button><span class="muted" style="font-size:12.5px" id="cmeta"></span></div>
     <div id="cres"></div></div>
 </div>
+<h2 class="sec-t" id="er">The entity model</h2>
+<p class="sec-p">Follow one shipment from the driver, through the vehicle, to a facility, a dock, a slot and an appointment. Hover a table to see its links, click it to open its rows, click a relationship to see the join and its data. FK values in the data grid are links — click one to jump to the row it points at.</p>
+<div class="card" style="padding:14px">
+  <div class="erbar"><span class="muted" style="font-size:13px">Follow one shipment</span><select id="ershp"></select><button class="btn pri" id="erfollow">▶ Follow it</button><button class="btn" id="erclear">Clear</button>
+    <span style="flex:1"></span><span class="muted" style="font-size:12px">Supporting tables:</span><span id="ersupp" class="ersupp"></span></div>
+  <div class="erlay"><div class="ersvgw"><svg id="ersvg" viewBox="0 0 1500 1070"></svg></div><aside class="erside" id="erside"></aside></div>
+</div>
+<div class="card" id="erdata" style="margin-top:14px"></div>
+
+<h2 class="sec-t" id="new-tables">Proposed database additions</h2>
+<p class="sec-p">What the supplied 18 tables cannot hold: the driver's language and consent, GPS positions and live trip status, the automated message series, holds and history for safe booking, and the commercial clocks (detention, e-way bill). Each table says why it is needed, what it links to, and when it lands. Click a box on the map to jump to its definition.</p>
+<div class="scfilter" id="scf"><button class="on" data-g="">All <b id="scall"></b></button></div>
+<div class="card" style="padding:12px;margin-bottom:14px"><svg id="scmap" viewBox="0 0 1200 600"></svg></div>
+<div class="scgrid" id="scgrid"></div>
+<h3 style="font-size:20px;margin:28px 0 10px">Changes to existing tables</h3>
+<div style="overflow:auto"><table class="t" id="sccols"></table></div>
+
 </main>
 <script src="data.js"></script><script src="app.js"></script><script src="insights_data.js"></script><script src="er_data.js"></script><script src="db.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-asm.js" onerror="window.__sqlFail=true"></script>
