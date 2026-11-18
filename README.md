@@ -25,6 +25,11 @@ Data files used by the pages: `data.js` (replay results), `er_data.js` (all supp
 
 External libraries loaded from cdnjs: Leaflet 1.9.4 (map), sql.js 1.10.3 (in-browser SQLite). Map tiles © OpenStreetMap contributors.
 
+## Videos
+
+- `videos/setuhaul_walkthrough.mp4` — the solution and the portal, 3:04, female voice-over (embedded on the Home page)
+- `videos/setuhaul_data_insights.mp4` — Data Insights explained, 1:58 (embedded on Home and Data Insights)
+
 ## Repository layout
 
 ```
@@ -37,6 +42,7 @@ prototype/             Python prototype: workflow, NLU, feasibility, capacity la
   out/                 results used by the deliverables and by this site
 docs/deliverables/     00 Review Pack, 01–06 hand-ins, solution design (Word)
 docs/images/           architecture (5 layers) and one-exception flow from the solution design
+videos/                walkthrough and data-insights videos (MP4, 1080p)
 data/                  data dictionary, database guide, schema & seed SQL, core ER diagram
 ```
 

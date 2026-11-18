@@ -91,6 +91,15 @@ textarea.sql{width:100%;min-height:150px;font-family:var(--mono);font-size:12.5p
 .scc .why{font-size:12.5px;margin-top:10px}.scc .why b{color:var(--gc)}
 .scc .lk2{font-size:12px;color:var(--muted);margin-top:6px}.scc .lk2 a{color:var(--saffron2);font-family:var(--mono)}
 @media (max-width:1100px){.scgrid{grid-template-columns:1fr}}
+
+.vids{display:grid;grid-template-columns:1.25fr 1fr;gap:20px;align-items:start}
+.vcard{background:var(--panel);border:1px solid var(--line);border-radius:22px;overflow:hidden;box-shadow:0 24px 50px -36px rgba(40,32,10,.5)}
+.vcard video{display:block;width:100%;aspect-ratio:16/9;background:#18212F}
+.vcard .vb{padding:16px 20px 18px}
+.vcard .vb b{font-family:var(--display);font-size:20px;display:block;margin-bottom:4px}
+.vcard .vb p{margin:0;color:var(--muted);font-size:14px}
+.vcard .vb .ch{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+@media (max-width:1000px){.vids{grid-template-columns:1fr}}
 .erbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
 .erbar select{font:inherit;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:var(--panel)}
 .ersupp{display:flex;gap:6px;flex-wrap:wrap}
@@ -139,7 +148,7 @@ textarea.sql{width:100%;min-height:150px;font-family:var(--mono);font-size:12.5p
 <main class="wrap">
 <div class="page-head"><div><div class="eyebrow">● Data Insights · supplied snapshot</div><h1>What the database says — and the query that proves it</h1>
 <p>Everything here is read straight from <span class="mono">setuhaul_freight_operations.db</span> (18 tables, 4 views, 4 Aug 2026). Every insight and every one of the 36 audit findings shows its SQL. Press <b>Run live</b> to execute it in your browser against the same file, or edit it.</p></div>
-<a class="btn" href="#er" style="margin-right:8px">Entity model ↓</a><a class="btn" href="#new-tables" style="margin-right:8px">Proposed tables ↓</a><span class="eng" id="eng"><i></i>Loading SQL engine…</span></div>
+<a class="btn" href="#er" style="margin-right:8px">Entity model ↓</a><a class="btn" href="#new-tables" style="margin-right:8px">Proposed tables ↓</a><a class="btn" href="#watch" style="margin-right:8px">▶ Video</a><span class="eng" id="eng"><i></i>Loading SQL engine…</span></div>
 
 <div class="kpis">
   <div class="card kpi rv"><div class="v" data-to="36">0</div><div class="l">Findings, each proven by a query</div></div>
@@ -192,6 +201,11 @@ textarea.sql{width:100%;min-height:150px;font-family:var(--mono);font-size:12.5p
 <h3 style="font-size:20px;margin:28px 0 10px">Changes to existing tables</h3>
 <div style="overflow:auto"><table class="t" id="sccols"></table></div>
 
+
+<h2 class="sec-t" id="watch">Watch: Data Insights in two minutes</h2>
+<p class="sec-p">A narrated tour of this page — the snapshot, the critical findings run live, the SQL console, the entity model and the proposed tables.</p>
+<div class="vcard" style="max-width:1100px"><video controls preload="metadata" playsinline poster="videos/data_insights_poster.jpg"><source src="videos/setuhaul_data_insights.mp4" type="video/mp4"></video>
+ <div class="vb"><b>SetuHaul — Data Insights explained</b><p>1:58 · female voice-over · 1080p. The full 3-minute walkthrough of the portal is on the <a href="index.html#watch" style="color:var(--saffron2);font-weight:600">Home page</a>.</p></div></div>
 </main>
 <script src="data.js"></script><script src="app.js"></script><script src="insights_data.js"></script><script src="er_data.js"></script><script src="db.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-asm.js" onerror="window.__sqlFail=true"></script>

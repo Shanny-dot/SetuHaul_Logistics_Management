@@ -54,6 +54,15 @@
 .layer.in::after{transform:none}
 .dir{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
 .dir a{text-decoration:none;padding:18px;border-radius:16px;border:1px solid var(--line);background:var(--panel);transition:.25s;display:block}
+
+.vids{display:grid;grid-template-columns:1.25fr 1fr;gap:20px;align-items:start}
+.vcard{background:var(--panel);border:1px solid var(--line);border-radius:22px;overflow:hidden;box-shadow:0 24px 50px -36px rgba(40,32,10,.5)}
+.vcard video{display:block;width:100%;aspect-ratio:16/9;background:#18212F}
+.vcard .vb{padding:16px 20px 18px}
+.vcard .vb b{font-family:var(--display);font-size:20px;display:block;margin-bottom:4px}
+.vcard .vb p{margin:0;color:var(--muted);font-size:14px}
+.vcard .vb .ch{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+@media (max-width:1000px){.vids{grid-template-columns:1fr}}
 .dir a:hover{border-color:var(--saffron);background:var(--panel2)}
 .dir b{font-family:var(--display);font-size:17px;display:block;margin-bottom:4px}
 .dir span{font-size:13px;color:var(--muted)}
@@ -65,7 +74,7 @@
     <div class="eyebrow">● Driver-Exception Agent · Jaipur DC</div>
     <h1 class="line-in"><span>Late</span> <span style="animation-delay:.08s">trucks,</span><br><span style="animation-delay:.18s"><em>re-docked</em></span> <span style="animation-delay:.26s">in</span><br><span style="animation-delay:.34s">one</span> <span style="animation-delay:.42s">message.</span></h1>
     <p class="lead rv">Drivers report delays on WhatsApp in English, Hinglish or Hindi. SetuHaul reads the words, checks every dock door against the rules, offers only slots that really work, and books the one they pick in a single checked transaction. Hard cases go to a coordinator with everything on one screen.</p>
-    <div class="ctas rv"><a class="btn pri" href="flow.html">See how it flows →</a><a class="btn" href="driver.html">Driver Messages</a><a class="btn" href="coordinator.html">Coordinator Day Board</a></div>
+    <div class="ctas rv"><a class="btn pri" href="flow.html">See how it flows →</a><a class="btn" href="#watch">▶ Watch the 3-min video</a><a class="btn" href="driver.html">Driver Messages</a><a class="btn" href="coordinator.html">Coordinator Day Board</a></div>
   </div>
   <div class="scene rv" id="scene">
     <svg viewBox="0 0 600 552" aria-label="Animated: trucks crossing a bridge to the Jaipur DC dock doors">
@@ -169,6 +178,15 @@
   <a class="rv" href="integrity.html"><b>Integrity</b><span>10 drivers, 1 slot: the race simulator</span></a>
   <a class="rv" href="how.html"><b>Inside a turn</b><span>Ten steps; the booking transaction</span></a>
   <a class="rv" href="mvp2.html" style="background:linear-gradient(135deg,#EEEAFE,#fff);border-color:#C9BFF5"><b>MVP2 · GPS Tower</b><span>Live tracking, RAG flags, WhatsApp series</span></a>
+</div>
+
+<h2 class="sec-t rv" id="watch">Watch the walkthrough</h2>
+<p class="sec-p rv">Two short videos with voice-over: the whole solution and portal in three minutes, and the data story in two.</p>
+<div class="vids">
+ <div class="vcard rv"><video controls preload="metadata" playsinline poster="videos/walkthrough_poster.jpg"><source src="videos/setuhaul_walkthrough.mp4" type="video/mp4"></video>
+  <div class="vb"><b>SetuHaul — the solution and the portal</b><p>The problem, the design, a walk through every page, and what changes for drivers and coordinators.</p><div class="ch"><span class="chip">3:04</span><span class="chip">Driver Messages · Day Board · Hand-offs · Planner · Integrity · GPS Tower · Data Insights</span></div></div></div>
+ <div class="vcard rv"><video controls preload="metadata" playsinline poster="videos/data_insights_poster.jpg"><source src="videos/setuhaul_data_insights.mp4" type="video/mp4"></video>
+  <div class="vb"><b>Data Insights explained</b><p>What the 4 August snapshot says, the critical findings run live, the SQL console, the entity model and the proposed tables.</p><div class="ch"><span class="chip">1:58</span><span class="chip">36 findings · live SQL · ER model</span></div></div></div>
 </div>
 </main>
 <script src="data.js"></script><script src="app.js"></script>
