@@ -13,8 +13,7 @@
   const here=(location.pathname.split('/').pop()||'index.html');
   const top=document.createElement('header');top.className='topbar';
   top.innerHTML=`<div class="in"><a class="brand" href="index.html">${LOGO}<span><b>SetuHaul</b><small>Logistic Management</small></span></a>
-    <nav class="nav">${PAGES.map(([h,l])=>`<a href="${h}" class="${h===here?'on':''}"><span class="dot"></span>${l}</a>`).join('')}<span class="more"><button class="${['trucks.html','how.html'].includes(here)?'on':''}">More ▾</button><span class="mm"><a href="trucks.html">Trucks</a><a href="how.html">Inside a turn</a></span></span></nav>
-    <span class="snap"><i></i>Jaipur DC · 4 Aug 2026 replay</span></div>`;
+    <nav class="nav">${PAGES.map(([h,l])=>`<a href="${h}" class="${h===here?'on':''}"><span class="dot"></span>${l}</a>`).join('')}<span class="more"><button class="${['trucks.html','how.html'].includes(here)?'on':''}">More ▾</button><span class="mm"><a href="trucks.html">Trucks</a><a href="how.html">Inside a turn</a></span></span></nav></div>`;
   document.body.prepend(top);
   const f=document.createElement('footer');f.className='foot';
   f.innerHTML=`SetuHaul — Logistic Management · Driver-Exception Agent prototype · built from the FDE Academy Mini Project 2 deliverables (snapshot 4 Aug 2026, Jaipur DC). All numbers come from the scenario replay.`;

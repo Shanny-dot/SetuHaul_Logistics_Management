@@ -385,7 +385,7 @@ function setFac(id){FSEL=id;$$('#facsel button').forEach(b=>b.classList.toggle('
   const ds=SH.docks.filter(d=>f?d.facility_id===id:FAC[d.facility_id]);
   $('#facinfo').textContent=f?`${f.city}, ${f.state} · ${ds.length} doors · ${f.grace}-min check-in grace · location assumed: ${f.where}`:`${FACS.length} facilities in the snapshot · ${ds.length} doors · trips flagged against their own facility's slots`;
   $('#faclegend').textContent='◆ '+(f?f.name+' (location assumed: '+f.where+')':'facilities (locations assumed: '+FACS.map(x=>x.where).join(', ')+')');
-  const snap=document.querySelector('.snap');if(snap)snap.lastChild.textContent=(f?f.name:'All facilities')+' · 4 Aug 2026 replay';
+  
   $('#stream').innerHTML='';if(LM)LM.flyToBounds(facBounds(),{duration:.8});outShown=-1;tick0();render(true)}
 $('#facsel').innerHTML=`<button data-f="ALL" class="on">All facilities<small>${TRIPS.length}</small></button>`+FACS.map(f=>`<button data-f="${f.id}">${f.name}<small>${TRIPS.filter(t=>t.fac.id===f.id).length}</small></button>`).join('');
 $$('#facsel button').forEach(b=>b.onclick=()=>setFac(b.dataset.f));
