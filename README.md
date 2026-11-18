@@ -72,3 +72,7 @@ python3 -m http.server 8000
 - The supplied data has no GPS feed. GPS positions on the MVP 2 page are simulated from each shipment's departure time and latest ETA in the snapshot; the Jaipur DC location (Sitapura) and road waypoints are approximate.
 - Reschedules made on the MVP 2 page are kept in the page only.
 - Phone numbers are the seed data's demo numbers.
+
+## Solution design document
+
+The detailed solution design is in [docs/solution_design/SetuHaul_Solution_Design.md](docs/solution_design/SetuHaul_Solution_Design.md) (Word version alongside).
