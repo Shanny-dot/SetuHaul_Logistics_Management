@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Day Board · SetuHaul - Logistic Management</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<style>
+.ctrlbar{display:grid;grid-template-columns:auto 1fr auto;gap:22px;align-items:center;padding:16px 20px;margin-bottom:16px}
+.clock{font-family:var(--display);font-size:46px;font-weight:800;letter-spacing:-.03em;line-height:1;min-width:190px}
+.clock small{display:block;font-family:var(--sans);font-size:11.5px;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;font-weight:600;margin-top:6px}
+.scrub{display:flex;flex-direction:column;gap:10px}
+input[type=range]{width:100%;accent-color:var(--saffron);height:6px}
+.jumps{display:flex;gap:6px;flex-wrap:wrap}
+.jumps button{border:1px solid var(--line);background:var(--bg2);color:var(--muted);font-size:11.5px;padding:5px 9px;border-radius:9px;font-weight:600}
+.jumps button:hover{color:var(--text);border-color:var(--saffron)}
+.jumps button b{font-family:var(--mono);color:var(--saffron);margin-right:4px}
+.play{display:flex;gap:10px;align-items:center}
+.play .btn.pri{width:52px;height:52px;border-radius:50%;justify-content:center;font-size:18px;padding:0}
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:16px}
+.kpi .v{transition:color .3s}
+.kpi.bump .v{color:var(--saffron)}
+.board{display:grid;grid-template-columns:1fr 360px;gap:16px;align-items:start}
+.gantt{position:relative;padding:14px 16px 16px}
+.g-head{display:grid;grid-template-columns:120px 1fr;margin-bottom:6px}
+.ticks{position:relative;height:20px}
+.ticks span{position:absolute;transform:translateX(-50%);font-family:var(--mono);font-size:10.5px;color:var(--dim)}
+.row{display:grid;grid-template-columns:120px 1fr;align-items:stretch;border-top:1px solid var(--line)}
+.dl{padding:12px 8px 12px 0}
+.dl b{font-family:var(--display);font-size:20px;display:block;line-height:1}
+.dl small{font-size:11px;color:var(--muted)}
+.lane{position:relative;height:66px;background-image:linear-gradient(90deg,rgba(150,140,115,.18) 1px,transparent 1px);background-size:calc(100%/16) 100%}
+.past{position:absolute;left:0;top:0;bottom:0;background:rgba(120,110,90,.07);pointer-events:none;transition:width .2s linear;z-index:1}
+.bar{position:absolute;top:12px;height:42px;border-radius:9px;padding:4px 8px;font-size:11.5px;line-height:1.2;overflow:hidden;cursor:pointer;z-index:2;border:1px solid rgba(0,0,0,.08);
+  transition:opacity .5s,transform .5s cubic-bezier(.2,.9,.3,1.3),filter .3s;transform-origin:left center;color:#0b1122;font-weight:600;white-space:nowrap}
+.bar small{display:block;font-family:var(--mono);font-size:10px;opacity:.75;font-weight:500}
+.bar.enter{transform:scaleX(0);opacity:0}
+.bar.ghost small,.bar.risk small{display:none}
+.bar.risk{top:44px;height:18px;padding:1px 6px;font-size:9.5px;z-index:1;background:rgba(219,126,0,.08)!important;border:1.5px dashed var(--saffron);color:var(--saffron)}
+.bar.risk::before{content:'⚠ ';}
+.bar.ghost{top:48px;height:14px;padding:0 6px;font-size:9px;z-index:1;background:transparent!important;border:1.5px dashed var(--coral);color:var(--coral);opacity:.55;text-decoration:line-through}
+.bar:hover{filter:brightness(1.12);z-index:3}
+.bar.new::after{content:'';position:absolute;right:4px;top:4px;width:7px;height:7px;border-radius:50%;background:#0b1122;box-shadow:0 0 0 2px rgba(255,255,255,.9)}
+.bar.active{box-shadow:0 0 0 2px var(--text),0 8px 20px -6px rgba(0,0,0,.35)}
+.block{position:absolute;top:6px;bottom:6px;border-radius:8px;z-index:1;font-size:10.5px;padding:4px 7px;font-weight:600;transition:opacity .6s}
+.block.brk{background:repeating-linear-gradient(-45deg,rgba(217,54,62,.16) 0 6px,rgba(217,54,62,.05) 6px 12px);border:1px solid rgba(217,54,62,.45);color:var(--coral)}
+.block.mnt{background:repeating-linear-gradient(-45deg,rgba(11,143,179,.14) 0 6px,rgba(11,143,179,.04) 6px 12px);border:1px solid rgba(11,143,179,.4);color:var(--ice)}
+.now{position:absolute;top:0;bottom:0;width:2px;background:var(--saffron);z-index:4;pointer-events:none;box-shadow:0 0 10px rgba(219,126,0,.5);transition:left .2s linear}
+.now::before{content:attr(data-t);position:absolute;top:-22px;left:50%;transform:translateX(-50%);background:var(--saffron);color:#fff;font-family:var(--mono);font-size:10.5px;font-weight:600;padding:2px 6px;border-radius:6px}
+.lanes{position:relative}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:12px}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:4px;margin-right:6px;vertical-align:-2px}
+.feed{max-height:690px;overflow:auto;display:flex;flex-direction:column;gap:8px}
+.fe{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--bg2);font-size:13px;animation:fin .45s cubic-bezier(.2,.9,.3,1.2)}
+@keyframes fin{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:none}}
+.fe .h{display:flex;justify-content:space-between;gap:8px;margin-bottom:4px;font-size:11px;color:var(--dim);font-family:var(--mono)}
+.fe.k-driver{border-left:3px solid var(--teal)} .fe.k-world{border-left:3px solid var(--blue)} .fe.k-system{border-left:3px solid var(--saffron)} .fe.k-notify{border-left:3px solid var(--violet)}
+.fe a{color:var(--saffron)}
+.health{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.hc{border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--bg2);font-size:12.5px;animation:fin .4s}
+.hc b{font-family:var(--mono)}
+.hc .s{font-family:var(--mono);font-size:10.5px;font-weight:600;padding:2px 7px;border-radius:6px;float:right}
+.s.INVALID{background:rgba(255,93,108,.15);color:var(--coral)} .s.CERTAIN_MISS{background:rgba(255,176,32,.15);color:var(--saffron)} .s.AT_RISK{background:rgba(78,168,255,.15);color:var(--blue)}
+@media (max-width:1150px){.board{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(2,1fr)}.health{grid-template-columns:1fr}.ctrlbar{grid-template-columns:1fr}}
+@media (max-width:700px){.g-head,.row{grid-template-columns:56px 1fr}.dl small{display:none}.bar small{display:none}}
+</style></head><body>
+<main class="wrap">
+<div class="page-head"><div><div class="eyebrow">● Coordinator console · Jaipur DC</div><h1>Day Board — 4 August, replayed</h1>
+<p>Six dock doors, 06:00 to 22:00. Press play to watch the morning unfold: new bookings grow in, released ones go dashed, the D3 breakdown appears at 09:15. Click any bar for the shipment.</p></div>
+<div style="display:flex;gap:10px"><a class="btn" href="handoffs.html">Hand-off queue →</a><a class="btn" href="planner.html">Planner →</a></div></div>
+
+<div class="card ctrlbar">
+  <div class="clock" id="clock">08:20<small>Replay clock · IST</small></div>
+  <div class="scrub"><input type="range" id="rng" min="500" max="990" value="500" step="1">
+    <div class="jumps" id="jumps"></div></div>
+  <div class="play"><button class="btn pri" id="pp" aria-label="Play">▶</button>
+    <div class="seg" id="spd"><button data-v="6">1×</button><button data-v="15" class="on">3×</button><button data-v="40">8×</button></div></div>
+</div>
+
+<div class="kpis">
+  <div class="card kpi" id="k1"><div class="v">0</div><div class="l">Trucks on a dock now</div></div>
+  <div class="card kpi" id="k2"><div class="v">0</div><div class="l">Driver messages handled</div></div>
+  <div class="card kpi" id="k3"><div class="v">0</div><div class="l">Bookings made today</div><div class="s">by chat, planner move or approval</div></div>
+  <div class="card kpi" id="k4"><div class="v">0</div><div class="l">Hand-offs to a person</div></div>
+  <div class="card kpi" id="k5"><div class="v">0</div><div class="l">Double bookings</div><div class="s">always zero — enforced by the database</div></div>
+</div>
+
+<div class="board">
+  <div class="card gantt">
+    <div class="g-head"><div></div><div class="ticks" id="ticks"></div></div>
+    <div class="lanes" id="lanes"></div>
+    <div class="legend"><span><i style="background:#FF9AA0"></i>Critical</span><span><i style="background:#FFC864"></i>High</span><span><i style="background:#93C3FF"></i>Normal</span><span><i style="background:#D3D9E3"></i>Low</span><span><i style="border:1.5px dashed var(--saffron)"></i>Flagged by health monitor</span><span><i style="border:1.5px dashed var(--coral)"></i>Released / rescheduled</span><span><i style="background:#0b1122;box-shadow:0 0 0 2px rgba(255,255,255,.7);border-radius:50%;width:8px;height:8px"></i>Booked today by SetuHaul</span><span><i style="background:rgba(255,93,108,.3)"></i>Breakdown</span><span><i style="background:rgba(127,227,255,.3)"></i>Maintenance</span></div>
+  </div>
+  <div class="card"><h3>Live feed <span class="chip ok" id="fc">0 events</span></h3><div class="feed" id="feed"></div></div>
+</div>
+
+<div class="card" style="margin-top:16px" id="hbox"><h3>Booking health monitor <span class="chip" id="hstat">waiting for an event</span></h3><div class="health" id="health"><div class="muted" style="font-size:13px">Every dock event or ETA change re-checks all affected bookings. The first run fires after the D3 breakdown at 09:16.</div></div></div>
+</main>
+<script src="data.js"></script><script src="app.js"></script>
+<script>
+const X0=360,X1=1320,px=m=>((m-X0)/(X1-X0)*100)+'%';
+const DOCKS=SH.docks.filter(d=>d.facility_id==='FAC-JAI-01');
+const COL={CRITICAL:'#FF9AA0',HIGH:'#FFC864',NORMAL:'#93C3FF',LOW:'#D3D9E3'};
+$('#ticks').innerHTML=Array.from({length:17},(_,i)=>`<span style="left:${i/16*100}%">${String(6+i).padStart(2,'0')}</span>`).join('');
+$('#lanes').innerHTML=DOCKS.map(d=>`<div class="row"><div class="dl"><b>${d.dock_code}</b><small>${d.dock_type.toLowerCase()} · ${d.max_vehicle_weight_kg/1000} t</small></div><div class="lane" id="L${d.dock_code}"><div class="past"></div></div></div>`).join('')+'<div class="now" id="now" style="left:0"></div>';
+// position now line relative to lanes area (offset by label column)
+function placeNow(t){const lanes=$('#lanes'),lane=$('#LD1');const off=lane.offsetLeft,w=lane.offsetWidth;const n=$('#now');n.style.left=(off+w*(t-X0)/(X1-X0))+'px';n.dataset.t=hm(Math.round(t));
+  $$('.past').forEach(p=>p.style.width=Math.max(0,(t-X0)/(X1-X0)*100)+'%')}
+// fixed blocks
+const BLOCKS=[{d:'D3',s:555,e:780,cls:'brk',lbl:'D3 leveller breakdown · until 13:00',from:555},{d:'D5',s:1080,e:1320,cls:'mnt',lbl:'D5 maintenance 18:00–22:00',from:0}];
+BLOCKS.forEach(b=>{const el=document.createElement('div');el.className='block '+b.cls;el.style.left=px(b.s);el.style.width=`calc(${px(b.e)} - ${px(b.s)})`;el.textContent=b.lbl;el.dataset.from=b.from;$('#L'+b.d).append(el)});
+
+const RISK=new Set(['APT1005','APT1006','APT1016A','APT1018','APT1015A']);
+const rendered={};
+function drawBars(t){
+  SH.appts.forEach(a=>{
+    const live=a.booked<=t&&(a.cancelled==null||a.cancelled>t);
+    const ghost=a.cancelled!=null&&a.cancelled<=t&&t-a.cancelled<45&&a.booked<=t;
+    let el=rendered[a.id];
+    if(!(live||ghost)){if(el){el.remove();delete rendered[a.id]}return}
+    if(!el){const s=SHIP[a.sh];el=document.createElement('div');el.className='bar enter';el.style.left=px(a.start);el.style.width=`calc(${px(a.end)} - ${px(a.start)})`;el.style.background=COL[s.priority_code];
+      el.innerHTML=`${a.sh.replace('SHP','')}<small>${hm(a.start)}</small>`;el.title=`${a.sh} ${s.customer_name} · ${hm(a.start)}–${hm(a.end)}`;el.onclick=()=>shipmentDrawer(a.sh);
+      if(a.booked>0)el.classList.add('new');$('#L'+a.dock).append(el);rendered[a.id]=el;requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.remove('enter')))}
+    el.classList.toggle('ghost',!live);el.classList.toggle('risk',live&&RISK.has(a.id)&&t>=556);el.classList.toggle('active',live&&a.start<=t&&t<a.end&&a.st!=='CANCELLED');
+  });
+  $$('.block').forEach(b=>b.style.opacity=t>=+b.dataset.from?1:0);
+}
+// feed
+const FEED=SH.log.filter(e=>e.t).map(e=>({...e,m:toMin(e.t)})).sort((a,b)=>a.m-b.m);
+let shown=0;
+function feedHtml(e){let body='';
+  if(e.kind==='driver'){const d=DRV[e.driver_id];body=`<b>${esc(d?.driver_name||e.who)}</b> <span class="muted">(${e.case})</span>: “${esc(e.text.length>90?e.text.slice(0,90)+'…':e.text)}”<div class="dim" style="margin-top:3px">→ ${e.state}${e.case?` · <a href="driver.html#${e.case.toLowerCase()}">open chat</a>`:''}</div>`}
+  else if(e.kind==='notify')body=`Follow-up to <b>${esc(e.name)}</b>: booking confirmed after approval`;
+  else body=esc(e.title);
+  return `<div class="fe k-${e.kind}"><div class="h"><span>${e.t}</span><span>${e.kind==='world'?'SEED DATA':e.kind.toUpperCase()}</span></div>${body}</div>`}
+function drawFeed(t){const n=FEED.filter(e=>e.m<=t).length;
+  if(n<shown){$('#feed').innerHTML='';shown=0}
+  const f=$('#feed');for(let i=shown;i<n;i++)f.insertAdjacentHTML('afterbegin',feedHtml(FEED[i]));shown=n;$('#fc').textContent=n+' events'}
+// health
+const HEV=SH.log.find(e=>/health monitor \(event/.test(e.title||''));
+let hDone=false;
+function drawHealth(t){if(t>=556&&!hDone){hDone=true;$('#hstat').textContent='09:16 · after D3 breakdown';$('#hstat').className='chip high';
+  $('#health').innerHTML=HEV.detail.map((h,i)=>`<div class="hc" style="animation-delay:${i*.08}s"><span class="s ${h.status}">${h.status.replace('_',' ')}</span><b>${h.shipment_id}</b> · ${h.dock_code} ${h.slot_start.slice(11,16)}<div class="muted" style="margin:6px 0 4px">${esc(h.reasons.join('; '))}</div><div style="font-size:12px">${esc(h.action)}</div></div>`).join('')}
+  if(t<556&&hDone){hDone=false;$('#hstat').textContent='waiting for an event';$('#hstat').className='chip';$('#health').innerHTML='<div class="muted" style="font-size:13px">The first run fires after the D3 breakdown at 09:16.</div>'}}
+// kpis
+const prevK={};
+function setK(id,v){const el=$('#'+id);if(prevK[id]!==v){el.querySelector('.v').textContent=v;if(prevK[id]!=null){el.classList.add('bump');setTimeout(()=>el.classList.remove('bump'),600)}prevK[id]=v}}
+function drawK(t){
+  setK('k1',SH.appts.filter(a=>a.start<=t&&t<a.end&&a.booked<=t&&(a.cancelled==null||a.cancelled>t)).length);
+  setK('k2',FEED.filter(e=>e.kind==='driver'&&e.m<=t).length);
+  setK('k3',SH.appts.filter(a=>a.booked>0&&a.booked<=t).length);
+  setK('k4',SH.esc.filter(e=>tsMin(e.created_at)<=t).length);
+  setK('k5',0);}
+let T=500;
+function render(){$('#clock').firstChild.textContent=hm(Math.round(T));$('#rng').value=T;drawBars(T);drawFeed(T);drawHealth(T);drawK(T);placeNow(T)}
+// controls
+const J=[[502,'08:22','Early truck'],[555,'09:15','D3 breakdown'],[557,'09:17','Approve move'],[576,'09:36','Race'],[585,'09:45','Planner snapshot'],[610,'10:10','Cancellation'],[984,'16:24','Reefer hand-off']];
+$('#jumps').innerHTML=J.map(j=>`<button data-t="${j[0]}"><b>${j[1]}</b>${j[2]}</button>`).join('');
+$$('#jumps button').forEach(b=>b.onclick=()=>{T=+b.dataset.t;render()});
+$('#rng').oninput=e=>{T=+e.target.value;render()};
+let playing=false,speed=15,last=0;
+$('#pp').onclick=()=>{playing=!playing;if(T>=990)T=500;$('#pp').textContent=playing?'❚❚':'▶';last=0;if(playing)requestAnimationFrame(tick)};
+$$('#spd button').forEach(b=>b.onclick=()=>{$$('#spd button').forEach(x=>x.classList.remove('on'));b.classList.add('on');speed=+b.dataset.v});
+function tick(ts){if(!playing)return;if(last){T+=speed*(ts-last)/1000;
+  // slow down in the busy morning window
+  if(T>=990){T=990;playing=false;$('#pp').textContent='▶'}render()}last=ts;requestAnimationFrame(tick)}
+addEventListener('resize',()=>placeNow(T));
+render();
+// autoplay once when page opens
+setTimeout(()=>{if(!playing&&T===500)$('#pp').click()},900);
+</script></body></html>

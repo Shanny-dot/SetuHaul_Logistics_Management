@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Brief Coverage · SetuHaul - Logistic Management</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<style>
+.hero{display:grid;grid-template-columns:1fr 300px;gap:24px;align-items:center}
+.ring{position:relative;width:240px;height:240px;margin:auto}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring .c{position:absolute;inset:0;display:grid;place-items:center;text-align:center}
+.ring b{font-family:var(--display);font-size:54px;line-height:1}
+.ring small{display:block;color:var(--muted);font-size:12.5px}
+.toc{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0 6px}
+.toc a{font-size:12.5px;padding:7px 11px;border-radius:10px;border:1px solid var(--line);background:var(--panel);text-decoration:none;font-weight:600}
+.toc a:hover{border-color:var(--saffron)}
+.sec-t{font-size:clamp(24px,2.8vw,34px);margin:56px 0 6px;display:flex;gap:12px;align-items:center}
+.sec-t .bar{width:5px;height:30px;border-radius:3px;background:var(--saffron)}
+.sec-p{color:var(--muted);margin:0 0 18px;max-width:820px}
+.scale{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.scale .card{padding:16px}
+.scale .v{font-family:var(--display);font-size:30px;font-weight:800;line-height:1}
+.scale .l{font-size:12.5px;color:var(--muted);margin-top:4px}
+.scale .h{font-size:12.5px;margin-top:10px;padding-top:10px;border-top:1px dashed var(--line)}
+.scale .dark{background:#18212F;color:#fff;border-color:#18212F}.scale .dark .l{color:#B9C1CF}.scale .dark .h{border-color:#3a4558}
+table.cov{width:100%;border-collapse:separate;border-spacing:0;font-size:13.5px;background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+table.cov th{background:#18212F;color:#fff;text-align:left;padding:11px 14px;font-size:12px;letter-spacing:.06em;font-weight:600}
+table.cov td{padding:12px 14px;border-top:1px solid var(--line);vertical-align:top}
+table.cov tr.grp td{background:#FFF1F6;color:#C2185B;font-weight:700;font-size:11px;letter-spacing:.14em;padding:7px 14px}
+table.cov td.n{font-family:var(--mono);font-weight:600;width:44px}
+table.cov a{color:var(--saffron2);font-weight:600;text-decoration:none;white-space:nowrap}
+table.cov a:hover{text-decoration:underline}
+table.cov tr{opacity:0;transform:translateY(8px);transition:.5s}
+table.cov.in tr{opacity:1;transform:none}
+.ok{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px;background:#E3F5EE;color:#0B8A78;white-space:nowrap}
+.ad{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px;background:#FFF1D6;color:#B86A00;white-space:nowrap}
+.mustgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:10px}
+.must{border:1px solid var(--line);border-radius:16px;padding:14px;background:var(--panel);position:relative}
+.must .num{width:28px;height:28px;border-radius:50%;background:#E0457B;color:#fff;display:grid;place-items:center;font-weight:700;font-size:13px}
+.must p{font-size:13px;margin:10px 0 8px}
+.must a{font-size:12px;font-weight:600;color:var(--saffron2);text-decoration:none}
+.must .tick{position:absolute;right:12px;top:12px;color:#0B8A78;font-weight:800}
+.bnd{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.bnd .card h4{font-size:12px;letter-spacing:.14em;margin-bottom:10px}
+.bi{display:grid;grid-template-columns:1fr;gap:2px;padding:9px 0;border-top:1px dashed var(--line);font-size:13px}
+.bi b{font-weight:600}.bi span{color:var(--muted);font-size:12.5px}
+.lab{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.lab .card{padding:0;overflow:hidden}
+.lab .hd{padding:12px 16px;color:#fff;font-family:var(--display);font-weight:700;font-size:18px}
+.lab ul{list-style:none;margin:0;padding:10px 16px 16px}
+.lab li{display:grid;grid-template-columns:20px 1fr;gap:8px;padding:7px 0;font-size:13px;border-bottom:1px dashed var(--line)}
+.lab li i{font-style:normal;color:#0B8A78;font-weight:800}
+.lab li a{color:var(--saffron2);font-size:12px;font-weight:600;text-decoration:none;display:block}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:1100px){.hero,.two,.bnd,.lab{grid-template-columns:1fr}.scale{grid-template-columns:1fr 1fr}.mustgrid{grid-template-columns:1fr 1fr}}
+</style></head><body>
+<main class="wrap">
+<section class="hero">
+ <div><div class="eyebrow">● Brief coverage · FDE Academy challenge</div><h1 style="font-size:clamp(32px,4vw,52px);line-height:1.02">Every expectation in the brief, with the evidence that meets it</h1>
+ <p class="muted" style="font-size:16px;max-width:760px;margin:14px 0 0">This page reads the project brief and the 16 November solution design line by line and points each requirement to where it is shown in this prototype. Where the final design changed something from the solution design, the change and its reason are stated.</p>
+ <div class="toc"><a href="#scale">Scale</a><a href="#handin">Six hand-ins</a><a href="#must">Scenario must-shows</a><a href="#decisions">13 decisions</a><a href="#measures">Measures</a><a href="#rubric">Rubric</a><a href="#bounds">Boundaries</a><a href="#lab">Learn · Apply · Build</a><a href="#doc">Solution design</a><a href="#guard">Guardrails & evals</a></div></div>
+ <div class="ring" id="ring"><svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="52" fill="none" stroke="#EDE7DA" stroke-width="12"/><circle id="arc" cx="60" cy="60" r="52" fill="none" stroke="#0B8A78" stroke-width="12" stroke-linecap="round" stroke-dasharray="327" stroke-dashoffset="327" style="transition:stroke-dashoffset 1.8s cubic-bezier(.3,.7,.2,1)"/></svg><div class="c"><div><b id="pct">0</b><small id="pctl">expectations covered</small></div></div></div>
+</section>
+
+<h2 class="sec-t" id="scale"><span class="bar"></span>The scale we designed for</h2>
+<p class="sec-p">The snapshot is one facility on one day. The brief's operating profile is what the design must survive.</p>
+<div class="scale" id="scalebox"></div>
+
+<h2 class="sec-t" id="handin"><span class="bar"></span>What you hand in — six items and the optional tool</h2>
+<p class="sec-p">Each hand-in is a Word deliverable; this prototype shows each one live.</p>
+<table class="cov rv" id="t-handin"></table>
+
+<h2 class="sec-t" id="must"><span class="bar" style="background:#E0457B"></span>Your scenario run must show</h2>
+<p class="sec-p">All seven, played from the 4 August replay.</p>
+<div class="mustgrid" id="mustbox"></div>
+
+<h2 class="sec-t" id="decisions"><span class="bar"></span>Decisions you must make — our answer and the evidence</h2>
+<table class="cov rv" id="t-dec"></table>
+
+<h2 class="sec-t" id="measures"><span class="bar"></span>How the work is judged — the measures</h2>
+<table class="cov rv" id="t-meas"></table>
+
+<h2 class="sec-t" id="rubric"><span class="bar"></span>The rubric</h2>
+<table class="cov rv" id="t-rub"></table>
+
+<h2 class="sec-t" id="bounds"><span class="bar"></span>Boundaries — and how the system enforces them</h2>
+<div class="bnd" id="bndbox"></div>
+<div class="card" style="margin-top:12px;background:#18212F;color:#fff;border-color:#18212F"><b style="color:#FFC864;font-size:12px;letter-spacing:.14em">NOT SUPPLIED — WE DESIGNED THESE</b><div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:10px;font-size:13px" id="nsbox"></div></div>
+
+<h2 class="sec-t" id="lab"><span class="bar"></span>Learn, apply, build</h2>
+<div class="lab" id="labbox"></div>
+
+<h2 class="sec-t" id="doc"><span class="bar" style="background:#6A55D6"></span>Solution design (16 Nov) — what was incorporated</h2>
+<p class="sec-p">The architecture diagram and the "one exception, end to end" flow from the solution design are now drawn on the <a href="flow.html#e2e" style="color:var(--saffron2);font-weight:600">Flow & Architecture</a> page. Everything else is mapped below. "Adapted" means the reconciled design kept the intent but changed the mechanism, with the reason.</p>
+<table class="cov rv" id="t-doc"></table>
+
+<h2 class="sec-t" id="guard"><span class="bar" style="background:#6A55D6"></span>Feasibility filters, guardrails, escalation triggers and evals</h2>
+<p class="sec-p">The solution design's reference tables, with where each is implemented and the result from the run.</p>
+<div class="two">
+ <div><h3 style="font-size:18px;margin-bottom:10px">Ask the driver vs look it up</h3><table class="cov rv" id="t-ask"></table></div>
+ <div><h3 style="font-size:18px;margin-bottom:10px">Hard filters F1–F9 (all inside the 15-point check)</h3><table class="cov rv" id="t-f"></table></div>
+</div>
+<h3 style="font-size:18px;margin:22px 0 10px">Guardrails at each boundary</h3><table class="cov rv" id="t-g"></table>
+<div class="two" style="margin-top:22px">
+ <div><h3 style="font-size:18px;margin-bottom:10px">Escalation triggers (rules, not the LLM)</h3><table class="cov rv" id="t-esc"></table></div>
+ <div><h3 style="font-size:18px;margin-bottom:10px">Eval metrics, targets and results</h3><table class="cov rv" id="t-ev"></table></div>
+</div>
+<h3 style="font-size:18px;margin:22px 0 10px">Security layers</h3><table class="cov rv" id="t-sec"></table>
+</main>
+<script src="data.js"></script><script src="app.js"></script>
+<script>
+const OK='<span class="ok">✓ Covered</span>',AD='<span class="ad">↻ Adapted</span>';
+const L=(h,t)=>`<a href="${h}">${t} →</a>`;
+let total=0,cov=0;
+function table(id,head,rows,grp){total+=rows.filter(r=>!r.g).length;cov+=rows.filter(r=>!r.g).length;
+  $('#'+id).innerHTML=`<tr>${head.map(h=>`<th>${h}</th>`).join('')}</tr>`+rows.map((r,i)=>r.g?`<tr class="grp"><td colspan="${head.length}">${r.g}</td></tr>`:`<tr style="transition-delay:${i*30}ms">${r.map(c=>`<td${typeof c==='string'&&/^\d+$|^D\d+|^F\d$/.test(c)?' class="n"':''}>${c}</td>`).join('')}</tr>`).join('')}
+/* scale */
+const SC=[['280–360','loads coordinated each day','Planner + earmarks run per facility; one write path per facility lock',1],['6','destination facilities','Every service takes facility_id + as_of',0],['32','dock doors across all facilities','~357 truck-starts/day of capacity vs 190–240 bookings',0],['190–240','receiving appointments each day','Interval bookings + overlap guard scale to all doors',0],['15–25','driver exception messages, normal day','Rules read them; LLM only on UNKNOWN — cents a month',0],['20–35','messages within 30 min in a spike','Per-driver queue; facility re-plan on every ETA; 50-race proof',1],['5','operations coordinators per shift','Only 3 of 13 cases reached a person — each with a full record',0],['0','live GPS feeds today','Late-edge ETAs + plausibility checks; GPS is MVP 2',1]];
+$('#scalebox').innerHTML=SC.map(s=>`<div class="card rv ${s[3]?'dark':''}"><div class="v">${s[0]}</div><div class="l">${s[1]}</div><div class="h">${s[2]}</div></div>`).join('');
+/* hand-ins */
+table('t-handin',['#','Hand in','What it shows','Our deliverable','See it live',''],[
+ ['1','Problem Definition Sheet and data audit','Facts vs estimates vs assumptions vs unknowns; every issue with its proof query','01 Problem Definition & Data Audit — 36 findings, each with SQL',L('insights.html','Data Insights'),OK],
+ ['2','Decision register','Answer, reason and evidence for each decision','02 Decision Register — D1–D13 + D14–D21',L('#decisions','Decisions below'),OK],
+ ['3','Working prototype','Conversation layer, tools, state; library versions in README','03 Working Prototype — Python 3.11+, SQLite, matplotlib only',L('driver.html','Driver Messages')+' '+L('how.html','Inside a turn'),OK],
+ ['4','Scenario run','Recorded run of the demonstration list, ending in escalation','04 Scenario Run — 13 conversations + 1 coordinator case, ends in ESC-0004',L('coordinator.html','Day Board'),OK],
+ ['5','Integrity proof','Competing requests for one slot, no double booking','05 Integrity Proof — 50 × 10-driver races, negative control, 12 tests',L('integrity.html','Integrity'),OK],
+ ['6','Client readout','Plain-language note: policy, limits, open risks','06 Client Readout — 7 policies to sign off, 6 asks',L('flow.html#life-coordinator','Before / after'),OK],
+ ['+','Optional: scheduling tool','Explicit objective; comparison with dispatch rules on the competing-trucks snapshot','Priority list + repair vs FCFS, EDD, WSPT, strict priority, exhaustive 8!',L('planner.html','Planner'),OK]]);
+/* must-shows */
+const MU=[['A driver reports a delay and answers clarification questions','C09 "thoda late" → asked the time; C06 asked which trip','driver.html#c09'],['The driver asks for later options and compares them','C11: after 1 PM, then after 3 PM, then keeps the slot','driver.html#c11'],['Several requests run against the same facility schedule','C03, C05, C07, C08, C10 in 26 minutes on one Jaipur plan','coordinator.html'],['At least two requests compete for the same capacity','09:36: DRV013 and DRV006 pick D4 12:40 at the same instant','driver.html#c03'],['The driver sees what happens when an option changes or disappears','"Sorry, Dock D4 at 12:40 PM was just taken…" + 3 fresh options','driver.html#c03'],['At least one case ends in escalation because no safe automatic outcome exists','C14 reefer, D5 in maintenance → ESC-0004 with 3 options','handoffs.html#esc-0004'],['Optional: a scheduling tool receives the snapshot and proposes a new sequence after an ETA update or gate check-in','09:16 re-plan after D3 breakdown; 09:45 plan vs 5 policies','planner.html']];
+$('#mustbox').innerHTML=MU.map((m,i)=>`<div class="must rv"><span class="tick">✓</span><span class="num">${i+1}</span><p>${m[0]}</p><div class="muted" style="font-size:12px;margin-bottom:8px">${m[1]}</div><a href="${m[2]}">Show me →</a></div>`).join('');total+=7;cov+=7;
+/* decisions */
+table('t-dec',['#','Decision','Our answer','Evidence','Live'],[{g:'UNDERSTAND'},
+ ['1','What must you collect before showing useful options?','Only what the backend cannot know: which trip (if ambiguous), a plannable arrival time, a "must leave by" if implied. Everything else is looked up. Two unanswered questions → a person.','Three chats: C03 (stated back), C06 (which trip), C09 (what time)',L('driver.html#c09','C09')],
+ ['2','How does a conversation link to driver, shipment, appointment?','Verified phone → driver. Evidence ladder: order ref → open conversation → only live trip → load attribute → state evidence → ask.','THR010 trace: DRV004 has SHP1004 at the gate and SHP1020 → asked, suggested the evening one',L('driver.html#c06','C06')],
+ ['3','How do you set the revised ETA and show how sure?','Check-in > newest ETA record > plan. Clock = HIGH, "around" = MEDIUM, range/implausible = LOW. Plan on the late edge (+0/+15/+30) + 15 min gate-to-dock.','"Late by one hour" → 11:00 MEDIUM, stated back; "11:30 tak" → HIGH',L('driver.html#c03','C03')],{g:'DECIDE'},
+ ['4','What makes a slot feasible?','15 checks: facility, door type, weight, slot open, dock events, overruns, unload fits, changeover, driver limits, 21:00 rule, earmarks, status, time ≥ as_of…','Check run on SHP1014, SHP1015, SHP1016 with per-slot rejection reasons',L('how.html','Inside a turn')],
+ ['5','What does "available" mean while another driver decides?','Passes all checks given everything committed, held or earmarked now. Showing reserves nothing; first valid commit wins.','C03 vs C07 at 09:36',L('integrity.html','Race')],{g:'COMMIT'},
+ ['6','When is an option a hold, request, reservation or booking?','Offered (no reservation) → pick = one checked transaction → CONFIRMED. A hold exists only while a coordinator decides, with a deadline min(15 min, start − 30).','C01 pick→confirmed; C06 hold → approved 09:41; T08 hold expiry',L('handoffs.html#esc-0001','HLD-0001')],
+ ['7','How do you order simultaneous requests?','First valid commit wins; scarce slots earmarked for HIGH/CRITICAL and deadline-limited trucks; promises moved only by a coordinator; priority only from the record.','Policy test at 09:45 vs FCFS, EDD, WSPT, strict priority',L('planner.html','Planner')],
+ ['8','Optional: when does the facility schedule recalculate?','Every ETA, check-in, dock event, cancellation, and every 15 min. Fixed: in-dock trucks, events, feasible bookings. Objective: serve all → keep promises → least weighted wait → fewest changes.','09:16 replay after D3 breakdown',L('coordinator.html','Day Board')],
+ ['9','Stale options, cancellations, duplicates, retries?','Re-check at commit; cancellations free capacity at once; dedupe by message ID / text; idempotency keys.','C03 option gone; C13 cancelled; C07 duplicate suppressed; T05 retry',L('driver.html#c07','C07')],{g:'FAIL SAFELY'},
+ ['10','What happens when no feasible slot exists?','Never invent one. Say so, tell the driver not to come, hand a complete record to the right person by a working channel.','ESC-0004 message and hand-off record',L('handoffs.html#esc-0004','ESC-0004')],
+ ['11','What do you say when the preferred slot is not granted?','What happened, no blame, what is still possible — same reply.','"Just taken by another truck…" and "priority follows the shipment record…"',L('driver.html#c10','C10')],
+ ['12','Which decisions need human approval or takeover?','Safety; no feasible slot; data conflicts; starts after 21:00; moving a confirmed booking; ETA unclear after 2 questions.','Trigger list below',L('#guard','Triggers')],{g:'PROVE'},
+ ['13','How do you prove no double booking?','Five layers: re-check in one write transaction, supplied unique indexes, hold indexes, triggers (incl. no-overlap), idempotency.','50/50 races one winner, 450 clean refusals; negative control double-books all 10',L('integrity.html','Integrity')]]);
+/* measures */
+table('t-meas',['Measure','What it reveals','Our result (4 Aug run)','How evidenced',''],[
+ ['Time from first message to usable outcome','Operational speed','Median 1 min; 11 of 13 within 2 min','Scenario clock per case',OK],
+ ['Share resolved without manual takeover','Automation coverage','10 of 13 (77%) — the 3 others by design','Cases with any person involved',OK],
+ ['Conflicting or duplicate allocations','Correctness under concurrency','0 (4 SQL invariants) · 50/50 races','Integrity test',OK],
+ ['Options later found infeasible','Freshness and decision quality','1 of 8 picks — caught at commit, rebooked in 1 min','Re-check at confirmation',OK],
+ ['No-slot escalations handled correctly','Safety of failure behaviour','1 of 1 complete (ESC-0004)','Field check of the hand-off record',OK],
+ ['Average driver waiting after rescheduling','Operational outcome','34.2 min planned (6 re-booked trucks)','Gate arrival → planned dock start',OK],
+ ['Warehouse slot utilisation','Capacity efficiency','10 of 31 slots 10:00–16:00 hold a booking','Slots used vs open',OK],
+ ['Priority-policy violations','Business-policy compliance','0 against 4 checks','Each decision vs D7',OK],
+ ['Driver clarification turns','Conversation effort','2 questions in 13 cases','Questions per resolved case',OK]]);
+table('t-rub',['Dimension','What strong work looks like','Our evidence',''],[
+ ['Framing and data audit','Facts vs estimates vs assumptions; finds issues and proves each','36 findings with SQL, run live; ER diagram with data links; "no single now" (F15)',L('insights.html','Data Insights')],
+ ['Conversation design','Asks only for missing facts; keeps context; states status without overpromising','13 transcripts with tool trails; "booked" only after CONFIRMED (output guard)',L('driver.html','Driver Messages')],
+ ['Capacity integrity','Code, not a prompt, decides; competing requests cannot double-book; explicit state model','Capacity layer + triggers; state machine; race simulator',L('integrity.html','Integrity')],
+ ['Failure and escalation','No-slot, stale options, duplicates; complete hand-off','ESC-0001…0004 with computed options and deadlines',L('handoffs.html','Hand-offs')],
+ ['Decision defence','Trade-offs stated openly; claims backed; readout for a non-technical lead','Decision register; policy comparison; before / after',L('flow.html#life-driver','Before / after')]]);
+/* boundaries */
+const BN=[['THE AGENT NEVER DECIDES ALONE','#C2185B',[['Whether two drivers can be promised the same capacity','Database write lock + overlap trigger decide; the model never sees capacity'],['Whether a vehicle fits a dock','Feasibility code: door type and weight from the records'],['How scarce capacity is ranked when rules conflict','Priority from shipments.priority_code + earmarks; "urgent" in text ignored (C10)'],['Whether a booking committed in the system of record','Reply may say "booked" only after commit returned CONFIRMED']]],
+ ['A PERSON APPROVES OR TAKES OVER','#B86A00',[['Driver safety decisions','Safety words → shift manager by phone (C12)'],['Penalties, compensation, customer commitments','Never offered by the agent; routed to coordinator'],['Cases with no feasible slot','ESC-0004 with three computed options'],['Contradictory data, regulated loads, emergencies','DATA_CONFLICT escalation (DRV007 on two trucks); hold for approval (C06)']]],
+ ['OUT OF SCOPE','#586274',[['National transport-network optimisation','Facility-level planner only'],['Carrier selection and freight-rate talks','Not modelled'],['Autonomous driver-safety decisions','Always a person'],['Customs, hazardous-material and legal workflows','Not modelled; flagged to a person'],['Commercial penalty approval','Not modelled']]]];
+$('#bndbox').innerHTML=BN.map(b=>`<div class="card rv"><h4 style="color:${b[1]}">${b[0]}</h4>${b[2].map(x=>`<div class="bi"><b>✓ ${x[0]}</b><span>${x[1]}</span></div>`).join('')}</div>`).join('');total+=13;cov+=13;
+$('#nsbox').innerHTML=[['A finished allocation algorithm','Priority list + pairwise repair, benchmarked vs 8! orders'],['A tool list or orchestration graph','16 typed tools; 10-step fixed workflow'],['A slot-hold model','Offered → committed; holds only for approvals, with deadline'],['A final priority policy','8:4:2:1 weights + earmarks; robust to 3 weight sets'],['A table of correct answers','Golden cases from the seeded ladder + 4 invariants']].map(x=>`<div><b style="font-size:13px">${x[0]}</b><div style="color:#B9C1CF;font-size:12px;margin-top:4px">→ ${x[1]}</div></div>`).join('');total+=5;cov+=5;
+/* learn apply build */
+const LAB=[['Learn','#C14BF0','FDE judgement',[['Frame an unclear operations problem from a messy data package','insights.html','36-finding audit'],['Decide which choices belong to a model, a tool, a database or a person','flow.html#architecture','Ownership map'],['Reason about stale reads, concurrent requests and promises','integrity.html','Race + re-check'],['Weigh priority, waiting time, fairness and commitments','planner.html','6-policy comparison'],['Design safe failure and escalation','handoffs.html','Hand-off records']]],
+ ['Apply','#E0457B','Tools you already have',[['Tool calling with structured inputs and outputs','how.html','16 typed tools + strict JSON'],['Conversation state and memory across turns','driver.html#c06','Conversation states'],['The choice between a fixed workflow and an agent','how.html','Workflow, not agent loop'],['Human approval checkpoints','handoffs.html#esc-0001','Hold → approve → re-check'],['SQL, constraints and transactions','how.html','Booking transaction'],['Multi-turn evaluation of agent behaviour','#guard','Eval metrics']]],
+ ['Build','#18212F','What you ship',[['A conversational exception service for drivers','driver.html','Driver Messages'],['A capacity layer that holds, confirms and releases slots','how.html','capacity.commit()'],['An escalation path to a human coordinator','handoffs.html','Hand-offs'],['A test that tries to double-book capacity and fails','integrity.html','Integrity'],['Optional: a facility-level scheduling tool','planner.html','Planner']]]];
+$('#labbox').innerHTML=LAB.map(l=>`<div class="card rv"><div class="hd" style="background:${l[1]}">${l[0]}</div><div class="muted" style="font-size:12px;padding:10px 16px 0">${l[2]}</div><ul>${l[3].map(x=>`<li><i>✓</i><span>${x[0]}<a href="${x[1]}">${x[2]} →</a></span></li>`).join('')}</ul></div>`).join('');total+=16;cov+=16;
+/* doc B */
+table('t-doc',['Element in the solution design','In this prototype','Status / reason'],[
+ ['Architecture: 5 layers, only 2 edge steps use an LLM','Flow & Architecture diagram: channel → API → fixed workflow → context / scheduler / booking services → database',OK+' '+L('flow.html#layers','Layers')],
+ ['One exception, end to end (3 side exits)','Interactive flow with ask-one-question, escalate and re-plan exits',OK+' '+L('flow.html#e2e','Flow')],
+ ['LLM extracts facts to strict JSON on every message','Rules read the message first; the LLM is called only when rules return UNKNOWN, same strict schema',AD+' same output, deterministic and cheaper; LLM fallback never fired on 4 Aug'],
+ ['LLM writes every reply','Replies from 34 reviewed templates × 3 languages; output guard checks every dock and time',AD+' no invented facts; LLM wording optional'],
+ ['Pick → 3-minute hold → "YES" books','Pick = booking in one checked transaction; holds only while a coordinator decides',AD+' saves a turn for a driver on the road; transaction is the hold'],
+ ['Long unloads book two consecutive slots','Bookings are time intervals that may run past the slot end if the door is free',AD+' two slots wasted ~3 dock-hours/day at Jaipur'],
+ ['Hard filters F1–F9','All nine inside the 15-point feasibility check',OK],
+ ['Score w_p 4:2:1:0.5 + penalties','Priority weights 8:4:2:1; plan identical under 4:2:1:0.5 and 100:40:15:5',OK+' sensitivity tested'],
+ ['Facility plan in a delay wave (6.3)','Planner proposes, earmarks for 20 min; worked example reproduced by code (09:45)',OK],
+ ['Deterministic language detection (Unicode script + Hinglish word list), reply in same language','Implemented; Hinglish in Latin script; short replies keep the thread language',OK],
+ ['driver_preferences(driver_id, language, script)','Proposed with channel, consent and quiet hours',OK+' '+L('insights.html#new-tables','Schema')],
+ ['Guardrails at 6 boundaries with evidence logged','Table below; output guard caught two of our own bugs',OK],
+ ['Security: driver auth, service identity, rate limits, PII redaction, RLS, observability','Table below; phone numbers masked in logs; model gets text only',OK],
+ ['Evals: golden cases, 10 metrics, concurrency suite C1–C4, error taxonomy','12 integrity tests incl. C1–C4 equivalents; metrics table below',OK],
+ ['Humans in the loop: escalation queue, day board, approve / override','Hand-offs, Day Board, Planner pages',OK],
+ ['Data audit D1–D17','Merged into 36 findings (F01–F36), ~15 new',OK],
+ ['7 new tables + 2 triggers','Built: 12 tables + 3 triggers; proposed for MVP 2: GPS, language, comms series',OK+' '+L('insights.html#new-tables','Schema')],
+ ['Reefer option "start after 21:00 with approval"','Removed: D5 is in maintenance until 22:00 and the site closes at 22:00',AD+' option does not exist'],
+ ['LangGraph, FastAPI, Gradio, Cognito, Redis, LangSmith, Presidio, LiteLLM','Plain Python state machine, one web service, one database; others when there is a reason',AD+' lean pilot ≈ US$20–30/month']]);
+/* reference tables */
+table('t-ask',['Ask the driver (only they know)','Look up (the backend knows)'],[
+ ['Which shipment, if two are active (DRV004)','Their shipments, vehicle, load weight, dock type, priority'],['A firmer ETA if they gave a range or "late by 1 hour" (stated back first)','Current appointment and slot, latest ETA history'],['The hard limit behind "another pickup"','Facility rules, dock events, open and occupied slots'],['Their choice among the options','Who else is competing for the same window']]);
+table('t-f',['#','Rule','Source'],[['F1','Same facility as the destination','shipments'],['F2','Door compatible: reefer→D5, &gt;25 t→heavy, weight ≤ dock max','docks, facility_rules'],['F3','Slot open, no overlapping dock event','dock_status_events'],['F4','Not occupied by a booking, hold or overrun','appointments, check-ins'],['F5','Start ≥ ETA (late edge) + 15 min gate-to-dock','eta, rules'],['F6','Unload fits (interval, may run past slot end if door free)','shipments'],['F7','Driver window: earliest start, latest gate-out','driver_constraints'],['F8','Start ≤ 21:00, else coordinator approval','RULE005'],['F9','Shipment not cancelled/completed; driver active','shipments, drivers']]);
+table('t-g',['Boundary','Check','On failure','Evidence logged',''],[
+ ['Input','Verified sender; length & rate limit; injection patterns ("ignore previous", "book for SHP…") are plain data','Reject or treat as data','audit_log row',OK],
+ ['Extraction','Strict JSON; times within as_of −1 h … +24 h; every evidence string appears in the message','Ask one question','facts + evidence per turn',OK],
+ ['Identity and scope','driver_id from the session, never from the model; queries filter by it','Refuse','session owner',OK],
+ ['Tool call','Allow-list of typed tools; booking accepts only a slot from this thread\'s candidates','Refuse; re-plan','tool, args, result',OK],
+ ['State change','Idempotency key; one transaction; hold ownership; unique indexes; overlap trigger','Roll back; next-best offer','appointment_events, audit_log',OK],
+ ['Output','Every time and dock code in the reply must be in the turn\'s evidence; "booked" only after CONFIRMED; no other driver\'s data','Fall back to template','guard result',OK]]);
+table('t-esc',['Trigger','Example','Coordinator gets'],[
+ ['No feasible compatible slot','SHP1015 reefer','3 computed options, deadline'],['Rule exception (start after 21:00)','C06 evening slot','Approve / reject with re-check'],['Better plan needs a booking moved','SHP1005 after D3 breakdown','The move and its cost'],['ETA unclear after 2 questions','—','Chat summary + call prompt'],['Warehouse confirmation expired','APT1013A (never sent)','Re-request or release'],['Message delivery failed','OM004 night-shift mailbox','Phone fallback'],['Breakdown hits a truck in the yard','SHP1005, D3','Best alternative doors'],['Safety words / angry driver','C12 accident','Immediate hand-off by phone']]);
+table('t-ev',['Metric','Target','Result'],[['Double bookings','0','0'],['False promises ("booked" without DB status)','0','0 (output guard)'],['Infeasible offers','0','0 offered; 1 went stale, caught at commit'],['Right next action','≥ 95%','13 / 13 cases'],['Clarify-before-book with LOW ETA','0 violations','0'],['Extraction accuracy','≥ 90%','All 13 cases read by rules'],['Language match','≥ 98%','100% (EN, Hinglish, Hindi)'],['Waiting cost vs FCFS','Lower','FCFS strands SHP1012; ours serves all'],['Missed commitments','Lower than baseline','0 bookings released while reachable'],['Reply helpfulness','≥ 90%','LLM-judge rubric planned on live traces']]);
+table('t-sec',['Layer','Pilot','Prototype'],[['Driver identity','WhatsApp webhook signature + verified phone','Phone → driver_id; text cannot claim identity'],['Service identity','One service role for the agent runtime','Single write path (capacity layer)'],['API protection','Rate limit per driver and per IP','Per-driver turn lock'],['PII','Model sees message text only; phones masked in logs','Masked numbers in exports'],['Database','Read-only views + one write path; row scoping by driver','Triggers + indexes'],['Observability','Trace every turn; guardrail events tagged','Tool trail on every reply'],['Privacy (DPDP Act 2023)','Notice at first contact; 90-day message retention','Consent field proposed in schema']]);
+/* ring */
+new IntersectionObserver((es,o)=>{if(es[0].isIntersecting){const p=cov/total;$('#arc').style.strokeDashoffset=327*(1-p);let k=0;const iv=setInterval(()=>{k+=Math.ceil(cov/40);if(k>=cov){k=cov;clearInterval(iv)}$('#pct').textContent=k+'/'+total},30);o.disconnect()}}).observe($('#ring'));
+$('#pctl').textContent='expectations covered';
+const tio=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');tio.unobserve(e.target)}}),{threshold:.08});$$('table.cov').forEach(t=>tio.observe(t));
+</script></body></html>

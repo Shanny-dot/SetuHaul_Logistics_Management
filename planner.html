@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Planner · SetuHaul - Logistic Management</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<style>
+.pols{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:16px}
+.pol{text-align:left;border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:14px;padding:12px 14px;transition:.25s}
+.pol b{font-family:var(--mono);font-size:13px;display:block}
+.pol small{font-size:12px;color:var(--muted);line-height:1.3;display:block;margin-top:4px}
+.pol.on{border-color:var(--saffron);background:linear-gradient(180deg,rgba(219,126,0,.1),var(--panel));transform:translateY(-2px)}
+.pol .tag{float:right;font-size:10px;font-weight:700;padding:1px 6px;border-radius:5px;background:var(--teal);color:#fff}
+.lay{display:grid;grid-template-columns:1fr 360px;gap:16px;align-items:start}
+.g{position:relative}
+.ticks{position:relative;height:20px;margin-left:70px}
+.ticks span{position:absolute;transform:translateX(-50%);font-family:var(--mono);font-size:10.5px;color:var(--dim)}
+.rows{position:relative}
+.row{display:flex;border-top:1px solid var(--line);height:62px}
+.row .l{width:70px;flex:none;display:flex;flex-direction:column;justify-content:center}
+.row .l b{font-family:var(--display);font-size:18px;line-height:1}
+.row .l small{font-size:10.5px;color:var(--dim)}
+.lane{flex:1;position:relative;overflow:hidden;background-image:linear-gradient(90deg,rgba(150,140,115,.18) 1px,transparent 1px);background-size:calc(100%/12) 100%}
+.fx{position:absolute;top:10px;height:42px;border-radius:8px;background:repeating-linear-gradient(-45deg,#EEEAE1 0 6px,#F6F3EC 6px 12px);border:1px solid #DDD6C6;color:var(--dim);font-size:10.5px;padding:4px 6px;overflow:hidden;white-space:nowrap}
+.fx.brk{background:repeating-linear-gradient(-45deg,rgba(217,54,62,.15) 0 6px,rgba(217,54,62,.04) 6px 12px);border-color:rgba(217,54,62,.4);color:var(--coral)}
+.job{position:absolute;height:42px;border-radius:9px;padding:4px 8px;font-size:11.5px;font-weight:700;color:#0b1122;white-space:nowrap;overflow:hidden;z-index:2;cursor:pointer;
+ transition:left .9s cubic-bezier(.6,0,.2,1),top .9s cubic-bezier(.6,0,.2,1),width .9s,opacity .5s,transform .5s;box-shadow:0 6px 16px -8px rgba(0,0,0,.35)}
+.job small{display:block;font-family:var(--mono);font-size:10px;font-weight:500;opacity:.8}
+.job.out{opacity:.95}
+.tray{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px;padding:12px 14px;border:1px dashed rgba(217,54,62,.45);border-radius:14px;min-height:62px}
+.tray .t{font-size:12px;color:var(--coral);font-weight:700;letter-spacing:.08em;margin-right:6px}
+.metric{margin-bottom:16px}
+.metric .h{display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:6px}
+.metric .h b{font-family:var(--mono)}
+.track{height:10px;background:var(--bg2);border-radius:6px;overflow:hidden;border:1px solid var(--line)}
+.fill{height:100%;border-radius:6px;transition:width .9s cubic-bezier(.6,0,.2,1),background .5s}
+.verdict{font-size:14px;padding:12px 14px;border-radius:12px;background:var(--bg2);border:1px solid var(--line);margin-top:6px;min-height:84px}
+.jt td:first-child{font-family:var(--mono)}
+@media (max-width:1150px){.pols{grid-template-columns:repeat(3,1fr)}.lay{grid-template-columns:1fr}}
+</style></head><body>
+<main class="wrap">
+<div class="page-head"><div><div class="eyebrow">● Scheduling tool · Jaipur at 09:45</div><h1>Eight trucks need a door. Six policies, one input.</h1>
+<p>The same fixed work (trucks in docks, kept bookings, the D3 breakdown) and the same eight jobs. Switch policy and watch the trucks re-plan. The planner only proposes; drivers book.</p></div>
+<button class="btn pri" id="tour">▶ Tour the policies</button></div>
+<div class="pols" id="pols"></div>
+<div class="lay">
+  <div class="card g"><h3>Dock plan <span class="chip" id="pname"></span></h3>
+    <div class="ticks" id="ticks"></div><div class="rows" id="rows"></div>
+    <div class="tray" id="tray"><span class="t">NO DOOR TODAY</span></div>
+  </div>
+  <div class="card"><h3>How this policy scores</h3><div id="metrics"></div><div class="verdict" id="verdict"></div></div>
+</div>
+<div class="card" style="margin-top:16px"><h3>The eight jobs <span class="chip">priority weights 8 : 4 : 2 : 1</span></h3>
+<div style="overflow:auto"><table class="t jt" id="jobs"></table></div>
+<p class="muted" style="font-size:13px;margin:12px 0 0">Sensitivity: the plan is identical under our weights (8:4:2:1), Doc A's (100:40:15:5) and Doc B's (4:2:1:0.5) — on this day the weights are a business choice that does not change the answer.</p></div>
+</main>
+<script src="data.js"></script><script src="app.js"></script>
+<script>
+const S=SH.sched,X0=540,X1=900,pc=m=>Math.max(0,Math.min(100,(m-X0)/(X1-X0)*100));
+const COL={CRITICAL:'#FF9AA0',HIGH:'#FFC864',NORMAL:'#93C3FF',LOW:'#D3D9E3'};
+const PDESC={FCFS:'Whoever asked first','EDD':'Earliest appointment first','WSPT':'Most priority per door-minute',PRIORITY:'Strict priority','PRIORITY+REPAIR':'Priority, then swap pairs while it improves','BEST_ORDER':'All 40,320 orders tried'};
+const VERD={FCFS:'Looks cheap but breaks a promise: D1 11:45 goes to SHP1013 because it asked ten minutes earlier, so SHP1012 has no door that lets it leave by 13:30 and misses its next pickup.',
+ EDD:'Serves everyone who can be served, but the CRITICAL hospital load waits a full hour.',
+ WSPT:'The CRITICAL load waits 0, but a HIGH truck waits 190 minutes — detention risk.',
+ PRIORITY:'Over-serves the CRITICAL load: SHP1005, a HIGH truck already in the yard since 09:05, waits 165 minutes.',
+ 'PRIORITY+REPAIR':'Ours. CRITICAL waits 40 minutes so the worst HIGH wait drops from 165 to 65. Every truck that can be served today gets a door.',
+ BEST_ORDER:'Exhaustive benchmark. Identical to ours — the repair step finds the optimum at a fraction of the work.'};
+const DK=['D1','D2','D3','D4','D5','D6'],DT={D1:'std 20t',D2:'std 25t',D3:'std 20t',D4:'std 25t',D5:'reefer',D6:'heavy 35t'};
+$('#ticks').innerHTML=Array.from({length:7},(_,i)=>`<span style="left:${i/6*100}%">${String(9+i).padStart(2,'0')}:00</span>`).join('');
+$('#rows').innerHTML=DK.map(d=>`<div class="row"><div class="l"><b>${d}</b><small>${DT[d]}</small></div><div class="lane" id="L${d}"></div></div>`).join('');
+Object.entries(S.fixed).forEach(([dock,arr])=>{const d=dock.slice(-2);arr.forEach(f=>{if(f[2]==='BLOCKED_SLOT')return;const s=toMin(f[0]),e=toMin(f[1]);if(e<X0||s>X1)return;
+  const el=document.createElement('div');el.className='fx'+(f[2]==='DOCK_EVENT'?' brk':'');el.style.left=pc(s)+'%';el.style.width=(pc(e)-pc(s))+'%';el.textContent=f[2]==='DOCK_EVENT'?(d==='D3'?'breakdown':'maintenance'):(f[4]||'')+' · fixed';$('#L'+d).append(el)})});
+// job elements live in the rows container, positioned absolutely
+const rows=$('#rows');rows.style.position='relative';
+const JOB={};S.jobs.forEach(j=>{const el=document.createElement('div');el.className='job';el.style.background=COL[j.priority];el.innerHTML=`${j.shipment}<small></small>`;el.onclick=()=>shipmentDrawer(j.shipment);rows.append(el);JOB[j.shipment]={el,j}});
+const KP=Object.fromEntries(S.kpis.map(k=>[k.policy,k]));
+$('#pols').innerHTML=S.kpis.map(k=>`<button class="pol" data-p="${k.policy}">${k.policy==='PRIORITY+REPAIR'?'<span class="tag">OURS</span>':''}<b>${k.policy}</b><small>${PDESC[k.policy]}</small></button>`).join('');
+$$('.pol').forEach(b=>b.onclick=()=>{stopTour();show(b.dataset.p)});
+function show(p){$$('.pol').forEach(b=>b.classList.toggle('on',b.dataset.p===p));$('#pname').textContent=p;
+  const plan=S.plans[p],lane=$('#LD1'),off=lane.offsetLeft,w=lane.offsetWidth,trayR=$('#tray').getBoundingClientRect(),rowsR=rows.getBoundingClientRect();
+  let ti=0;
+  Object.values(JOB).forEach(({el,j})=>{const a=plan[j.shipment];
+    if(a){const s=toMin(a.start),e=s+j.unload_min,r=DK.indexOf(a.dock);el.style.left=(off+w*pc(s)/100)+'px';el.style.width=Math.max(46,w*(pc(e)-pc(s))/100)+'px';el.style.top=(r*62+10)+'px';
+      el.querySelector('small').textContent=`${a.start} · wait ${a.wait}m`;el.classList.remove('out')}
+    else{el.style.left=(trayR.left-rowsR.left+160+ti*150)+'px';el.style.top=(trayR.top-rowsR.top+10)+'px';el.style.width='138px';el.querySelector('small').textContent='no compatible door';el.classList.add('out');ti++}});
+  const k=KP[p],mx={weighted_wait:1400,avg_wait:60,critical_wait:60,high_plus_max_wait:200};
+  const M=[['Trucks with no door',k.unscheduled.length,3,v=>v>1?'var(--coral)':'var(--teal)'],['Priority-weighted wait',k.weighted_wait,1400,()=>'var(--saffron)'],['Average wait (min)',k.avg_wait,60,()=>'var(--blue)'],['CRITICAL load wait (min)',k.critical_wait,60,()=>'var(--crit)'],['Longest HIGH/CRITICAL wait (min)',k.high_plus_max_wait,200,v=>v>100?'var(--coral)':'var(--teal)']];
+  if(!$('#metrics').children.length)$('#metrics').innerHTML=M.map((m,i)=>`<div class="metric"><div class="h"><span>${m[0]}</span><b id="mv${i}"></b></div><div class="track"><div class="fill" id="mf${i}" style="width:0"></div></div></div>`).join('');
+  M.forEach((m,i)=>{$('#mv'+i).textContent=m[1].toLocaleString();$('#mf'+i).style.width=Math.min(100,m[1]/m[2]*100)+'%';$('#mf'+i).style.background=m[3](m[1])});
+  $('#verdict').innerHTML=`<b>${p}.</b> ${VERD[p]}`;}
+$('#jobs').innerHTML=`<tr><th>Shipment</th><th>Priority</th><th>Door</th><th>Weight</th><th>Unload</th><th>Earliest dock start</th><th>Driver limit</th><th>Current booking</th></tr>`+
+ S.jobs.map(j=>`<tr><td>${j.shipment}</td><td>${prioChip(j.priority)}</td><td>${dockChip(j.dock_need)}</td><td>${j.weight_t} t</td><td>${j.unload_min} min</td><td class="mono">${j.release}</td><td>${Object.entries(j.limits).map(([k,v])=>k.replace('_',' ').toLowerCase()+' '+v).join('')||'—'}</td><td>${j.current_status?`<span class="chip ${j.current_status==='INVALID'?'crit':'high'}">${j.current_status}</span>`:'—'}</td></tr>`).join('');
+let tourT=null;function stopTour(){clearInterval(tourT);tourT=null;$('#tour').textContent='▶ Tour the policies'}
+$('#tour').onclick=()=>{if(tourT){stopTour();return}const ps=S.kpis.map(k=>k.policy);let i=0;show(ps[0]);$('#tour').textContent='❚❚ Stop tour';tourT=setInterval(()=>{i=(i+1)%ps.length;show(ps[i])},3200)};
+addEventListener('resize',()=>show($('.pol.on')?.dataset.p||'PRIORITY+REPAIR'));
+// start on FCFS then morph to ours for a first motion moment
+show('FCFS');setTimeout(()=>show('PRIORITY+REPAIR'),1400);
+</script></body></html>

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>How it works · SetuHaul - Logistic Management</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<style>
+.sec-t{font-size:clamp(24px,2.8vw,34px);margin:56px 0 8px}
+.sec-p{color:var(--muted);max-width:760px;margin:0 0 20px}
+.pick{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:14px}
+.pick button{border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:12px;padding:10px 14px;text-align:left;font-size:13px}
+.pick button.on{border-color:var(--saffron);background:linear-gradient(90deg,rgba(219,126,0,.1),var(--panel))}
+.pick button small{display:block;color:var(--muted);font-size:11.5px;margin-top:2px}
+.flow{position:relative;display:grid;grid-template-columns:repeat(5,1fr);gap:14px 14px}
+.node{position:relative;border:1px solid var(--line);border-radius:16px;padding:14px;background:var(--panel);min-height:150px;transition:.4s}
+.node .n{font-family:var(--mono);font-size:11px;color:var(--dim)}
+.node b{display:block;font-family:var(--display);font-size:17px;margin:6px 0 4px}
+.node p{margin:0;font-size:12.5px;color:var(--muted)}
+.node .out{margin-top:10px;font-family:var(--mono);font-size:11px;padding:6px 8px;border-radius:8px;background:var(--bg2);border:1px solid var(--line);opacity:0;transform:translateY(4px);transition:.35s;word-break:break-word}
+.node.on{border-color:var(--teal);box-shadow:0 0 0 1px var(--teal),0 18px 40px -20px rgba(11,138,120,.45);transform:translateY(-3px)}
+.node.on .out{opacity:1;transform:none}
+.node.stop{border-color:var(--coral);box-shadow:0 0 0 1px var(--coral)}
+.node.red .n::after{content:' · can stop';color:var(--coral)}
+.node.skip{opacity:.3}
+.pkt{position:absolute;width:16px;height:16px;border-radius:50%;background:var(--saffron);box-shadow:0 0 18px var(--saffron);z-index:5;transition:left .5s cubic-bezier(.5,0,.2,1),top .5s cubic-bezier(.5,0,.2,1);pointer-events:none;opacity:0}
+.txn{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+.code{color:#D5DCEA;font-family:var(--mono);font-size:12.5px;background:#141B2A;border:1px solid var(--line);border-radius:16px;padding:16px 0;overflow:auto;line-height:1.7}
+.code div{padding:0 16px;white-space:pre;cursor:pointer;transition:.2s;border-left:3px solid transparent}
+.code div:hover{background:rgba(255,255,255,.03)}
+.code div.on{background:rgba(255,176,32,.16);border-left-color:var(--saffron)}
+.code .c{color:#5E6B88}.code .k{color:#FF8FA0}.code .s{color:#7FE3FF}
+.explain{position:sticky;top:90px}
+.explain .num{font-family:var(--display);font-size:64px;font-weight:800;color:var(--saffron);line-height:1}
+.explain h3{font-size:22px;margin:8px 0 10px}
+.plain{margin-top:14px;padding:12px 14px;border-radius:12px;background:rgba(34,211,182,.06);border:1px solid rgba(34,211,182,.3);font-size:13.5px}
+.plain b{color:var(--teal);font-size:11px;letter-spacing:.12em;display:block;margin-bottom:4px}
+.lay3{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+pre.schema{font-family:var(--mono);font-size:11.5px;background:#141B2A;border:1px solid var(--line);border-radius:14px;padding:14px;overflow:auto;max-height:360px;margin:0;color:#B8C4DE}
+@media (max-width:1000px){.pick{grid-template-columns:1fr 1fr}.flow{grid-template-columns:1fr 1fr}.txn,.lay3{grid-template-columns:1fr}.explain{position:static}}
+</style></head><body>
+<main class="wrap">
+<div class="page-head"><div><div class="eyebrow">● Architecture</div><h1>Inside one turn: a workflow, not an agent loop</h1>
+<p>The steps are known in advance and the cost of a wrong step is a double booking, so code decides the next step. The model is used only to read words. Every turn returns the list of tools it called — the transcript is also the audit trail.</p></div></div>
+
+<h2 class="sec-t">One turn, step by step</h2>
+<p class="sec-p">Every inbound WhatsApp message follows the same ten steps. Pick a message and watch it travel. Red-marked steps can stop the flow.</p>
+<div class="pick" id="pick"></div>
+<div class="flow" id="flow"><div class="pkt" id="pkt"></div></div>
+
+<h2 class="sec-t">The booking transaction, line by line</h2>
+<p class="sec-p">The most important code in the system: <span class="mono">capacity.commit()</span>. Click a line — or let it step through.</p>
+<div class="txn"><div class="code" id="code"></div><div class="card explain" id="ex"></div></div>
+
+<h2 class="sec-t">The language layer and the LLM boundary</h2>
+<p class="sec-p">Rules read English, Hinglish and Hindi with no model call: clock times (11:30, 7 baje, 7 बजे), durations (dedh ghanta, डेढ़ घंटा), choices ("pehla"), safety words and urgency claims. A model is called only when rules return UNKNOWN.</p>
+<div class="lay3">
+  <div class="card"><h3>Checks in code after the model replies</h3>
+   <div class="plain"><b>TIMES</b>Every time must lie between as-of − 1 h and as-of + 24 h.</div>
+   <div class="plain"><b>EVIDENCE</b>Every evidence string must appear verbatim in the driver's message.</div>
+   <div class="plain"><b>SAFETY</b>Checked against the word list as well — either source escalates.</div>
+   <div class="plain" style="background:rgba(255,176,32,.06);border-color:rgba(255,176,32,.35)"><b style="color:var(--saffron)">OUTPUT GUARD</b>Every dock code and clock time in an outgoing reply must appear in this turn's evidence. "Booked" may appear only after a commit returned CONFIRMED. In development it blocked one of our own replies — and was right.</div></div>
+  <div class="card"><h3>Strict JSON shape for the fallback</h3><pre class="schema">{
+  "intent": ["REPORT_DELAY","EARLY_ARRIVAL","ASK_OPTIONS",
+             "CHECK_STATUS","CHOOSE","DECLINE",
+             "ASK_HUMAN","SAFETY","UNKNOWN"],
+  "eta": { "kind": ["CLOCK","DELAY","WINDOW","VAGUE"],
+           "clock": "^([01][0-9]|2[0-3]):[0-5][0-9]$",
+           "delay_min": "0..720",
+           "window": ["HH:MM","HH:MM"],
+           "hedged": true },
+  "limits": { "earliest_start": null, "latest_gate_out": null },
+  "shipment_hint": ["MORNING","EVENING","HEAVY","REEFER",null],
+  "choice": "1..3",
+  "safety": false,
+  "evidence": { "<field>": "<exact words from the message>" }
+}
+// additionalProperties: false — anything else is UNKNOWN
+// The model's output can change what we ask, never what we book.</pre></div>
+</div>
+
+<h2 class="sec-t">From prototype to pilot</h2>
+<div class="card"><table class="t"><tr><th>Layer</th><th>Pilot</th><th>Prototype stand-in</th></tr>
+<tr><td>Inbound</td><td>WhatsApp Business Cloud API webhook, signature verified</td><td class="mono">workflow.handle(phone, text, as_of, external_id)</td></tr>
+<tr><td>Ordering</td><td>Per-driver queue, one turn at a time (FOR UPDATE SKIP LOCKED)</td><td>Per-conversation busy flag</td></tr>
+<tr><td>Words</td><td>Rules; Claude Haiku fallback with strict JSON</td><td>Rules; fallback asks a clarifying question</td></tr>
+<tr><td>System of record</td><td>Managed Postgres with an EXCLUDE constraint</td><td>SQLite, BEGIN IMMEDIATE and triggers</td></tr>
+<tr><td>Outbound</td><td>Outbox drained to WhatsApp, SMS, e-mail, phone task</td><td>Outbox table</td></tr>
+<tr><td>Humans</td><td>Coordinator console (approve, reject, swap, queue)</td><td><a href="handoffs.html" style="color:var(--saffron)">This prototype's Hand-offs page</a></td></tr>
+<tr><td>Cost</td><td>One small container + managed Postgres ≈ US$20–30 / month</td><td>vs ~US$170 fixed floor for the earlier 12-service AWS design</td></tr></table></div>
+</main>
+<script src="data.js"></script><script src="app.js"></script>
+<script>
+const STEPS=[['Identify','Phone number → driver. Unknown numbers get no reply.',0],['Dedupe','Same message ID, or same text within 10 min → no second reply.',1],['Language','Script share + word list: EN, Hinglish, Hindi.',0],['Read facts','Regex → intent, ETA, limits, choice, with evidence.',0],['Safety words','Stop all scheduling; page the shift manager.',1],['Which shipment','Evidence ladder; ask only if it cannot decide.',0],['Record','ETA, window, limits; re-plan; refresh earmarks.',0],['Booking still works?','If yes, tell the driver to keep it.',0],['Options or escalate','Up to 3 feasible options, or a full hand-off.',1],['Reply + guard','Catalogue template, output guard, outbox.',0]];
+const MSGS={
+ c07:{lbl:'"Traffic after Shahpura. Reaching around 11:20. Any slot after 12?"',sub:'C07 · delay with a limit',out:['DRV006 Manoj Sharma','new message wa-9001','en','REPORT_DELAY · ETA 11:20 · earliest 12:00','none','SHP1006 (the trip you are driving)','ETA 11:20 MEDIUM recorded','CERTAIN_MISS on D4 10:00','3 options: D4 12:40, D2 1:00, D1 2:00','guard ✓ → outbox'],stop:null},
+ dup:{lbl:'Same message, redelivered 1 minute later',sub:'C07 · WhatsApp retry',out:['DRV006 Manoj Sharma','SUPPRESSED — same as wa-9001'],stop:1},
+ c12:{lbl:'"bhai accident ho gaya, helper ko chot lagi hai…"',sub:'C12 · safety in Hinglish',out:['DRV011 Ramesh Choudhary','new message','hi-Latn (Hinglish)','intent SAFETY · evidence "accident", "chot"','ESC-0003 → Anita Joshi, phone + WhatsApp'],stop:4},
+ c09:{lbl:'"thoda late hoon bhai, traffic hai"',sub:'C09 · vague delay',out:['DRV010 Deepak Saini','new message','hi-Latn (Hinglish)','REPORT_DELAY · ETA VAGUE','none','SHP1010 · then ask: "kitne baje?"'],stop:5,ask:true},
+ c14:{lbl:'"Evening traffic. ETA 6:30. Can the reefer unload tonight?"',sub:'C14 · no feasible slot',out:['DRV015 Mohammed Salim','new message','en','REPORT_DELAY · ETA 18:30','none','SHP1015 (reefer)','ETA 18:30 HIGH recorded','CERTAIN_MISS on D5 17:00','0 options → ESC-0004 hand-off','guard ✓ → "don\'t go to the dock"'],stop:null}
+};
+$('#flow').insertAdjacentHTML('beforeend',STEPS.map((s,i)=>`<div class="node ${s[2]?'red':''}" id="n${i}"><div class="n">STEP ${String(i+1).padStart(2,'0')}</div><b>${s[0]}</b><p>${s[1]}</p><div class="out"></div></div>`).join(''));
+$('#pick').innerHTML=Object.entries(MSGS).map(([k,m])=>`<button data-k="${k}">${esc(m.lbl)}<small>${m.sub}</small></button>`).join('');
+let run=0;
+async function play(k){const id=++run,m=MSGS[k];$$('#pick button').forEach(b=>b.classList.toggle('on',b.dataset.k===k));
+  $$('.node').forEach(n=>{n.classList.remove('on','stop','skip');n.querySelector('.out').textContent=''});const p=$('#pkt');p.style.opacity=1;
+  for(let i=0;i<STEPS.length;i++){if(id!==run)return;const n=$('#n'+i);p.style.left=(n.offsetLeft+n.offsetWidth-24)+'px';p.style.top=(n.offsetTop+10)+'px';await sleep(420);if(id!==run)return;
+    if(i<m.out.length){n.classList.add('on');n.querySelector('.out').textContent=m.out[i]}
+    if(m.stop===i){n.classList.add('stop');for(let j=i+1;j<STEPS.length;j++)$('#n'+j).classList.add('skip');p.style.background='var(--coral)';await sleep(300);p.style.opacity=0;p.style.background='';return}
+    await sleep(280)}
+  p.style.opacity=0}
+$$('#pick button').forEach(b=>b.onclick=()=>play(b.dataset.k));
+new IntersectionObserver((es,o)=>{if(es[0].isIntersecting){play('c07');o.disconnect()}},{threshold:.3}).observe($('#flow'));
+// transaction
+const CODE=[
+ [1,'<span class="k">with</span> write_txn(con):                       <span class="c"># BEGIN IMMEDIATE</span>'],
+ [2,'    prior = _idem_get(con, idem_key)       <span class="c"># seen this request?</span>'],
+ [2,'    <span class="k">if</span> prior: <span class="k">return</span> prior'],
+ [6,'    lim, earliest = driver_limits(con, shipment_id, as_of)'],
+ [7,'    opts = options(..., respect_earmarks=<span class="k">not</span> approved,'],
+ [7,'                   constraints=lim, earliest_start=earliest)'],
+ [8,'    <span class="k">if</span> slot_id <span class="k">not in</span> opts: <span class="k">return</span> <span class="s">"OPTION_GONE"</span>, why'],
+ [9,'    <span class="k">if</span> o.needs_approval <span class="k">and not</span> approved: <span class="k">return</span> <span class="s">"NEEDS_APPROVAL"</span>'],
+ [10,'    <span class="k">for</span> dead <span class="k">in</span> o.releases: _cancel(dead); outbox(<span class="s">"DISPATCH_NOTICE"</span>)'],
+ [11,'    _cancel(old_booking, <span class="s">"Rescheduled"</span>)'],
+ [12,'    refresh_guard_rows(con, facility, as_of)'],
+ [13,'    INSERT INTO appointments ... <span class="s">\'CONFIRMED\'</span>, is_current=1'],
+ [14,'    INSERT INTO dock_reservations (dock, start, occupancy_end)'],
+ [15,'    <span class="k">except</span> IntegrityError: <span class="k">raise</span> GuardTripped'],
+ [16,'    _event(); outbox(coordinator, <span class="s">"BOOKING_NOTICE"</span>); _audit()'],
+ [17,'    DELETE FROM slot_earmarks WHERE shipment_id=? OR slot_id=?'],
+ [5,'    _idem_put(con, idem_key, res)          <span class="c"># COMMIT on leaving the block</span>']];
+const EX={1:['Take the single write lock before reading anything','A second commit waits here, so two "check then insert" sequences can never interleave.','The counter has one rubber stamp, and you must hold it before you look at the chart.'],
+ 2:['Look up the idempotency key (the WhatsApp message ID)','WhatsApp redelivers webhooks; networks retry. The same tap must not book twice.','If the passenger shows the same token twice, give back the same ticket.'],
+ 5:['All or nothing','The key is stored inside the same transaction. Any exception rolls back everything — no half-made booking.','Either the whole ticket is issued or none of it.'],
+ 6:['Read the driver\'s stored limits','"Leave by 13:30" from an earlier message still applies; a swap or approval cannot break it.','The note the passenger gave earlier is pinned to the file.'],
+ 7:['Re-run the full feasibility check, now, with the lock held','The option may be 10 minutes old. A breakdown, another booking or an earmark may have appeared since.','Check the chart again just before stamping.'],
+ 8:['Refuse with a reason code','Taken, held, protected or no longer fits — the driver gets a plain reason and fresh options in the same reply.','"Sorry, that berth just went; here are three others."'],
+ 9:['Stop if a rule needs a person','Start after 21:00, or a data conflict: the workflow creates a hold with a deadline instead.','Some tickets need the station master\'s signature.'],
+ 10:['Release dead bookings and tell their dispatcher','A booking whose truck certainly cannot arrive must not block a truck that can use the slot.','An empty reserved seat on a departed train is released, and the agent is told.'],
+ 11:['Retire the old booking','Keeps "one current active booking per shipment" true.','Cancel the old ticket before issuing the new one.'],
+ 12:['Refresh the busy intervals','Trucks in docks, kept bookings, dock events — the trigger checks against up-to-date reality, including overruns.','Update the chart with who is still sitting in the seats.'],
+ 13:['Insert the booking — guard triggers run','Wrong door, overweight load, closed slot or cancelled shipment: the database still refuses even if the code has a bug.','A second clerk checks the stamp.'],
+ 14:['Insert the time interval — overlap trigger runs','Two blocks clash if each starts before the other ends. If they would overlap on one door, the database refuses.','10:00–11:00 and 10:50–11:30 clash; 10:00–11:00 and 11:00–11:30 do not.'],
+ 15:['A tripped guard becomes a clean refusal','The driver never sees a raw database error.','"Just taken" — never a stack trace.'],
+ 16:['Record, notify, audit — inside the transaction','Nothing is sent outside a transaction; the outbox only drains committed messages.','The ticket stub, the station log and the agent\'s copy are written together.'],
+ 17:['Clear the earmarks','The protected capacity has been used by the truck it was protecting.','The reserved sign comes off the seat.']};
+$('#code').innerHTML=CODE.map((c,i)=>`<div data-i="${i}">${c[1]}</div>`).join('');
+function showLine(i){$$('#code div').forEach(d=>d.classList.toggle('on',+d.dataset.i===i));const k=CODE[i][0],e=EX[k];
+  $('#ex').innerHTML=`<div class="num">${String(k).padStart(2,'0')}</div><h3>${e[0]}</h3><p class="muted" style="margin:0">${e[1]}</p><div class="plain"><b>IN PLAIN WORDS</b>${e[2]}</div>`}
+let li=0,auto=setInterval(()=>{showLine(li);li=(li+1)%CODE.length},3200);showLine(0);
+$$('#code div').forEach(d=>d.onclick=()=>{clearInterval(auto);showLine(+d.dataset.i)});
+</script></body></html>

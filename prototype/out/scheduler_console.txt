@@ -1,0 +1,11 @@
+{'policy': 'FCFS', 'jobs': 8, 'served': 6, 'unscheduled': ['SHP1012', 'SHP1015'], 'weighted_wait': 1040, 'avg_wait': 33.3, 'critical_wait': 60, 'high_plus_max_wait': 60, 'approvals': 0, 'note': ''}
+{'policy': 'EDD', 'jobs': 8, 'served': 7, 'unscheduled': ['SHP1015'], 'weighted_wait': 1200, 'avg_wait': 40.0, 'critical_wait': 60, 'high_plus_max_wait': 60, 'approvals': 0, 'note': ''}
+{'policy': 'WSPT', 'jobs': 8, 'served': 7, 'unscheduled': ['SHP1015'], 'weighted_wait': 1320, 'avg_wait': 52.9, 'critical_wait': 0, 'high_plus_max_wait': 190, 'approvals': 0, 'note': ''}
+{'policy': 'PRIORITY', 'jobs': 8, 'served': 7, 'unscheduled': ['SHP1015'], 'weighted_wait': 1310, 'avg_wait': 52.9, 'critical_wait': 0, 'high_plus_max_wait': 165, 'approvals': 0, 'note': ''}
+{'policy': 'PRIORITY+REPAIR', 'jobs': 8, 'served': 7, 'unscheduled': ['SHP1015'], 'weighted_wait': 1120, 'avg_wait': 40.0, 'critical_wait': 40, 'high_plus_max_wait': 65, 'approvals': 0, 'note': ''}
+{'policy': 'BEST_ORDER', 'jobs': 8, 'served': 7, 'unscheduled': ['SHP1015'], 'weighted_wait': 1120, 'avg_wait': 40.0, 'critical_wait': 40, 'high_plus_max_wait': 65, 'approvals': 0, 'note': 'exhaustive over 8! orders'}
+sensitivity identical: True
+{'weights': 'Ours 8:4:2:1', 'plan': {'SHP1005': 'D2 10:55', 'SHP1016': 'D6 12:50', 'SHP1015': None, 'SHP1014': 'D2 12:20', 'SHP1006': 'D4 12:40', 'SHP1012': 'D1 11:30', 'SHP1013': 'D3 13:00', 'SHP1018': 'D1 14:20'}}
+{'weights': 'Doc A 100:40:15:5', 'plan': {'SHP1005': 'D2 10:55', 'SHP1016': 'D6 12:50', 'SHP1015': None, 'SHP1014': 'D2 12:20', 'SHP1006': 'D4 12:40', 'SHP1012': 'D1 11:30', 'SHP1013': 'D3 13:00', 'SHP1018': 'D1 14:20'}}
+{'weights': 'Doc B 4:2:1:0.5', 'plan': {'SHP1005': 'D2 10:55', 'SHP1016': 'D6 12:50', 'SHP1015': None, 'SHP1014': 'D2 12:20', 'SHP1006': 'D4 12:40', 'SHP1012': 'D1 11:30', 'SHP1013': 'D3 13:00', 'SHP1018': 'D1 14:20'}}
+charts written

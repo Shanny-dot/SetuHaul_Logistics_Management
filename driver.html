@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Driver Messages · SetuHaul - Logistic Management</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+Devanagari:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<style>
+.app{display:grid;grid-template-columns:300px 410px 1fr;gap:22px;align-items:start}
+.cases{display:flex;flex-direction:column;gap:8px;max-height:calc(100vh - 120px);overflow:auto;position:sticky;top:84px;padding-right:4px}
+.case{display:flex;gap:12px;align-items:center;text-align:left;width:100%;border:1px solid var(--line);background:var(--panel);color:var(--text);padding:11px 12px;border-radius:14px;transition:.2s}
+.case:hover{border-color:var(--line2);background:var(--panel2)}
+.case.on{border-color:var(--teal);background:linear-gradient(90deg,rgba(11,138,120,.1),var(--panel))}
+.av{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;font-weight:700;font-size:13px;flex:none;color:#0b1122}
+.case b{font-size:13.5px;display:block;line-height:1.25}
+.case small{display:block;color:var(--muted);font-size:12px;line-height:1.3;margin-top:2px}
+.case .end{margin-left:auto;font-size:10px}
+.cg{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin:10px 4px 2px;font-weight:600}
+
+/* phone */
+.phone-wrap{position:sticky;top:84px}
+.phone{width:390px;height:780px;max-height:calc(100vh - 110px);border-radius:46px;padding:12px;background:linear-gradient(145deg,#3a4153,#151a26);box-shadow:0 40px 70px -30px rgba(40,32,10,.5),inset 0 0 0 2px #59627a;position:relative}
+.screen{height:100%;border-radius:36px;overflow:hidden;display:flex;flex-direction:column;background:#EFE7DC;position:relative}
+.notch{position:absolute;top:8px;left:50%;transform:translateX(-50%);width:110px;height:28px;border-radius:20px;background:#05080f;z-index:5}
+.wa-h{background:#0B5C4F;color:#fff;padding:44px 14px 12px;display:flex;gap:10px;align-items:center}
+.wa-h .lg svg{width:36px;height:36px;border-radius:50%}
+.wa-h b{font-size:15px;display:flex;gap:5px;align-items:center}
+.wa-h small{font-size:11.5px;opacity:.8}
+.wa-h .vf{width:14px;height:14px;border-radius:50%;background:#25D366;display:inline-grid;place-items:center;font-size:9px;color:#063}
+.chat{flex:1;overflow-y:auto;padding:14px 12px 10px;display:flex;flex-direction:column;gap:6px;scroll-behavior:smooth;
+  background-color:#EFE7DC;background-image:radial-gradient(rgba(11,92,79,.07) 1px,transparent 1.4px);background-size:16px 16px}
+.day{align-self:center;background:#fff;color:#556;font-size:11px;padding:4px 10px;border-radius:8px;margin:4px 0 6px;box-shadow:0 1px 1px rgba(0,0,0,.08)}
+.msg{max-width:84%;min-width:96px;padding:7px 10px 18px;border-radius:10px;font-size:13.6px;line-height:1.42;color:#1b2430;position:relative;white-space:pre-wrap;word-wrap:break-word;box-shadow:0 1px 1px rgba(0,0,0,.1);animation:pop .35s cubic-bezier(.2,.9,.3,1.3)}
+.msg.me{align-self:flex-end;background:#DCF8C6;border-top-right-radius:3px}
+.msg.bot{align-self:flex-start;background:#fff;border-top-left-radius:3px}
+.msg .tm{white-space:nowrap;position:absolute;right:8px;bottom:3px;font-size:10px;color:#7a8794;display:flex;gap:3px;align-items:center}
+.msg .tk{color:#9aa6b2;transition:color .5s}.msg .tk.read{color:#34B7F1}
+.msg.dev{font-family:'Noto Sans Devanagari',var(--sans)}
+.msg .gl{display:block;margin-top:6px;padding-top:6px;border-top:1px dashed #b9c4b0;color:#4f6b52;font-size:12px;font-style:italic}
+.msg.sup{opacity:.6}.msg.sup::after{content:'duplicate — suppressed, no reply';position:absolute;left:10px;bottom:3px;font-size:10px;color:#a3532d;font-weight:600}
+.opts{display:flex;flex-direction:column;gap:5px;margin-top:8px}
+.opt{border:0;background:#F0F7F4;color:#0B5C4F;font-weight:600;font-size:13px;padding:9px 10px;border-radius:8px;text-align:center;transition:.15s;border:1px solid #d6e9e2}
+.opt:hover{background:#d8efe7}
+.opt.hint{box-shadow:0 0 0 2px #25D366;animation:pulse 1.6s infinite}
+.opt.used{opacity:.5;pointer-events:none}
+.opt.picked{background:#0B5C4F;color:#fff;opacity:1}
+@keyframes pulse{50%{box-shadow:0 0 0 5px rgba(37,211,102,.25)}}
+@keyframes pop{from{opacity:0;transform:translateY(10px) scale(.96)}to{opacity:1;transform:none}}
+.sys{align-self:center;max-width:92%;background:#FFF3C4;color:#5a4500;font-size:11.5px;padding:6px 10px;border-radius:8px;text-align:center;animation:pop .35s}
+.sys.red{background:#FFE0E3;color:#8a1525}
+.typing{align-self:flex-start;background:#fff;padding:10px 14px;border-radius:10px;display:flex;gap:4px}
+.typing i{width:7px;height:7px;border-radius:50%;background:#9aa6b2;animation:bl 1s infinite}
+.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+@keyframes bl{0%,80%,100%{transform:translateY(0);opacity:.5}40%{transform:translateY(-4px);opacity:1}}
+.comp{background:#F0F0F0;padding:8px;display:flex;gap:8px;align-items:center}
+.comp .in{flex:1;background:#fff;border-radius:22px;padding:10px 14px;font-size:13.5px;color:#1b2430;min-height:40px;display:flex;align-items:center;line-height:1.3}
+.comp .in.ph{color:#99a}
+.comp .send{width:42px;height:42px;border-radius:50%;border:0;background:#0B5C4F;color:#fff;font-size:17px;flex:none;transition:.2s}
+.comp .send:disabled{background:#b7c3c0}
+.comp .send.go{animation:pulse 1.6s infinite;box-shadow:0 0 0 2px #25D366}
+.ctrl{display:flex;gap:8px;justify-content:center;margin-top:14px;flex-wrap:wrap}
+
+/* right panel */
+.side{display:flex;flex-direction:column;gap:16px}
+.head h1{font-size:28px;line-height:1.1}
+.trip{display:grid;grid-template-columns:1fr 1fr;gap:10px 16px;font-size:13.5px}
+.trip dt{color:var(--dim);font-size:11.5px;text-transform:uppercase;letter-spacing:.08em}
+.trip dd{margin:2px 0 0;font-weight:500}
+.book{margin-top:14px;padding:12px 14px;border-radius:12px;border:1px dashed var(--line2);display:flex;justify-content:space-between;align-items:center;gap:10px;transition:.4s}
+.book.flash{border-color:var(--teal);background:rgba(11,138,120,.07);border-style:solid}
+.book .bk{font-family:var(--display);font-size:22px;font-weight:700}
+.states{display:flex;gap:4px;flex-wrap:wrap}
+.states span{font-family:var(--mono);font-size:10.5px;padding:5px 8px;border-radius:8px;border:1px solid var(--line);color:var(--dim);transition:.3s}
+.states span.on{color:#fff;background:var(--teal);border-color:var(--teal);transform:scale(1.05)}
+.states span.on.esc{background:var(--coral);border-color:var(--coral)}
+.turns{display:flex;flex-direction:column;gap:12px}
+.turn{border:1px solid var(--line);border-radius:14px;padding:14px;background:var(--bg2);animation:pop .4s}
+.turn .top{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--muted);margin-bottom:8px}
+.turn .q{font-size:13.5px;margin-bottom:10px;color:var(--text)}
+.pipe{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.tool{font-size:11.5px;padding:5px 9px;border-radius:9px;background:var(--panel);border:1px solid var(--line2);opacity:0;transform:translateY(6px);transition:.35s;display:flex;gap:6px;align-items:center}
+.tool.on{opacity:1;transform:none}
+.tool b{font-weight:600;color:var(--text)}
+.tool span{color:var(--muted);font-family:var(--mono);font-size:10.5px;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tool.k-book{border-color:rgba(34,211,182,.5)} .tool.k-esc{border-color:rgba(255,93,108,.5)} .tool.k-gone{border-color:rgba(255,176,32,.6)}
+.arrow{color:var(--dim);font-size:11px;opacity:0;transition:.3s}.arrow.on{opacity:1}
+.empty{color:var(--dim);font-size:13.5px;padding:16px;border:1px dashed var(--line);border-radius:14px;text-align:center}
+.note{font-size:12.5px;color:var(--muted);border-left:3px solid var(--saffron);padding:6px 12px;background:rgba(219,126,0,.05);border-radius:0 10px 10px 0}
+.toggle{display:flex;gap:8px;align-items:center;font-size:12.5px;color:var(--muted);cursor:pointer;user-select:none}
+.toggle input{accent-color:var(--teal)}
+@media (max-width:1200px){.app{grid-template-columns:260px 410px}.side{grid-column:1/-1}}
+@media (max-width:760px){.app{grid-template-columns:1fr}.cases{position:static;max-height:none;flex-direction:row;overflow-x:auto}.case{min-width:240px}.cg{display:none}.phone-wrap{position:static;display:flex;flex-direction:column;align-items:center}.phone{width:100%;max-width:390px;height:720px}}
+</style></head><body>
+<main class="wrap">
+<div class="page-head"><div><div class="eyebrow">● Driver Messages · WhatsApp channel</div><h1>Every driver conversation from 4 August</h1>
+<p>Choose a driver. Tap <b>send</b> to post their real message, tap a slot to book it, or press <b>Auto-play</b>. The right panel shows what SetuHaul checked before each reply.</p></div>
+<div style="display:flex;gap:10px;align-items:center"><label class="toggle"><input type="checkbox" id="gloss" checked> English gloss for Hindi / Hinglish</label></div></div>
+
+<div class="app">
+  <aside class="cases" id="cases"></aside>
+  <div class="phone-wrap">
+    <div class="phone"><div class="screen"><div class="notch"></div>
+      <div class="wa-h"><span class="lg" id="lg"></span><div style="flex:1"><b>SetuHaul Dispatch <span class="vf">✓</span></b><small id="sub">Jaipur DC · online</small></div><span style="opacity:.8">⋮</span></div>
+      <div class="chat" id="chat"></div>
+      <div class="comp"><div class="in ph" id="inp">Message</div><button class="send" id="send" disabled aria-label="Send">➤</button></div>
+    </div></div>
+    <div class="ctrl"><button class="btn" id="restart">↺ Restart</button><button class="btn pri" id="auto">▶ Auto-play</button><button class="btn" id="next">Next case →</button></div>
+  </div>
+  <section class="side">
+    <div class="card head"><div class="eyebrow" id="cLad">Ladder</div><h1 id="cTitle">—</h1><p class="muted" id="cDesc" style="margin:8px 0 0"></p></div>
+    <div class="card"><h3>Trip <span id="prio"></span></h3><dl class="trip" id="trip"></dl>
+      <div class="book" id="book"></div></div>
+    <div class="card"><h3>Conversation state</h3><div class="states" id="states"></div></div>
+    <div class="card"><h3>Behind each reply <span class="chip">audit trail</span></h3><div class="turns" id="turns"><div class="empty">Send the driver's message to see the tools the workflow calls.</div></div></div>
+  </section>
+</div>
+</main>
+<script src="data.js"></script><script src="app.js"></script>
+<script>
+const META={
+ C01:['Early truck asks for a dock now','+ Early truck','The truck is at the gate before its 9:00 slot. A free door that delays nobody is offered.'],
+ C03:['"Late by one hour" — loses a race, re-booked in one message','Levels 2 · 4 · 5','The ETA is stated back, not asked. At 09:36 another driver takes the same slot a moment earlier; the re-check at commit catches it and fresh options arrive in the same reply.'],
+ C04:['Late truck in the yard behind an overrunning unload','+ Work in progress','Checked in inside the 30-minute grace, so the booking stands. The truck ahead is still unloading; the reply gives queue position and expected call.'],
+ C05:['Tyre repaired; must leave by 1:30 for another pickup','Level 4 · competing trucks','The driver\'s own deadline becomes a hard limit that every later commit and swap must respect.'],
+ C06:['Two trips: which one? The evening slot needs approval','Levels 2 · 3','One question to pick the trip, answered in Hindi. The evening slot needs a coordinator because records show the vehicle on another trip — a hold with a deadline, then approval.'],
+ C07:['"Any slot after 12?" — a retried message, wins the race','Levels 4 · 5','WhatsApp redelivers the same message; dedupe suppresses the second reply. Then this driver wins the 09:36 race.'],
+ C08:['Heavy trailer: only one door fits','Level 3 · rules narrow choices','31 t needs the heavy door D6. Every option is on D6. A data conflict (driver on two trucks) is flagged without blocking.'],
+ C09:['A vague delay in Hinglish','Levels 2 · 3','"Thoda late" has no time, so one question. The answer shows the reefer booking still works — nothing changes.'],
+ C10:['CRITICAL load claims urgency','Level 4 · priority policy','Priority comes from the shipment record, never the message. The earliest fitting slot is offered; a swap search refuses to break SHP1012\'s 13:30 limit.'],
+ C11:['Only asking about options','Level 1 · asking, not booking','A proactive check-in after the health monitor flags risk. Options are read-only: nothing recorded or held; "no thanks" keeps the plan.'],
+ C12:['Safety: accident reported','Boundary · a person takes over','All scheduling talk stops. 112 advice and the shift manager is paged by phone.'],
+ C13:['Shipment cancelled while on the way','Level 5 · world changes','Dispatch cancelled at 10:10. The driver is told not to travel; the slot already went back to the pool.'],
+ C14:['Reefer load: no feasible slot today','Level 6 · no feasible slot','D5 maintenance blocks every reefer start. SetuHaul never invents a slot: a complete hand-off goes to the coordinator, skipping the failed night-shift address.']
+};
+const GLOSS={
+ 'शाम वाला':'the evening one',
+ 'thoda late hoon bhai, traffic hai':'running a bit late, brother, there\'s traffic',
+ '11:30 tak pahunch jaunga':'I\'ll reach by 11:30',
+ 'bhai accident ho gaya, helper ko chot lagi hai, truck side mein laga diya':'brother, there\'s been an accident, my helper is hurt, I\'ve pulled the truck to the side',
+};
+const GLOSS_R=[
+ [/^आपके पहुँचने/,'I\'ve taken your arrival as about 6:45 PM (your 6:00 PM slot + 45 min). If that\'s wrong, send the time. These slots fit your truck (booked only when you choose) — each needs coordinator approval. Send 1, 2 or 3 to book.'],
+ [/^डॉक D1, 7:30 PM के लिए/,'I\'ve asked the coordinator to approve Dock D1 at 7:30 PM (records show this truck on another trip). Not confirmed yet. You\'ll hear by 9:48 AM.'],
+ [/^पक्का हो गया/,'Confirmed: the coordinator approved Jaipur DC, Dock D1, 7:30 PM. Please reach the gate by 7:15 PM. Ref APT-N0007.'],
+ [/^Batane ke liye/,'Thanks for telling us. By what time will you reach Jaipur DC? Write a time like 11:30 so we can find the right slot.'],
+ [/^Shukriya\. Lagbhag/,'Thanks. Even arriving about 11:30 AM, your booking (Dock D5, from 11:45 AM) still works. Nothing needs to change.'],
+ [/^Sabse pehle/,'First make sure everyone is safe. If anyone is injured, call 112 now. Shift manager Anita Joshi has been told; she will call within 5 minutes. Don\'t worry about the dock slot.'],
+];
+const TOOLN={read_message:'Read message',resolve_shipment:'Which shipment',record_eta:'Record ETA',scheduling_tool:'Re-plan facility',check_current_booking:'Current booking',check_slot_feasibility:'Feasible slots',book:'Commit booking',ask:'Ask driver',escalate:'Escalate',dedupe:'Dedupe',get_booking_status:'Booking status',policy:'Policy',hold_for_approval:'Hold for approval',decline:'Decline',notify_driver:'Notify driver'};
+const STATES=['NEW','NEED_SHIPMENT','NEED_ETA','OPTIONS_SHOWN','PENDING_APPROVAL','BOOKED','CLOSED','ESCALATED'];
+const AVC=['#7FE0CF','#FFC864','#C3B8FF','#93C3FF','#FFB0BA','#9EE6F7','#9BE3B8'];
+
+// build case scripts from the replay log
+const ORDER=Object.keys(META);
+const SCRIPT={};ORDER.forEach(c=>SCRIPT[c]=SH.log.filter(e=>e.case===c));
+$('#lg').innerHTML=SH_LOGO;
+
+function caseDriver(c){const e=SCRIPT[c].find(x=>x.driver_id);return e?DRV[e.driver_id]:null}
+function caseShip(c){const e=SCRIPT[c].filter(x=>x.kind==='driver'&&x.shipment_id).pop();return e?.shipment_id}
+function endState(c){const d=SCRIPT[c].filter(x=>x.state);return d.length?d[d.length-1].state:''}
+
+// list
+const groups=[['Booked by chat',['C01','C03','C05','C07','C08','C10']],['Kept or informed',['C04','C09','C11','C13']],['Reached a person',['C06','C12','C14']]];
+$('#cases').innerHTML=groups.map(([g,cs])=>`<div class="cg">${g}</div>`+cs.map(c=>{const d=caseDriver(c),i=ORDER.indexOf(c),st=endState(c);
+  const lang=(SCRIPT[c].find(x=>x.lang&&x.lang!=='en')||{}).lang;
+  return `<button class="case" data-c="${c}"><span class="av" style="background:${AVC[i%AVC.length]}">${d.driver_name.split(' ').map(w=>w[0]).join('')}</span>
+  <span style="min-width:0"><b>${d.driver_name}</b><small>${c} · ${META[c][0].replace(/"/g,'')}</small></span>
+  <span class="chip end ${st==='ESCALATED'?'crit':st==='BOOKED'?'ok':''}">${lang==='hi'?'हिं':lang==='hi-Latn'?'Hing':'EN'}</span></button>`}).join('')).join('');
+$$('.case').forEach(b=>b.onclick=()=>{location.hash=b.dataset.c.toLowerCase()});
+
+let C,steps,idx,busy,autoplay=false,branch=false,curState='NEW',lastOpts=null;
+const chat=$('#chat');
+
+function glossFor(text){if(GLOSS[text])return GLOSS[text];for(const[r,g]of GLOSS_R)if(r.test(text))return g;return null}
+function addMsg(text,who,t,opts={}){const m=document.createElement('div');m.className='msg '+who+(/[ऀ-ॿ]/.test(text)?' dev':'')+(opts.sup?' sup':'');
+  const g=glossFor(text);
+  m.innerHTML=esc(text)+(g?`<span class="gl" ${$('#gloss').checked?'':'hidden'}>${esc(g)}</span>`:'')+`<span class="tm">${t?ampm(toMin(t)):''}${who==='me'?' <span class="tk">✓✓</span>':''}</span>`;
+  chat.append(m);chat.scrollTop=chat.scrollHeight;
+  if(who==='me')setTimeout(()=>m.querySelector('.tk')?.classList.add('read'),900);return m}
+function addSys(text,red){const s=document.createElement('div');s.className='sys'+(red?' red':'');s.innerHTML=text;chat.append(s);chat.scrollTop=chat.scrollHeight}
+async function typing(ms){const t=document.createElement('div');t.className='typing';t.innerHTML='<i></i><i></i><i></i>';chat.append(t);chat.scrollTop=chat.scrollHeight;await sleep(ms);t.remove()}
+$('#gloss').onchange=()=>$$('.gl').forEach(g=>g.hidden=!$('#gloss').checked);
+
+function parseOpts(reply){return (reply||'').split('\n').map(l=>l.match(/^\s*(\d)\)\s*(.+)$/)).filter(Boolean).map(m=>({n:+m[1],txt:m[2]}))}
+
+function setState(s){curState=s;$('#states').innerHTML=STATES.map(x=>`<span class="${x===s?'on'+(s==='ESCALATED'?' esc':''):''}">${x}</span>`).join('<span style="border:0;padding:5px 0">›</span>')}
+
+function renderTrip(t){const sid=caseShip(C);const s=SHIP[sid];
+  if(!s){$('#trip').innerHTML='<dd class="muted" style="grid-column:1/-1">No shipment linked: the driver reported an accident. Scheduling is suspended.</dd>';$('#prio').innerHTML='<span class="chip crit">SAFETY</span>';$('#book').innerHTML='<span class="muted">No booking action — a person takes over.</span>';return}
+  const v=VEH[s.vehicle_id];$('#prio').innerHTML=prioChip(s.priority_code);
+  $('#trip').innerHTML=`<div><dt>Shipment</dt><dd><a href="#" onclick="shipmentDrawer('${sid}');return false" style="color:var(--saffron)">${sid}</a> · <span class="mono">${s.order_reference}</span></dd></div>
+   <div><dt>Customer</dt><dd>${esc(s.customer_name)}</dd></div>
+   <div><dt>Load</dt><dd>${esc(s.product_category)} · ${(s.load_weight_kg/1000).toFixed(1)} t</dd></div>
+   <div><dt>Door needed</dt><dd>${dockChip(s.required_dock_type)}</dd></div>
+   <div><dt>Vehicle</dt><dd class="mono">${v.registration_number} · ${v.vehicle_type_code}</dd></div>
+   <div><dt>Unload</dt><dd>${s.expected_unload_min} min · from ${esc(s.origin_city)}</dd></div>`;
+  renderBooking(t)}
+function renderBooking(t,flash){const sid=caseShip(C);if(!sid)return;const s=SHIP[sid];
+  const live=SH.appts.filter(a=>a.sh===sid&&a.booked<=t&&(a.cancelled==null||a.cancelled>t)).pop();
+  const el=$('#book');
+  if(s.current_status==='CANCELLED'&&t>=610){el.innerHTML='<div><div class="dim" style="font-size:11.5px">CURRENT BOOKING</div><div class="bk" style="color:var(--coral)">Cancelled</div></div><span class="chip crit">Shipment cancelled 10:10</span>';}
+  else if(live){el.innerHTML=`<div><div class="dim" style="font-size:11.5px">CURRENT BOOKING · ${live.id}</div><div class="bk">Dock ${live.dock} · ${ampm(live.start)}</div></div><span class="chip ${live.src==='DRIVER_CHAT'||live.src==='WAREHOUSE'?'ok':''}">${live.src.replace('_',' ')}</span>`}
+  else el.innerHTML='<div><div class="dim" style="font-size:11.5px">CURRENT BOOKING</div><div class="bk muted">None</div></div>';
+  if(flash){el.classList.add('flash');setTimeout(()=>el.classList.remove('flash'),2200)}}
+
+function addTurn(e,label){const box=$('#turns');if(box.querySelector('.empty'))box.innerHTML='';
+  const d=document.createElement('div');d.className='turn';
+  const tools=(e.tools||[]);
+  d.innerHTML=`<div class="top"><span class="mono">${e.t} · ${label}</span><span class="chip ${e.state==='BOOKED'?'ok':e.state==='ESCALATED'?'crit':''}">${e.state||''}</span></div>
+   ${e.text?`<div class="q">“${esc(e.text)}”</div>`:''}
+   <div class="pipe">${tools.map((x,i)=>{const[n,...r]=x.split(':');const det=r.join(':');const k=n==='book'&&/CONFIRMED/.test(det)?'k-book':n==='escalate'?'k-esc':/GONE|SUPPRESSED|ignored/.test(det)?'k-gone':'';
+     return (i?'<span class="arrow">→</span>':'')+`<span class="tool ${k}" title="${esc(det)}"><b>${TOOLN[n]||n}</b>${det?`<span>${esc(det)}</span>`:''}</span>`}).join('')}</div>`;
+  box.prepend(d);
+  const els=$$('.tool,.arrow',d);els.forEach((x,i)=>setTimeout(()=>x.classList.add('on'),120+i*110));}
+
+function loadCase(c){C=c;steps=SCRIPT[c];idx=0;busy=false;branch=false;lastOpts=null;autoplay=false;$('#auto').textContent='▶ Auto-play';
+  $$('.case').forEach(b=>b.classList.toggle('on',b.dataset.c===c));
+  const d=caseDriver(c);$('#sub').textContent=`${d.driver_name} · ${d.phone.replace(/\d{4}$/,'••••')}`;
+  $('#cTitle').textContent=META[c][0];$('#cLad').textContent='● '+c+' · '+META[c][1];$('#cDesc').textContent=META[c][2];
+  chat.innerHTML='<div class="day">Tuesday, 4 August 2026</div>';
+  $('#turns').innerHTML='<div class="empty">Send the driver\'s message to see the tools the workflow calls.</div>';
+  setState('NEW');const first=steps.find(s=>s.t);renderTrip(first?toMin(first.t)-1:0);
+  advance();}
+
+function nextDriverStep(){return steps[idx]}
+
+// play non-driver steps until a driver message is due
+async function advance(){busy=true;
+  while(idx<steps.length&&steps[idx].kind!=='driver'){const e=steps[idx++];await playSystem(e)}
+  busy=false;prepComposer();}
+async function playSystem(e){
+  if(e.kind==='notify'){await typing(900);addMsg(e.reply,'bot',e.t);addTurn(e,'Follow-up');setState(e.state);renderBooking(toMin(e.t),true);return}
+  if(e.kind==='system'){
+    if(/check-in/.test(e.title)&&e.detail?.message){addSys(`🛰 ${e.t} · Health monitor: booking at risk → proactive check-in`);await typing(800);addMsg(e.detail.message,'bot',e.t);return}
+    if(/Race/.test(e.title)){addSys(`⚡ ${e.t} · Two drivers pick the same slot at the same instant`);return}
+    if(/approves HLD/.test(e.title)){addSys(`👩‍💼 ${e.t} · Coordinator Neha Bansal approves the hold (re-checked before booking)`);return}
+    if(/reefer booking/.test(e.title)){addSys(`🛰 ${e.t} · Monitor already warned the coordinator: this booking cannot work (D5 maintenance)`,true);return}
+    addSys(`${e.t} · ${esc(e.title)}`);}
+}
+function prepComposer(){const e=steps[idx],inp=$('#inp'),send=$('#send');
+  if(branch||!e){inp.textContent=branch?'Off-script branch — press Restart to follow the recorded run':'Conversation complete';inp.classList.add('ph');send.disabled=true;send.classList.remove('go');
+    if(!e&&!branch&&autoplay){autoplay=false;$('#auto').textContent='▶ Auto-play'}return}
+  const isChoice=lastOpts&&/^\s*[1-3]\s*$/.test(e.text);
+  if(isChoice){inp.textContent='Tap an option above';inp.classList.add('ph');send.disabled=true;send.classList.remove('go');
+    const want=+e.text.trim();$$('.opt',lastOpts).forEach(o=>o.classList.toggle('hint',+o.dataset.n===want))}
+  else {inp.textContent=e.text;inp.classList.remove('ph');send.disabled=false;send.classList.add('go');
+    if(lastOpts&&/शाम/.test(e.text))$$('.opt',lastOpts).forEach(o=>o.classList.toggle('hint',o.dataset.n==='2'))}
+  if(autoplay)setTimeout(()=>{if(!autoplay||busy)return;if(isChoice)$(`.opt[data-n="${e.text.trim()}"]`,lastOpts)?.click();else if(steps[idx]===e)send.click()},1300);}
+
+async function sendDriver(e,displayText){busy=true;$('#send').disabled=true;$('#send').classList.remove('go');$('#inp').textContent='Message';$('#inp').classList.add('ph');
+  const m=addMsg(displayText??e.text,'me',e.t,{sup:!e.reply&&/dedupe/.test((e.tools||[])[0]||'')});idx++;
+  if(lastOpts&&e.reply){$$('.opt',lastOpts).forEach(o=>{o.classList.add('used');o.classList.remove('hint')})}
+  addTurn(e,'Driver turn');
+  if(/OPTION_GONE/.test((e.tools||[]).join()))addSys('⚡ 09:36 · Another driver committed this exact slot a moment earlier — the re-check inside the booking transaction caught it',true);
+  if(e.reply){await typing(Math.min(1700,650+e.reply.length*4));const b=addMsg(e.reply,'bot',e.t);
+    const opts=parseOpts(e.reply);lastOpts=null;
+    if(opts.length){const box=document.createElement('div');box.className='opts';
+      box.innerHTML=opts.map(o=>`<button class="opt" data-n="${o.n}">${o.n}) ${esc(o.txt.replace(/,? unloading done by about.*$/,'').replace(/ - /,' · '))}</button>`).join('');
+      b.insertBefore(box,b.querySelector('.tm'));lastOpts=box;$$('.opt',box).forEach(btn=>btn.onclick=()=>pickOpt(btn,e))}
+  } else lastOpts=lastOpts; // duplicate: keep previous options alive
+  setState(e.state);renderBooking(toMin(e.t),/CONFIRMED/.test((e.tools||[]).join()));
+  if(e.state==='ESCALATED')addSys(e.case==='C12'?'🚨 Escalated ESC-0003 → Anita Joshi (shift manager) · phone call + WhatsApp · SLA 5 min':'📋 Escalated ESC-0004 → Neha Bansal (coordinator) · e-mail + dashboard · night-shift address skipped',true);
+  if(e.state==='CLOSED'&&e.case==='C13')addSys('Conversation closed · the 4 PM D4 slot was already returned to the pool at 10:10');
+  await advance();}
+
+function pickOpt(btn,e){if(busy)return;const n=+btn.dataset.n,next=steps[idx];
+  btn.classList.add('picked');
+  if(next&&next.kind==='driver'&&/^\s*\d\s*$/.test(next.text)&&+next.text.trim()===n){sendDriver(next);return}
+  if(next&&/शाम/.test(next.text)){ if(n===2){sendDriver(next);return} }
+  // off-script branch
+  const txt=btn.textContent.replace(/^\d\)\s*/,'');branch=true;busy=true;
+  $$('.opt',lastOpts).forEach(o=>{o.classList.add('used');o.classList.remove('hint')});
+  addMsg(String(n),'me',next?.t||e.t);
+  (async()=>{await typing(1000);let r;
+    const dock=(txt.match(/D\d/)||[])[0],time=(txt.match(/\d{1,2}:\d{2} [AP]M/)||[])[0];
+    if(/Keep/.test(txt))r=`No problem — your ${time} slot stays as it is. Nothing was changed.`;
+    else if(/ORD-|Kota/.test(txt))r=`That truck is already at our gate, so its booking stands. Send me the delay again if you meant the other trip.`;
+    else if(/मंज़ूरी|approval/.test(txt))r=`Approval requested for Dock ${dock} at ${time}. Not confirmed yet — the coordinator will answer before the hold deadline.`;
+    else r=`Booked: Dock ${dock} at Jaipur DC, start ${time}. Please be at the gate 15 minutes earlier.\n(Demo branch — the recorded run took option ${next?.text?.trim()||'—'}.)`;
+    addMsg(r,'bot',next?.t||e.t);addSys('↺ You left the recorded run. Press Restart to replay it as it happened.');busy=false;prepComposer();})();}
+
+$('#send').onclick=()=>{const e=steps[idx];if(!busy&&e&&e.kind==='driver')sendDriver(e)};
+$('#restart').onclick=()=>loadCase(C);
+$('#next').onclick=()=>{const i=ORDER.indexOf(C);location.hash=ORDER[(i+1)%ORDER.length].toLowerCase()};
+$('#auto').onclick=()=>{if(branch||idx>=steps.length)loadCase(C);autoplay=!autoplay;$('#auto').textContent=autoplay?'❚❚ Pause':'▶ Auto-play';if(autoplay)prepComposer()};
+function route(){const h=location.hash.slice(1).toUpperCase();loadCase(META[h]?h:'C03')}
+addEventListener('hashchange',route);route();
+</script></body></html>

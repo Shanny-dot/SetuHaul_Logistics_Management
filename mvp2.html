@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MVP2 · GPS Control Tower · SetuHaul - Logistic Management</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="styles.css">
+<style>
+
+/* minimal Leaflet core styles (in case the CDN stylesheet is blocked) */
+.leaflet-pane,.leaflet-tile,.leaflet-marker-icon,.leaflet-marker-shadow,.leaflet-tile-container,.leaflet-pane>svg,.leaflet-pane>canvas,.leaflet-zoom-box,.leaflet-image-layer,.leaflet-layer{position:absolute;left:0;top:0}
+.leaflet-container{overflow:hidden;background:#EEE9DE;outline:0;font-family:var(--sans)}
+.leaflet-tile{filter:inherit;visibility:hidden}.leaflet-tile-loaded{visibility:inherit}
+.leaflet-tile,.leaflet-marker-icon{user-select:none;-webkit-user-drag:none}
+.leaflet-container img.leaflet-tile{max-width:none!important;max-height:none!important;width:256px;height:256px}
+.leaflet-pane{z-index:400}.leaflet-tile-pane{z-index:200}.leaflet-overlay-pane{z-index:400}.leaflet-marker-pane{z-index:600}.leaflet-tooltip-pane{z-index:650}.leaflet-popup-pane{z-index:700}
+.leaflet-control{position:relative;z-index:800;pointer-events:auto;float:left;clear:both}
+.leaflet-top,.leaflet-bottom{position:absolute;z-index:1000;pointer-events:none}.leaflet-top{top:0}.leaflet-bottom{bottom:0}.leaflet-left{left:0}.leaflet-right{right:0}
+.leaflet-top .leaflet-control{margin-top:10px}.leaflet-left .leaflet-control{margin-left:10px}.leaflet-right .leaflet-control{float:right;margin-right:10px}
+.leaflet-bar{box-shadow:0 1px 5px rgba(0,0,0,.25);border-radius:6px;background:#fff}
+.leaflet-bar a{display:block;width:30px;height:30px;line-height:30px;text-align:center;text-decoration:none;color:#18212F;font:700 18px/30px sans-serif;border-bottom:1px solid #ddd}
+.leaflet-control-attribution{background:rgba(255,255,255,.8);font-size:11px;padding:0 5px}
+.leaflet-tooltip{position:absolute;padding:6px 8px;background:#fff;border:1px solid #ddd;border-radius:8px;white-space:nowrap;font-size:12px;box-shadow:0 2px 8px rgba(0,0,0,.15);pointer-events:none}
+.leaflet-interactive{cursor:pointer}.leaflet-zoom-animated{transform-origin:0 0}
+#lmap{height:560px;border-radius:14px;border:2px solid #2B57D9;position:relative;z-index:0;isolation:isolate}
+.leaflet-attribution-flag{display:inline!important;vertical-align:baseline!important;width:1em;height:.6669em}
+.leaflet-overlay-pane svg{overflow:visible}
+.ltk{position:relative;width:18px;height:18px}
+.ltk .dt{position:absolute;inset:0;border-radius:50%;border:2.5px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.35);outline-offset:2px}
+.ltk .pl{position:absolute;inset:-2px;border-radius:50%;border:2px solid;opacity:0}
+.ltk .pl.go{animation:lp 1.4s ease-out}
+@keyframes lp{0%{transform:scale(1);opacity:.9}100%{transform:scale(3.2);opacity:0}}
+.ltk b{position:absolute;left:20px;top:-4px;font:600 10px 'IBM Plex Mono',monospace;color:#18212F;background:rgba(255,255,255,.85);padding:0 3px;border-radius:4px;white-space:nowrap}
+.ldc{width:44px;height:44px;border-radius:50%;border:3px solid #2B57D9;background:rgba(255,255,255,.75);display:grid;place-items:center}
+.ldc span{width:20px;height:20px;background:#18212F;transform:rotate(45deg);border:2px solid #fff}
+#mapnote{display:none;font-size:12.5px;color:var(--muted);background:#FFF6E6;border:1px solid #F3D7A6;border-radius:10px;padding:8px 12px;margin:8px 6px 0}
+:root{--G:#1E9E5A;--A:#E08A00;--R:#D9363E;--N:#9AA3B2}
+.mvp{display:inline-flex;gap:6px;align-items:center;font-size:11px;font-weight:700;letter-spacing:.12em;color:#fff;background:linear-gradient(90deg,#6A55D6,#2370C8);padding:4px 10px;border-radius:999px}
+.ctl{display:grid;grid-template-columns:auto 1fr auto;gap:20px;align-items:center;padding:14px 18px;margin-bottom:14px;position:sticky;top:64px;z-index:20}
+.clock{font-family:var(--display);font-size:40px;font-weight:800;line-height:1;letter-spacing:-.03em;min-width:150px}
+.clock small{display:block;font-family:var(--sans);font-size:11px;letter-spacing:.12em;color:var(--muted);font-weight:600;margin-top:4px}
+input[type=range]{width:100%;accent-color:var(--saffron)}
+.jumps{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.jumps button{border:1px solid var(--line);background:var(--bg2);color:var(--muted);font-size:11.5px;padding:4px 9px;border-radius:9px;font-weight:600}
+.jumps button b{font-family:var(--mono);color:var(--saffron);margin-right:3px}
+.pp{width:50px;height:50px;border-radius:50%;justify-content:center;padding:0;font-size:17px}
+.feedind{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);margin-top:8px}
+.feedind .pipe{width:120px;height:6px;border-radius:4px;background:var(--panel2);position:relative;overflow:hidden}
+.feedind .pipe i{position:absolute;top:0;width:18px;height:6px;border-radius:4px;background:var(--teal);animation:flow 1.2s linear infinite}
+.feedind .pipe i:nth-child(2){animation-delay:.4s}.feedind .pipe i:nth-child(3){animation-delay:.8s}
+@keyframes flow{from{left:-20px}to{left:120px}}
+.paused .feedind .pipe i{animation-play-state:paused}
+.sum{display:grid;grid-template-columns:repeat(8,1fr);gap:10px;margin-bottom:14px}
+.sum .card{padding:14px 14px}
+.sum .v{font-family:var(--display);font-size:30px;font-weight:800;line-height:1;transition:.3s}
+.sum .l{font-size:12px;color:var(--muted);margin-top:6px}
+.sum .rag{border-top:4px solid}
+.top{display:grid;grid-template-columns:1.25fr 1fr;gap:14px;align-items:stretch}
+.map{position:relative;padding:10px}
+#map{width:100%;height:auto;border-radius:14px;background:linear-gradient(180deg,#FBF8F1,#F3EEE3)}
+.rt{fill:none;stroke:#D8CFBD;stroke-width:3;stroke-linecap:round}
+.rt.done{stroke-dasharray:none}
+.city{font:600 11px 'IBM Plex Sans',system-ui,sans-serif;fill:#586274}
+.trk{cursor:pointer}
+.trk text{font:600 9.5px 'IBM Plex Mono',monospace;fill:#18212F;paint-order:stroke;stroke:#fff;stroke-width:3px}
+.ping{fill:none;stroke-width:2;opacity:0}
+.ping.go{animation:ping2 1.4s ease-out}
+@keyframes ping2{0%{r:6;opacity:.9}100%{r:26;opacity:0}}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin:8px 6px 0}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+.side{display:grid;grid-template-rows:auto 1fr;gap:14px}
+.stream{font-family:var(--mono);font-size:11.5px;height:190px;overflow:hidden;display:flex;flex-direction:column;gap:3px}
+.stream div{animation:sin .35s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted)}
+.stream div b{color:var(--text);font-weight:600}
+@keyframes sin{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+.out{height:260px;overflow:auto;display:flex;flex-direction:column;gap:7px}
+.om{border:1px solid var(--line);border-radius:12px;padding:8px 10px;font-size:12.5px;animation:sin .4s;background:var(--bg2)}
+.om .h{display:flex;justify-content:space-between;gap:8px;font-size:11px;color:var(--dim);font-family:var(--mono)}
+.rule{font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:6px;background:var(--panel2);color:var(--muted)}
+.board-h{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin:26px 0 12px}
+.row{border:1px solid var(--line);border-radius:16px;background:var(--panel);margin-bottom:10px;overflow:hidden;position:relative;transition:border-color .3s,box-shadow .3s}
+.row::before{content:'';position:absolute;left:0;top:0;bottom:0;width:6px;background:var(--c,var(--N));transition:background .4s}
+.row.flash{box-shadow:0 0 0 3px color-mix(in srgb,var(--c) 35%,transparent)}
+.rm{display:grid;grid-template-columns:185px 175px minmax(150px,1fr) 105px 105px 210px auto;gap:14px;align-items:center;padding:12px 16px 12px 22px}
+.dr{display:flex;gap:10px;align-items:center}
+.av{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;font-weight:700;font-size:13px;background:var(--panel2);flex:none}
+.dr b{display:block;font-size:14px;line-height:1.2}
+.dr small,.tp small{display:block;color:var(--muted);font-size:11.5px}
+.tp b{font-family:var(--mono);font-size:12.5px}
+.prog{position:relative;height:40px}
+.prog .tr{position:absolute;left:0;right:0;top:12px;height:4px;border-radius:3px;background:var(--panel2)}
+.prog .fl{position:absolute;left:0;top:12px;height:4px;border-radius:3px;background:var(--c,var(--N));transition:width .5s linear}
+.prog .ic{position:absolute;top:0;font-size:17px;transform:translateX(-50%);transition:left .5s linear}
+.prog .m{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:space-between;font-size:10.5px;color:var(--dim);font-family:var(--mono)}
+.eta b{font-family:var(--display);font-size:20px}
+.eta small{display:block;font-size:11.5px;color:var(--muted)}
+.eta .d{font-family:var(--mono);font-weight:600}
+.flag{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;padding:4px 9px;border-radius:999px;color:#fff;background:var(--c,var(--N))}
+.why{font-size:12px;color:var(--muted);margin-top:5px;line-height:1.3}
+.acts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.acts a,.acts button{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;padding:7px 10px;border-radius:10px;border:1px solid var(--line);background:var(--panel);text-decoration:none;color:var(--text)}
+.acts .wa{background:#25D366;border-color:#25D366;color:#fff}
+.acts .call{background:var(--text);border-color:var(--text);color:#fff}
+.acts button.on{border-color:var(--saffron);background:#FFF6E6}
+.ex{display:none;grid-template-columns:1fr 1fr;gap:14px;padding:0 16px 16px 22px}
+.row.open .ex{display:grid;animation:sin .35s}
+.opt{display:grid;grid-template-columns:28px 1fr auto;gap:10px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px;background:var(--bg2)}
+.opt .n{width:28px;height:28px;border-radius:9px;display:grid;place-items:center;font-weight:700;background:var(--panel);border:1px solid var(--line)}
+.opt b{font-size:14px}.opt small{display:block;color:var(--muted);font-size:11.5px}
+.opt .btn{padding:6px 10px;font-size:12px}
+.series{position:relative;padding-left:18px}
+.series::before{content:'';position:absolute;left:6px;top:4px;bottom:4px;width:2px;background:var(--line)}
+.sm{position:relative;margin-bottom:10px;font-size:12.5px}
+.sm::before{content:'';position:absolute;left:-17px;top:4px;width:12px;height:12px;border-radius:50%;background:var(--panel);border:2px solid var(--line2)}
+.sm.sent::before{background:var(--teal);border-color:var(--teal)}
+.sm.skip{opacity:.45}
+.sm .h{display:flex;gap:8px;align-items:center;font-size:11px;color:var(--dim);font-family:var(--mono)}
+.bub{margin-top:4px;background:#DCF8C6;border-radius:10px;padding:7px 10px;color:#1b2430;max-width:520px;white-space:pre-wrap;font-size:12.5px}
+.bub .tk{float:right;font-size:10px;color:#34B7F1;margin-left:8px}
+.pend{margin-top:3px;color:var(--muted);font-size:12px}
+.rules{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.ru{border:1px solid var(--line);border-radius:14px;padding:12px;background:var(--panel)}
+.ru .t{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.ru b{font-size:13.5px}
+.ru p{font-size:12px;color:var(--muted);margin:6px 0 0}
+.sw{position:relative;width:36px;height:20px;border-radius:999px;background:var(--line2);border:0;flex:none;transition:.2s}
+.sw::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:.2s}
+.sw.on{background:var(--teal)}.sw.on::after{left:18px}
+.ru .cnt{font-family:var(--mono);font-size:11px;color:var(--teal);margin-top:6px}
+.note{font-size:12.5px;color:var(--muted);border-left:3px solid #6A55D6;padding:8px 12px;background:rgba(106,85,214,.06);border-radius:0 10px 10px 0;margin-top:10px}
+@media (max-width:1300px){.rm{grid-template-columns:1fr 1fr 1fr;row-gap:12px}.sum{grid-template-columns:repeat(4,1fr)}.rules{grid-template-columns:1fr 1fr}.acts{justify-content:flex-start}}
+@media (max-width:1000px){.top,.ex{grid-template-columns:1fr}.ctl{grid-template-columns:1fr;position:static}}
+</style></head><body>
+<main class="wrap">
+<div class="page-head"><div><div class="eyebrow"><span class="mvp">MVP 2</span> GPS Control Tower · Jaipur DC</div><h1>Every truck, live — and the driver hears first</h1>
+<p>MVP 2 adds a GPS feed to the MVP 1 workflow. ETAs come from position and speed, not from what the driver remembers. Each trip is flagged green, amber or red against its dock slot. When a slot will be missed, 2–3 fitting slots are ready to offer, and a series of WhatsApp messages keeps the driver informed from the day before until the gate.</p></div>
+<a class="btn" href="#rules">Message series →</a></div>
+
+<div class="card ctl" id="ctl">
+  <div class="clock" id="clock">05:00<small>4 AUG 2026 · SIMULATED GPS</small></div>
+  <div><input type="range" id="rng" min="300" max="1170" value="300" step="1"><div class="jumps" id="jumps"></div>
+    <div class="feedind"><span class="pipe"><i></i><i></i><i></i></span><span id="feedtxt">GPS feed: 0 pings/min from 0 trucks</span></div></div>
+  <div style="display:flex;gap:10px;align-items:center"><button class="btn pri pp" id="pp">▶</button><div class="seg" id="spd"><button data-v="2">1×</button><button data-v="6" class="on">3×</button><button data-v="18">9×</button></div></div>
+</div>
+
+<div class="sum" id="sum"></div>
+
+<div class="top">
+  <div class="card map"><h3 style="padding:6px 8px 0">Live map <span style="display:flex;gap:8px;align-items:center"><span class="chip" id="mapc">—</span><span class="seg" id="mapmode"><button data-m="street" class="on">Street map</button><button data-m="schematic">Schematic</button></span></span></h3><div id="lmap"></div><svg id="map" viewBox="0 0 800 640" style="display:none"></svg><div id="mapnote"></div>
+    <div class="legend"><span><i style="background:#B23A2E"></i>Red: will miss / no slot / not moving</span><span><i style="background:#B5651D"></i>Amber: at risk, act now</span><span><i style="background:#2E7D46"></i>Green: on time</span><span><i style="background:#2B57D9"></i>At Jaipur DC · unloading</span><span>◆ Jaipur DC (location assumed: Sitapura)</span><span>dashed ring = stationary</span><span>◯ pulse = GPS ping</span></div></div>
+  <div class="side">
+    <div class="card"><h3>Incoming GPS data <span class="chip ok">live</span></h3><div class="stream" id="stream"></div></div>
+    <div class="card"><h3>Outbound WhatsApp <span class="chip" id="outc">0 sent</span></h3><div class="out" id="out"></div></div>
+  </div>
+</div>
+
+<div class="board-h"><div><div class="eyebrow">Trip board</div><h2 style="font-size:30px">Driver by driver</h2></div>
+  <div class="seg" id="flt"><button class="on" data-v="">All</button><button data-v="R">🔴 Red</button><button data-v="A">🟠 Amber</button><button data-v="G">🟢 Green</button><button data-v="N">Other</button></div></div>
+<div id="board"></div>
+
+<h2 id="rules" style="font-size:30px;margin:46px 0 6px">The message series</h2>
+<p class="muted" style="margin:0 0 16px;max-width:760px">Automated WhatsApp messages, triggered by time and by GPS. Switch a rule off to see the series change. Drivers who wrote in Hindi or Hinglish on 4 August get Hinglish templates.</p>
+<div class="rules" id="rulebox"></div>
+<div class="note">Prototype note: GPS positions are simulated from the snapshot's own departure times and latest ETAs (a stop is inserted where a truck lost time on the road), because the supplied data has no GPS feed. Bookings follow the 4 August replay; reschedules you make here stay in this page only. Phone numbers are the seed data's demo numbers.</div>
+</main>
+<script src="data.js"></script><script src="app.js"></script><script src="er_data.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+/* ---------------- geography ---------------- */
+const GEO={Jaipur:[26.91,75.79],Neemrana:[27.99,76.38,150,'NH48'],Manesar:[28.36,76.94,220,'NH48'],Bhiwadi:[28.21,76.86,170,'NH48'],Kota:[25.18,75.83,250,'NH52'],Ludhiana:[30.90,75.85,540,'NH52'],Ghaziabad:[28.67,77.45,280,'NH48'],Ajmer:[26.45,74.64,135,'NH48 (south)'],Ahmedabad:[23.02,72.57,670,'NH48 (south)'],Udaipur:[24.58,73.71,395,'NH48 (south)'],Delhi:[28.70,77.10,280,'NH48'],Dausa:[26.89,76.34,60,'NH21'],Jhunjhunu:[28.13,75.40,180,'NH52'],Mumbai:[19.08,72.88,1150,'NH48 (south)'],Jodhpur:[26.24,73.02,335,'NH62']};
+const PX=([la,lo])=>[40+(lo-73.2)/(77.9-73.2)*720, 20+(30.2-la)/(30.2-24.2)*600];
+const hmd=m=>m<0?'3 Aug '+hm(m+1440):hm(m);
+const absMin=ts=>{if(!ts)return null;const d=+ts.slice(8,10);return (d-4)*1440+toMin(ts.slice(11,16))};
+/* ---------------- trip model ---------------- */
+const LANG={DRV004:'hi',DRV010:'hi',DRV011:'hi'};
+const DERIVED={SHP1018:{dep:541,arr:771,note:'departure derived: vehicle was still at Jaipur on SHP1003'},SHP1020:{arr:1125,note:'arrival per driver message (+45 min)'}};
+const SFULL=Object.fromEntries(ERD.shipments.rows.map(r=>[r[0],Object.fromEntries(ERD.shipments.cols.map((c,i)=>[c,r[i]]))]));
+const TRIPS=SH.ships.filter(s=>s.destination_facility_id==='FAC-JAI-01').map(s0=>{const s=SFULL[s0.shipment_id];
+  const g=GEO[s.origin_city]||GEO.Delhi,dist=g[2];const D=DERIVED[s.shipment_id]||{};
+  const depP=absMin(s.planned_departure_ts),depA=D.dep??(absMin(s.actual_departure_ts)??depP),origEta=absMin(s.original_eta_ts),arr=D.arr??absMin(s.latest_eta_ts);
+  const planTrip=origEta-depP,dur=arr-depA,unexp=dur-planTrip;
+  let stop=null,move=dur;if(unexp>10){stop={s:depA+Math.round(planTrip*.55),d:unexp};move=planTrip}
+  const ck=(ERD.facility_checkins.rows.find(r=>r[1]===s.shipment_id));
+  return {s,id:s.shipment_id,drv:DRV[s.driver_id],veh:VEH[s.vehicle_id],origin:s.origin_city,road:g[3],dist,depP,depA,origEta,arr,stop,move,
+    gateOut:ck&&ck[8]?absMin(ck[8]):null,cancelAt:s.shipment_id==='SHP1008'?0:s.shipment_id==='SHP1019'?610:null,note:D.note,fired:{},msgs:[],override:null}});
+const TR=byId(TRIPS,'id');
+function movedMin(tr,t){if(t<=tr.depA)return 0;let m=t-tr.depA;if(tr.stop){const o=Math.max(0,Math.min(t,tr.stop.s+tr.stop.d)-tr.stop.s);m-=o}return Math.min(m,tr.move)}
+function state(tr,t){
+  if(tr.cancelAt!=null&&t>=tr.cancelAt)return{k:'cancelled',p:0};
+  if(t>=tr.arr){return{k:tr.gateOut&&t>=tr.gateOut?'done':'arrived',p:1,eta:tr.arr}}
+  if(t<tr.depA){const notMoving=t>tr.depP+5;const eta=Math.max(t,tr.depP)+tr.move+(tr.stop&&false?0:0);return{k:notMoving?'idle':'sched',p:0,eta:notMoving?t+tr.move:tr.depP+tr.move}}
+  const m=movedMin(tr,t),p=m/tr.move,stopped=tr.stop&&t>=tr.stop.s&&t<tr.stop.s+tr.stop.d;
+  return{k:stopped?'stopped':'moving',p,eta:t+(tr.move-m),stopFor:stopped?t-tr.stop.s:0}}
+function booking(tr,t){if(tr.override&&tr.override.at<=t)return tr.override;
+  const a=SH.appts.filter(a=>a.sh===tr.id&&a.booked<=t&&(a.cancelled==null||a.cancelled>t)).sort((x,y)=>x.booked-y.booked).pop();return a?{dock:a.dock,start:a.start,end:a.end,id:a.id}:null}
+function traffic(tr,t){const h=t/60,south=/south|NH62/.test(tr.road);
+  if(!south&&h>=8&&h<10.5)return{lv:'heavy',x:.25};if(h>=17&&h<20)return{lv:'moderate',x:.15};if(h>=6.5&&h<8||south&&h>=8&&h<10)return{lv:'moderate',x:.12};return{lv:'light',x:.05}}
+function rag(tr,t){const st=state(tr,t);const b=booking(tr,t);
+  if(st.k==='cancelled')return{c:'N',t:'Cancelled',why:'Shipment cancelled by dispatch'};
+  if(st.k==='done')return{c:'N',t:'Completed',why:'Unloaded and gated out'};
+  if(st.k==='arrived')return{c:'N',t:'At Jaipur DC',why:b?`In yard / dock · Dock ${b.dock} ${hm(b.start)}`:'In yard'};
+  const delay=st.eta-tr.origEta;
+  if(st.k==='sched')return{c:'N',t:'Scheduled',why:`Departs ${hm(((tr.depP%1440)+1440)%1440)} from ${tr.origin}`,delay:0,st,b};
+  if(!b)return{c:'R',t:'No slot',why:'No live booking — choose a slot',delay,st,b};
+  const gate=st.eta+15,late=gate-b.start;
+  if(st.k==='idle')return{c:'R',t:'Not moving',why:`Planned to leave ${hmd(tr.depP)} — no GPS movement yet`,delay,st,b};
+  if(late>30)return{c:'R',t:'Will miss slot',why:`Gate ${hm(gate)} vs Dock ${b.dock} ${hm(b.start)} (+${late} min, past 30-min grace)`,delay,st,b};
+  if(delay>60)return{c:'A',t:'Delay > 60 min',why:`${delay} min behind plan — Dock ${b.dock} ${hm(b.start)} still holds`,delay,st,b};
+  if(late>0)return{c:'A',t:'Inside grace',why:`Gate ${hm(gate)} is ${late} min into the ${hm(b.start)} slot`,delay,st,b};
+  if(st.k==='stopped'&&st.stopFor>=15)return{c:'A',t:'Stationary',why:`No movement for ${st.stopFor} min`,delay,st,b};
+  if(delay>30)return{c:'A',t:'Slipping',why:`${delay} min behind plan, slot still holds`,delay,st,b};
+  return{c:'G',t:'On track',why:`Gate ${hm(gate)} · ${b.start-gate} min spare for Dock ${b.dock} ${hm(b.start)}`,delay,st,b}}
+/* ---------------- slots & options ---------------- */
+const DK={};SH.docks.filter(d=>d.facility_id==='FAC-JAI-01').forEach(d=>DK[d.dock_id]=d);
+const SLOTS=ERD.appointment_slots.rows.filter(r=>r[1]==='FAC-JAI-01').map(r=>({id:r[0],dock:DK[r[2]].dock_code,type:DK[r[2]].dock_type,max:DK[r[2]].max_vehicle_weight_kg,s:absMin(r[3]),e:absMin(r[4]),st:r[5]}));
+function busy(dock,t,exclude){const iv=[];SH.appts.forEach(a=>{if(a.dock===dock&&a.sh!==exclude&&a.booked<=t&&(a.cancelled==null||a.cancelled>t))iv.push([a.start,a.end+10])});
+  TRIPS.forEach(o=>{if(o.override&&o.id!==exclude&&o.override.dock===dock)iv.push([o.override.start,o.override.end+10])});
+  if(dock==='D3'&&t>=555)iv.push([555,780]);if(dock==='D5')iv.push([1080,1320]);return iv}
+function options(tr,t){const st=state(tr,t);if(!st.eta)return[];const E=Math.ceil((st.eta+15)/5)*5,s=tr.s,u=s.expected_unload_min,out=[];
+  SLOTS.filter(x=>x.st==='OPEN'&&x.type===s.required_dock_type&&x.max>=s.load_weight_kg).sort((a,b)=>a.s-b.s).forEach(x=>{if(out.length>=3)return;
+    const st0=Math.max(x.s,E);if(st0>=x.e||st0>1260)return;const iv=busy(x.dock,t,tr.id);let start=st0;
+    for(const [a,b] of iv.sort((p,q)=>p[0]-q[0])){if(start<b&&a<start+u+10)start=Math.ceil(b/5)*5}
+    if(start>=x.e||start+u>1320)return;if(out.some(o=>o.dock===x.dock&&Math.abs(o.start-start)<30))return;
+    out.push({dock:x.dock,start,end:start+u,slot:x.id,wait:start-E,approval:start>=1260})});
+  return out.sort((a,b)=>a.start-b.start).slice(0,3)}
+/* ---------------- message series ---------------- */
+const RULES=[
+ {id:'R1',n:'Day-before trip brief',d:'18:00 the evening before: tomorrow\'s pickup, departure time, dock and slot.',on:true},
+ {id:'R2',n:'Start on time (T−60 min)',d:'One hour before departure, with live traffic on the route and a leave-by time.',on:true},
+ {id:'R3',n:'Not moving check',d:'20 minutes after planned departure with no GPS movement.',on:true},
+ {id:'R4',n:'Delay over 60 min',d:'When GPS ETA slips 60+ min behind plan: the delay and 2–3 fitting slots.',on:true},
+ {id:'R5',n:'Slot at risk',d:'First time a trip turns amber: "Are you on track?" with 3 quick replies.',on:true},
+ {id:'R6',n:'Stationary alert',d:'No movement for 20 minutes mid-route: "Do you need help?"',on:true},
+ {id:'R7',n:'Arrival prep (T−30 min)',d:'Documents to keep ready (e-way bill, invoice, LR), dock and gate time.',on:true},
+ {id:'R8',n:'Booking change',d:'Confirmation whenever a slot is booked, moved or released.',on:true}];
+const RON=Object.fromEntries(RULES.map(r=>[r.id,true]));
+function first(tr){return tr.drv.driver_name.split(' ')[0]}
+function tpl(rule,tr,t,x){const hi=LANG[tr.drv.driver_id]==='hi',b=booking(tr,t),slot=b?`Dock ${b.dock}, ${ampm(b.start)}`:(hi?'slot abhi tay nahi':'slot to be confirmed'),ord=tr.s.order_reference;
+  switch(rule){
+  case 'R1':return hi?`Namaste ${first(tr)} ji. Kal ki trip: ${ord}, ${tr.origin} se Jaipur DC. Nikalna ${ampm(((tr.depP%1440)+1440)%1440)}. Slot: ${slot}.\n1) Theek hai  2) Problem hai`:`Hi ${first(tr)}, tomorrow's trip: ${ord}, ${tr.origin} → Jaipur DC. Leave at ${ampm(((tr.depP%1440)+1440)%1440)}. Your slot: ${slot}.\nReply 1) Confirmed  2) I have a problem`;
+  case 'R2':{const tf=traffic(tr,t),lb=b?Math.round(b.start-15-(tr.origEta-tr.depP)*(1+tf.x)):tr.depP;if(!b)return hi?`${first(tr)} ji, 1 ghante mein nikalna hai. ${tr.road} par traffic ${tf.lv} hai. ${ampm(((tr.depP%1440)+1440)%1440)} tak nikaliye — dock slot raste mein confirm karenge.`:`Good morning ${first(tr)}. Traffic on ${tr.road} is ${tf.lv} (+${Math.round(tf.x*100)}%). Leave by ${ampm(((tr.depP%1440)+1440)%1440)} — we'll confirm your dock slot on the way.`;return hi?`${first(tr)} ji, 1 ghante mein nikalna hai. ${tr.road} par traffic abhi ${tf.lv} hai (+${Math.round(tf.x*100)}%). ${ampm(((Math.min(lb,tr.depP)%1440)+1440)%1440)} tak nikal jaiye taaki ${slot} pakka rahe.`:`Good morning ${first(tr)}. Traffic on ${tr.road} is ${tf.lv} right now (+${Math.round(tf.x*100)}%). Leave by ${ampm(((Math.min(lb,tr.depP)%1440)+1440)%1440)} to make ${slot}.`}
+  case 'R3':return hi?`${first(tr)} ji, GPS mein truck abhi chala nahi hai. Sab theek hai?\n1) Nikal raha hoon  2) Late hoga  3) Madad chahiye`:`${first(tr)}, we don't see your truck moving yet. All OK?\n1) Leaving now  2) I'll be late  3) Need help`;
+  case 'R4':{const o=options(tr,t);return (hi?`${first(tr)} ji, GPS ke hisaab se aap ~${x} min late hain (pahunch ${ampm(state(tr,t).eta)}). ${b?slot+' chhoot sakta hai. ':''}Naye slot:\n`:`${first(tr)}, GPS shows you ~${x} min behind plan (arrival ${ampm(state(tr,t).eta)}). ${b?slot+' may be missed. ':''}Slots that fit:\n`)+(o.length?o.map((p,i)=>`${i+1}) Dock ${p.dock} · ${ampm(p.start)}`).join('\n')+(hi?'\nBook karne ke liye 1, 2 ya 3 bhejiye.':'\nReply 1, 2 or 3 to book.'):(hi?'Abhi koi slot nahi — coordinator call karenge.':'No slot fits right now — the coordinator will call you.'))}
+  case 'R5':return hi?`${first(tr)} ji, ${slot} thoda risk mein hai. Aap time par hain?\n1) Haan  2) Late hoga  3) Madad`:`${first(tr)}, ${slot} is getting tight. Are you on track?\n1) On time  2) Running late  3) Need help`;
+  case 'R6':return hi?`${first(tr)} ji, truck ${x} min se ruka hua hai. Sab theek? Koi chot ho to 112 call kijiye.\n1) Theek hai  2) Breakdown  3) Madad`:`${first(tr)}, your truck hasn't moved for ${x} min. Everything OK? If anyone is hurt, call 112.\n1) All fine  2) Breakdown  3) Need help`;
+  case 'R7':return hi?`${first(tr)} ji, aap 30 min mein Jaipur DC pahunchenge. E-way bill, invoice aur LR taiyaar rakhiye. ${slot} · gate ${b?ampm(b.start-15):''}.`:`${first(tr)}, ~30 min to Jaipur DC. Keep e-way bill, invoice and LR ready. ${slot} · be at the gate by ${b?ampm(b.start-15):'—'}.`;
+  case 'R8':return hi?`Pakka ho gaya: Jaipur DC, ${slot}. Gate par ${ampm(b.start-15)} tak pahunchiye. Ref ${b.id}.`:`Booked: Jaipur DC, ${slot}. Be at the gate by ${ampm(b.start-15)}. Ref ${b.id}.`}}
+const OUT=[];
+function send(tr,rule,t,text,label){const m={tr:tr.id,rule,t,text,label};tr.msgs.push(m);OUT.push(m);return m}
+function evalRules(tr,t){const f=tr.fired,st=state(tr,t);if(['cancelled','done','arrived'].includes(st.k))return;const r=rag(tr,t);
+  const fire=(id,x,lbl)=>{if(f[id]||!RON[id])return;f[id]=t;send(tr,id,t,tpl(id,tr,t,x),lbl)};
+  if(st.k==='sched'||st.k==='idle'){if(t>=tr.depP-60)fire('R2');if(st.k==='idle'&&t>=tr.depP+20)fire('R3')}
+  if(st.k==='moving'||st.k==='stopped'){if(t>=tr.depP-60&&!f.R2&&tr.depP-60>=300)fire('R2');
+    if(r.delay>60)fire('R4',r.delay);if(r.c==='A')fire('R5');if(st.k==='stopped'&&st.stopFor>=20)fire('R6',st.stopFor);if(st.eta-t<=30)fire('R7')}}
+let simT=300;
+function reset(){OUT.length=0;TRIPS.forEach(tr=>{tr.fired={};tr.msgs=[];if(tr.override&&tr.override.at>simT)tr.override=null});
+  TRIPS.forEach(tr=>{if(tr.cancelAt===0)return;if(RON.R1){tr.fired.R1=-360;send(tr,'R1',-360,tpl('R1',tr,tr.depP<300?300:tr.depP),'3 Aug 18:00')}
+    if(RON.R2&&tr.depP-60<300){tr.fired.R2=tr.depP-60;send(tr,'R2',tr.depP-60,tpl('R2',tr,Math.max(0,tr.depP-60)),tr.depP-60<0?'3 Aug '+hm(tr.depP-60+1440):'4 Aug '+hm(tr.depP-60))}});
+  TRIPS.forEach(tr=>{if(tr.override&&RON.R8)send(tr,'R8',tr.override.at,tpl('R8',tr,tr.override.at))});
+  OUT.sort((a,b)=>a.t-b.t);lastT=300}
+let lastT=300;
+function advanceTo(T){if(T<lastT){reset()}for(let t=lastT+1;t<=T;t++){TRIPS.forEach(tr=>{evalRules(tr,t);if(tr.override&&tr.override.at===t&&!tr.override.sent){}})}lastT=Math.max(lastT,T)}
+/* ---------------- map ---------------- */
+const off=g=>{const p=PX(g);return p[0]<18||p[1]>626||p[1]<14};const offLbl=(k,g)=>{const p=PX(g);return (p[1]>626?'↓ ':p[1]<14?'↑ ':'← ')+k+' ('+g[2].toLocaleString()+' km)'};
+const FIX={Ahmedabad:[22,566],Mumbai:[120,626],Jodhpur:[18,404]};
+const clampP=(p,k)=>FIX[k]||[Math.max(18,Math.min(780,p[0])),Math.max(20,Math.min(626,p[1]))];
+const J=PX(GEO.Jaipur);let mh='<defs><pattern id="gr" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" stroke="#ECE5D6" stroke-width="1"/></pattern></defs><rect width="800" height="640" fill="url(#gr)"/>';
+mh+=`<text x="300" y="300" style="font:800 46px 'Bricolage Grotesque',sans-serif;fill:#EDE4D0;letter-spacing:6px">RAJASTHAN</text><text x="640" y="110" style="font:700 14px 'IBM Plex Sans',sans-serif;fill:#E2D7BF;letter-spacing:3px">HARYANA · NCR</text><text x="80" y="600" style="font:700 14px 'IBM Plex Sans',sans-serif;fill:#E2D7BF;letter-spacing:3px">GUJARAT</text>`;
+TRIPS.forEach(tr=>{const p=clampP(PX(GEO[tr.origin]),tr.origin);const mx=(p[0]+J[0])/2+(p[1]-J[1])*.12,my=(p[1]+J[1])/2-(p[0]-J[0])*.12;
+  mh+=`<path class="rt" id="rt-${tr.id}" d="M${p[0]} ${p[1]} Q ${mx} ${my} ${J[0]} ${J[1]}"/>`});
+Object.entries(GEO).forEach(([k,g])=>{if(k==='Jaipur')return;const [x,y]=clampP(PX(g),k);mh+=`<circle cx="${x}" cy="${y}" r="4" fill="#B9AE96"/><text class="city" x="${x+7}" y="${y+4}">${off(g)?offLbl(k,g):k}</text>`});
+mh+=`<g><circle cx="${J[0]}" cy="${J[1]}" r="18" fill="#DB7E00" opacity=".15"><animate attributeName="r" values="14;26;14" dur="3s" repeatCount="indefinite"/></circle><rect x="${J[0]-11}" y="${J[1]-11}" width="22" height="22" rx="6" fill="#DB7E00"/><text x="${J[0]+16}" y="${J[1]+26}" style="font:800 13px 'Bricolage Grotesque',sans-serif;fill:#18212F">Jaipur DC</text></g><g id="trks"></g>`;
+$('#map').innerHTML=mh;
+const TK={};TRIPS.forEach(tr=>{const g=document.createElementNS('http://www.w3.org/2000/svg','g');g.setAttribute('class','trk');g.innerHTML=`<circle class="ping" r="6"/><circle class="dot" r="7" stroke="#fff" stroke-width="2"/><text x="10" y="-8">${tr.veh.registration_number.slice(-4)}</text>`;g.onclick=()=>openRow(tr.id);$('#trks').append(g);TK[tr.id]=g});
+const COL={G:'#1E9E5A',A:'#E08A00',R:'#D9363E',N:'#9AA3B2'};
+function drawMap(t){let n=0;TRIPS.forEach(tr=>{const g=TK[tr.id],st=state(tr,t),r=rag(tr,t);const vis=!(st.k==='cancelled'||st.k==='done'||(st.k==='sched'&&tr.depP-t>120));g.style.display=vis?'':'none';if(!vis)return;
+  const path=$('#rt-'+tr.id),L=path.getTotalLength(),pt=path.getPointAtLength(L*st.p);g.setAttribute('transform',`translate(${pt.x},${pt.y})`);$('.dot',g).setAttribute('fill',COL[r.c]);$('.ping',g).setAttribute('stroke',COL[r.c]);
+  path.style.stroke=st.k==='moving'||st.k==='stopped'?COL[r.c]+'55':'#D8CFBD';if(st.k==='moving'||st.k==='stopped')n++});$('#mapc').textContent=n+' trucks on the road';return n}
+/* ---------------- GPS stream ---------------- */
+let lastPing=0;
+function ping(t){const live=TRIPS.filter(tr=>['moving','stopped'].includes(state(tr,t).k));
+  $('#feedtxt').textContent=`GPS feed: ${live.length*2} pings/min from ${live.length} trucks`;
+  if(!live.length)return;const tr=live[Math.floor(Math.random()*live.length)],st=state(tr,t),rp=routePos(tr.origin,st.p);pingLeaflet(tr.id);
+  const la=rp[0].toFixed(3),lo=rp[1].toFixed(3),sp=st.k==='stopped'?0:Math.round(tr.dist/tr.move*60+(Math.random()*8-4));
+  const s=$('#stream');s.insertAdjacentHTML('afterbegin',`<div>${hm(Math.floor(t))}:${String(Math.floor(Math.random()*60)).padStart(2,'0')} · <b>${tr.veh.registration_number}</b> · ${la}N ${lo}E · ${sp} km/h · ${Math.round(tr.dist*(1-st.p))} km left · ETA <b>${hm(st.eta)}</b></div>`);while(s.children.length>14)s.lastChild.remove();
+  const pg=$('.ping',TK[tr.id]);pg.classList.remove('go');void pg.getBoundingClientRect();pg.classList.add('go')}
+/* ---------------- summary ---------------- */
+function drawSum(t){const rs=TRIPS.map(tr=>({tr,r:rag(tr,t),st:state(tr,t)}));const c=k=>rs.filter(x=>x.r.c===k).length;
+  const road=rs.filter(x=>['moving','stopped'].includes(x.st.k)),arr=rs.filter(x=>['arrived','done'].includes(x.st.k)).length;
+  const dl=road.map(x=>x.r.delay||0),avg=dl.length?Math.round(dl.reduce((a,b)=>a+b,0)/dl.length):0;const sent=OUT.filter(m=>m.t<=t).length;
+  const items=[['Trips today',rs.filter(x=>x.st.k!=='cancelled').length,'Jaipur DC inbound',''],['On the road',road.length,'GPS reporting',''],['On track',c('G'),'green','G'],['At risk',c('A'),'amber','A'],['Action needed',c('R'),'red','R'],['Arrived',arr,'in yard, dock or done',''],['Avg delay on road',(avg>0?'+':'')+avg+'m','GPS ETA vs plan',''],['Messages sent',sent,'automated WhatsApp','']];
+  $('#sum').innerHTML=items.map(i=>`<div class="card ${i[3]?'rag':''}" style="${i[3]?`border-top-color:${COL[i[3]]}`:''}"><div class="v" style="${i[3]?`color:${COL[i[3]]}`:''}">${i[1]}</div><div class="l">${i[0]}<br><span class="dim">${i[2]}</span></div></div>`).join('')}
+/* ---------------- board ---------------- */
+let flt='',OPEN=new Set();
+function rowHtml(tr,t){const r=rag(tr,t),st=state(tr,t),b=booking(tr,t),d=tr.drv,ph=d.phone.replace(/\D/g,'');
+  const kmL=Math.round(tr.dist*(1-st.p));const sp=st.k==='moving'?Math.round(tr.dist/tr.move*60)+' km/h':st.k==='stopped'?'stopped':'—';
+  return `<div class="rm"><div class="dr"><span class="av">${d.driver_name.split(' ').map(w=>w[0]).join('')}</span><div><b>${d.driver_name}</b><small>${d.phone} · ${LANG[d.driver_id]?'Hinglish':'English'}</small></div></div>
+  <div class="tp"><b>${tr.id}</b> ${prioChip(tr.s.priority_code)}<small>${tr.veh.registration_number} · ${tr.veh.vehicle_type_code}</small><small>${tr.origin} → Jaipur · ${tr.dist} km</small></div>
+  <div><div class="prog"><div class="tr"></div><div class="fl" style="width:${st.p*100}%"></div><span class="ic" style="left:${Math.max(3,Math.min(97,st.p*100))}%">${st.k==='stopped'?'⏸':st.k==='cancelled'?'✕':'🚚'}</span><div class="m"><span>${tr.origin}</span><span>${st.k==='moving'||st.k==='stopped'?kmL+' km · '+sp:st.k}</span><span>Jaipur</span></div></div></div>
+  <div class="eta"><small>GPS ETA</small><b>${st.eta!=null&&st.k!=='cancelled'?hm(st.eta):'—'}</b><small>plan ${hm(tr.origEta)} <span class="d" style="color:${(r.delay||0)>60?COL.R:(r.delay||0)>30?COL.A:COL.G}">${r.delay!=null?(r.delay>0?'+':'')+r.delay+'m':''}</span></small></div>
+  <div class="eta"><small>Dock slot</small><b>${b?'Dock '+b.dock:'—'}</b><small>${b?hm(b.start)+' · '+(b.id||''):'no booking'}</small></div>
+  <div><span class="flag" style="--c:${COL[r.c]}">${r.c==='G'?'●':r.c==='A'?'▲':r.c==='R'?'■':'○'} ${r.t}</span><div class="why">${esc(r.why)}</div></div>
+  <div class="acts"><a class="wa" href="https://wa.me/${ph}?text=${encodeURIComponent('SetuHaul Jaipur DC re '+tr.s.order_reference+': ')}" target="_blank" rel="noopener" title="Open WhatsApp chat">💬 WhatsApp</a><a class="call" href="tel:+${ph}" title="${d.phone}">📞 Call</a>
+   <button data-x="opt" class="${OPEN.has(tr.id)?'on':''}">⇄ Options</button></div></div>
+  <div class="ex"><div><h4 style="font-size:15px;margin:2px 0 10px">Reschedule options <span class="chip">from free slots now</span></h4><div class="opts"></div></div><div><h4 style="font-size:15px;margin:2px 0 10px">Message series to ${first(tr)}</h4><div class="series"></div></div></div>`}
+function fillEx(row,tr,t){const os=options(tr,t),st=state(tr,t);const box=$('.opts',row);
+  if(['cancelled','done','arrived'].includes(st.k)){box.innerHTML=`<div class="muted" style="font-size:13px">No rescheduling — trip is ${st.k}.</div>`}
+  else box.innerHTML=(os.length?os.map((o,i)=>`<div class="opt"><span class="n">${i+1}</span><div><b>Dock ${o.dock} · ${ampm(o.start)}</b><small>unload to ~${ampm(o.end)} · ${o.wait>0?o.wait+' min wait after gate':'no wait'}${o.approval?' · needs approval':''}</small></div><button class="btn pri" data-b="${i}">Book</button></div>`).join('')+
+   `<button class="btn" data-x="offer" style="margin-top:4px">💬 Send these ${os.length} options on WhatsApp</button>`:`<div class="opt" style="grid-template-columns:1fr"><div><b style="color:var(--coral)">No feasible slot today</b><small>Every compatible door is busy, blocked or closed — escalate to the coordinator with the full hand-off record.</small></div></div><a class="btn" href="handoffs.html#esc-0004">Open hand-off queue →</a>`);
+  $$('[data-b]',box).forEach(b=>b.onclick=()=>{const o=os[+b.dataset.b];tr.override={dock:o.dock,start:o.start,end:o.end,id:'APT-M2-'+String(Object.keys(TR).indexOf(tr.id)+1).padStart(3,'0'),at:Math.floor(simT)};if(RON.R8)send(tr,'R8',Math.floor(simT),tpl('R8',tr,Math.floor(simT)));toast(`Booked ${tr.id} on Dock ${o.dock} at ${ampm(o.start)} · driver notified`);render(true)});
+  const of=$('[data-x=offer]',box);if(of)of.onclick=()=>{const text=`${first(tr)}, slots that fit your GPS ETA (${hm(st.eta)}):\n`+os.map((o,i)=>`${i+1}) Dock ${o.dock} · ${ampm(o.start)}`).join('\n')+'\nReply 1, 2 or 3 to book.';send(tr,'MAN',Math.floor(simT),text);toast('Options sent to '+tr.drv.driver_name);render(true)};
+  const ser=$('.series',row);const seen=new Set(tr.msgs.map(m=>m.rule));
+  ser.innerHTML=RULES.map(R=>{const ms=tr.msgs.filter(m=>m.rule===R.id);if(ms.length)return ms.map(m=>`<div class="sm sent"><div class="h"><span class="rule">${R.id}</span>${m.label||'4 Aug '+hm(m.t)} · ${R.n}</div><div class="bub">${esc(m.text)}<span class="tk">✓✓</span></div></div>`).join('');
+    return `<div class="sm ${RON[R.id]?'':'skip'}"><div class="h"><span class="rule">${R.id}</span>${R.n}</div><div class="pend">${RON[R.id]?pendText(R.id,tr,t):'rule switched off'}</div></div>`}).join('')+
+    tr.msgs.filter(m=>m.rule==='MAN').map(m=>`<div class="sm sent"><div class="h"><span class="rule">Manual</span>4 Aug ${hm(m.t)} · options offered</div><div class="bub">${esc(m.text)}<span class="tk">✓✓</span></div></div>`).join('')}
+function pendText(id,tr,t){const st=state(tr,t);if(st.k==='cancelled')return'not sent — trip cancelled';
+  return {R1:'scheduled 3 Aug 18:00',R2:`scheduled ${hmd(tr.depP-60)}`,R3:'only if no movement 20 min after departure time',R4:'triggers if GPS delay exceeds 60 min',R5:'triggers the first time the trip turns amber',R6:'triggers after 20 min stationary mid-route',R7:st.eta?`expected ~${hm(st.eta-30)}`:'30 min before arrival',R8:'sent on any booking change'}[id]}
+function render(full){const t=Math.floor(simT);
+  const list=TRIPS.map(tr=>({tr,r:rag(tr,t)})).filter(x=>!flt||x.r.c===flt);
+  const ord={R:0,A:1,G:2,N:3};list.sort((a,b)=>ord[a.r.c]-ord[b.r.c]||(a.tr.origEta-b.tr.origEta));
+  const bd=$('#board');const keys=list.map(x=>x.tr.id).join();
+  if(full||bd.dataset.k!==keys){bd.dataset.k=keys;bd.innerHTML=list.map(x=>`<div class="row ${OPEN.has(x.tr.id)?'open':''}" id="row-${x.tr.id}" style="--c:${COL[x.r.c]}"></div>`).join('')}
+  list.forEach(({tr,r})=>{const row=$('#row-'+tr.id);const prev=row.dataset.c;row.style.setProperty('--c',COL[r.c]);row.innerHTML=rowHtml(tr,t);
+    if(prev&&prev!==r.c){row.classList.add('flash');setTimeout(()=>row.classList.remove('flash'),1500)}row.dataset.c=r.c;
+    $('[data-x=opt]',row).onclick=()=>{OPEN.has(tr.id)?OPEN.delete(tr.id):OPEN.add(tr.id);row.classList.toggle('open');render(true)};
+    if(OPEN.has(tr.id))fillEx(row,tr,t)})}
+function openRow(id){OPEN.add(id);flt='';$$('#flt button').forEach(b=>b.classList.toggle('on',b.dataset.v===''));render(true);$('#row-'+id).scrollIntoView({behavior:'smooth',block:'center'})}
+/* ---------------- outbound feed ---------------- */
+let outShown=-1;
+function drawOut(t){const ms=OUT.filter(m=>m.t<=t).sort((a,b)=>a.t-b.t);if(ms.length===outShown)return;outShown=ms.length;$('#outc').textContent=ms.length+' sent';
+  $('#out').innerHTML=ms.slice(-30).reverse().map(m=>{const tr=TR[m.tr],R=RULES.find(r=>r.id===m.rule);return `<div class="om"><div class="h"><span>${m.label||hm(m.t)} → ${tr.drv.driver_name}</span><span class="rule">${R?R.id+' · '+R.n:'Manual offer'}</span></div>${esc(m.text.split('\n')[0])}</div>`}).join('')}
+/* ---------------- rules panel ---------------- */
+function drawRules(){$('#rulebox').innerHTML=RULES.map(r=>`<div class="ru"><div class="t"><b>${r.id} · ${r.n}</b><button class="sw ${RON[r.id]?'on':''}" data-r="${r.id}" aria-label="toggle"></button></div><p>${r.d}</p><div class="cnt">${OUT.filter(m=>m.rule===r.id&&m.t<=simT).length} sent so far</div></div>`).join('');
+  $$('.sw').forEach(b=>b.onclick=()=>{RON[b.dataset.r]=!RON[b.dataset.r];const T=simT;reset();advanceTo(Math.floor(T));outShown=-1;tick0()})}
+/* ---------------- real street map (Leaflet + OpenStreetMap) ---------------- */
+const DC=[26.78,75.83];
+const NH48N=[[26.78,75.83],[26.92,75.78],[27.05,75.88],[27.39,75.96],[27.70,76.20],[27.89,76.29],[27.99,76.38],[28.21,76.80],[28.36,76.94],[28.46,77.03],[28.61,77.21]];
+const fromIdx=(arr,i)=>arr.slice(0,i+1).reverse();
+const NORTH52=[[26.78,75.83],[26.92,75.78],[27.17,75.72],[27.36,75.57],[27.61,75.14],[28.13,75.40]];
+const AJ=[[26.45,74.64],[26.59,74.86],[26.69,75.27],[26.82,75.60],[26.78,75.83]];
+const UD=[[24.58,73.71],[25.35,74.63],...AJ];
+const AH=[[23.02,72.57],[23.60,72.97],...UD];
+const ROUTES={Delhi:fromIdx(NH48N,10),Ghaziabad:[[28.67,77.45],...fromIdx(NH48N,10)],Manesar:fromIdx(NH48N,8),Bhiwadi:[[28.21,76.86],...fromIdx(NH48N,6)],Neemrana:fromIdx(NH48N,6),
+ Jhunjhunu:NORTH52.slice().reverse(),Ludhiana:[[30.90,75.85],[30.25,75.84],[29.15,75.72],...NORTH52.slice().reverse()],
+ Kota:[[25.18,75.83],[25.44,75.64],[26.17,75.79],[26.60,75.86],[26.78,75.83]],Ajmer:AJ,Jodhpur:[[26.24,73.02],[26.10,74.32],...AJ],Udaipur:UD,Ahmedabad:AH,Mumbai:[[19.08,72.88],[21.17,72.83],[22.31,73.18],...AH],
+ Dausa:[[26.89,76.34],[26.84,76.05],[26.80,75.90],[26.78,75.83]]};
+const hav=(a,b)=>{const R=6371,r=x=>x*Math.PI/180,dl=r(b[0]-a[0]),dn=r(b[1]-a[1]);const h=Math.sin(dl/2)**2+Math.cos(r(a[0]))*Math.cos(r(b[0]))*Math.sin(dn/2)**2;return 2*R*Math.asin(Math.sqrt(h))};
+const RL={};Object.entries(ROUTES).forEach(([k,pts])=>{const cum=[0];for(let i=1;i<pts.length;i++)cum.push(cum[i-1]+hav(pts[i-1],pts[i]));RL[k]={pts,cum,len:cum[cum.length-1]}});
+function routePos(origin,p){const r=RL[origin]||RL.Delhi;const d=Math.max(0,Math.min(1,p))*r.len;let i=1;while(i<r.cum.length-1&&r.cum[i]<d)i++;const a=r.pts[i-1],b=r.pts[i],seg=r.cum[i]-r.cum[i-1]||1,f=(d-r.cum[i-1])/seg;return[a[0]+(b[0]-a[0])*f,a[1]+(b[1]-a[1])*f]}
+let LM=null,LMK={},LPL={},mapMode='street';
+function initLeaflet(){if(typeof L==='undefined'){useSchematic('The map library could not load in this viewer.');return}
+  LM=L.map('lmap',{zoomControl:true,attributionControl:true,scrollWheelZoom:false}).fitBounds([[24.6,73.6],[29.0,77.6]]);
+  let ok=false;const tl=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'}).addTo(LM);
+  tl.on('tileload',()=>{ok=true});setTimeout(()=>{if(!ok&&mapMode==='street')useSchematic('Street-map tiles cannot load inside this viewer (it blocks external images). On the GitHub Pages version the live OpenStreetMap shows here.')},5000);
+  Object.keys(ROUTES).forEach(k=>{if(TRIPS.some(t=>t.origin===k))LPL[k]=L.polyline(ROUTES[k],{color:'#8B5E3C',weight:3,opacity:.55}).addTo(LM)});
+  L.marker(DC,{icon:L.divIcon({className:'',html:'<div class="ldc"><span></span></div>',iconSize:[44,44],iconAnchor:[22,22]}),zIndexOffset:1000}).addTo(LM).bindTooltip('<b>Jaipur DC</b><br>6 doors · D1–D6',{direction:'top'});
+  TRIPS.forEach(tr=>{const m=L.marker(DC,{icon:L.divIcon({className:'',html:`<div class="ltk"><i class="pl"></i><i class="dt"></i><b>${tr.veh.registration_number.slice(-4)}</b></div>`,iconSize:[18,18],iconAnchor:[9,9]})}).addTo(LM);
+    m.on('click',()=>openRow(tr.id));m.bindTooltip('',{direction:'top',offset:[0,-8]});LMK[tr.id]=m});
+  setTimeout(()=>LM.invalidateSize(),200)}
+function useSchematic(msg){mapMode='schematic';$('#lmap').style.display='none';$('#map').style.display='block';$$('#mapmode button').forEach(b=>b.classList.toggle('on',b.dataset.m==='schematic'));if(msg){$('#mapnote').textContent=msg;$('#mapnote').style.display='block'}}
+function useStreet(){if(!LM){initLeaflet()}mapMode='street';$('#lmap').style.display='block';$('#map').style.display='none';$$('#mapmode button').forEach(b=>b.classList.toggle('on',b.dataset.m==='street'));setTimeout(()=>LM&&LM.invalidateSize(),50)}
+const LCOL={G:'#2E7D46',A:'#B5651D',R:'#B23A2E',N:'#9AA3B2',B:'#2B57D9'};
+function drawLeaflet(t){if(!LM)return;TRIPS.forEach(tr=>{const m=LMK[tr.id],st=state(tr,t),r=rag(tr,t);const vis=!(st.k==='cancelled'||st.k==='done'||(st.k==='sched'&&tr.depP-t>120));
+  const el=m.getElement();if(!el)return;el.style.display=vis?'':'none';if(!vis)return;
+  const pos=st.k==='arrived'?[DC[0]+((tr.id.charCodeAt(6)%5)-2)*.012,DC[1]+((tr.id.charCodeAt(5)%5)-2)*.012]:routePos(tr.origin,st.p);m.setLatLng(pos);
+  const c=st.k==='arrived'?LCOL.B:LCOL[r.c];const d=el.querySelector('.dt');d.style.background=c;d.style.outline=st.k==='stopped'?'2px dashed #18212F':'none';el.querySelector('.pl').style.borderColor=c;
+  m.setTooltipContent(`<b>${tr.drv.driver_name}</b> · ${tr.id}<br>${tr.veh.registration_number} · ${st.k==='moving'?Math.round(tr.dist*(1-st.p))+' km left':st.k}<br>GPS ETA <b>${st.eta?hm(st.eta):'—'}</b> · ${r.t}`)})}
+function pingLeaflet(id){const m=LMK[id];const el=m&&m.getElement();if(!el)return;const p=el.querySelector('.pl');p.classList.remove('go');void p.offsetWidth;p.classList.add('go')}
+$$('#mapmode button').forEach(b=>b.onclick=()=>b.dataset.m==='street'?useStreet():useSchematic());
+initLeaflet();
+
+/* ---------------- loop ---------------- */
+function tick0(){const t=Math.floor(simT);$('#clock').firstChild.textContent=hm(t);$('#rng').value=t;drawMap(t);drawLeaflet(t);drawSum(t);drawOut(t);render();drawRules()}
+reset();advanceTo(300);tick0();
+const JM=[[300,'05:00','overnight trucks'],[420,'07:00','start-on-time nudges'],[555,'09:15','delays pile up'],[585,'09:45','options'],[660,'11:00','arrivals'],[1000,'16:40','reefer evening'],[1110,'18:30','last trips']];
+$('#jumps').innerHTML=JM.map(j=>`<button data-t="${j[0]}"><b>${j[1]}</b>${j[2]}</button>`).join('');
+$$('#jumps button').forEach(b=>b.onclick=()=>{simT=+b.dataset.t;advanceTo(Math.floor(simT));outShown=-1;tick0()});
+$('#rng').oninput=e=>{simT=+e.target.value;advanceTo(Math.floor(simT));outShown=-1;tick0()};
+let playing=false,speed=6,last=0,acc=0,racc=0;
+$('#pp').onclick=()=>{playing=!playing;$('#pp').textContent=playing?'❚❚':'▶';$('#ctl').classList.toggle('paused',!playing);last=0;if(playing)requestAnimationFrame(loop)};
+$$('#spd button').forEach(b=>b.onclick=()=>{$$('#spd button').forEach(x=>x.classList.remove('on'));b.classList.add('on');speed=+b.dataset.v});
+function loop(ts){if(!playing)return;if(last){const dt=(ts-last)/1000;simT=Math.min(1170,simT+speed*dt);const t=Math.floor(simT);
+  if(t>lastT)advanceTo(t);acc+=dt;racc+=dt;
+  $('#clock').firstChild.textContent=hm(t);$('#rng').value=t;drawMap(simT);drawLeaflet(simT);
+  if(acc>.35){acc=0;ping(t)}if(racc>1){racc=0;drawSum(t);drawOut(t);render();drawRules()}
+  if(simT>=1170){playing=false;$('#pp').textContent='▶'}}last=ts;requestAnimationFrame(loop)}
+setTimeout(()=>{if(!playing)$('#pp').click()},800);
+</script></body></html>

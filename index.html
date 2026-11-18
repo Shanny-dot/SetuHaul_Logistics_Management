@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SetuHaul - Logistic Management</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<style>
+.hero{display:grid;grid-template-columns:1.05fr 1fr;gap:40px;align-items:center;min-height:calc(100vh - 140px);padding:20px 0 40px}
+.hero h1{font-size:clamp(40px,5.6vw,76px);line-height:.98;font-weight:800}
+.hero h1 em{font-style:normal;background:linear-gradient(90deg,var(--saffron),var(--saffron2));-webkit-background-clip:text;color:transparent}
+.hero p.lead{font-size:18px;color:var(--muted);max-width:560px;margin:22px 0 28px}
+.hero .ctas{display:flex;gap:12px;flex-wrap:wrap}
+.hero .ctas .btn{padding:13px 20px;font-size:15px}
+.line-in span{display:inline-block;opacity:0;transform:translateY(40px) rotate(2deg);animation:wordIn .9s cubic-bezier(.2,.8,.2,1) forwards}
+@keyframes wordIn{to{opacity:1;transform:none}}
+.scene{position:relative;aspect-ratio:1/0.92;border-radius:28px;border:1px solid var(--line);background:linear-gradient(180deg,#FFF4DF 0%,#FDE6C4 55%,#F7D9AE 100%);overflow:hidden;box-shadow:var(--shadow)}
+.scene svg{width:100%;height:100%;display:block}
+.bub{position:absolute;max-width:230px;font-size:12.5px;padding:9px 12px;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.35);opacity:0;animation:bub 9s infinite}
+.bub.d{left:5%;top:9%;background:#DCF8C6;color:#123;border-bottom-left-radius:4px}
+.bub.a{right:5%;top:22%;background:#fff;color:#123;border-bottom-right-radius:4px;animation-delay:1.6s}
+.bub.c{left:8%;bottom:8%;background:var(--text);color:#fff;animation-delay:3.4s}
+.bub small{display:block;font-size:10px;opacity:.6;font-weight:600;letter-spacing:.06em;margin-bottom:2px}
+@keyframes bub{0%{opacity:0;transform:translateY(12px) scale(.96)}6%,62%{opacity:1;transform:none}72%,100%{opacity:0;transform:translateY(-8px)}}
+.door{fill:#E9E3D6;animation:door 6s infinite}
+@keyframes door{0%,100%{fill:#E9E3D6}40%,60%{fill:#F0A020}}
+.roles{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:10px}
+.role{position:relative;overflow:hidden;border-radius:24px;padding:30px;border:1px solid var(--line);background:var(--panel);text-decoration:none;display:block;min-height:300px;transition:.35s}
+.role:hover{transform:translateY(-4px);border-color:var(--saffron)}
+.role h2{font-size:34px;margin:8px 0 10px}
+.role p{color:var(--muted);max-width:420px}
+.role ul{list-style:none;padding:0;margin:18px 0 0;display:grid;gap:8px;font-size:14px}
+.role li::before{content:'→ ';color:var(--saffron)}
+.role .art{position:absolute;right:-20px;bottom:-20px;width:240px;opacity:.9;transition:.5s}
+.role:hover .art{transform:translate(-8px,-8px) rotate(-2deg)}
+.role.drv{background:linear-gradient(135deg,#DDF4EF,#FFFFFF 65%)}
+.role.crd{background:linear-gradient(135deg,#FCEBD0,#FFFFFF 65%)}
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin:56px 0}
+.sec-t{font-size:clamp(26px,3vw,36px);margin:70px 0 8px}
+.sec-p{color:var(--muted);max-width:700px;margin:0 0 24px}
+.ribbon{position:relative;height:150px;border:1px solid var(--line);border-radius:20px;background:var(--panel);overflow:hidden}
+.ribbon .axis{position:absolute;left:30px;right:30px;top:76px;height:2px;background:var(--line2)}
+.ribbon .prog{position:absolute;left:30px;top:76px;height:2px;background:linear-gradient(90deg,var(--teal),var(--saffron));width:0;transition:width 3.5s cubic-bezier(.3,.7,.2,1)}
+.ev{position:absolute;top:69px;width:16px;height:16px;margin-left:-8px;border-radius:50%;border:3px solid var(--bg);opacity:0;transform:scale(0);transition:.4s}
+.ev.on{opacity:1;transform:none}
+.ev .lb{position:absolute;left:50%;transform:translateX(-50%);white-space:nowrap;font-size:11.5px;width:max-content;max-width:150px;white-space:normal;text-align:center;line-height:1.25}
+.ev.up .lb{bottom:22px}.ev.dn .lb{top:22px}
+.ev .lb b{display:block;font-family:var(--mono);font-size:10.5px;color:var(--muted)}
+.layers{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.layer{border-radius:18px;padding:20px;border:1px solid var(--line);background:var(--panel);position:relative;overflow:hidden}
+.layer .n{font-family:var(--mono);font-size:11px;color:var(--dim)}
+.layer h4{font-size:19px;margin:10px 0 6px}
+.layer p{font-size:13.5px;color:var(--muted);margin:0}
+.layer::after{content:'';position:absolute;left:0;top:0;height:3px;width:100%;background:var(--c);transform:scaleX(0);transform-origin:left;transition:1s .3s}
+.layer.in::after{transform:none}
+.dir{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.dir a{text-decoration:none;padding:18px;border-radius:16px;border:1px solid var(--line);background:var(--panel);transition:.25s;display:block}
+.dir a:hover{border-color:var(--saffron);background:var(--panel2)}
+.dir b{font-family:var(--display);font-size:17px;display:block;margin-bottom:4px}
+.dir span{font-size:13px;color:var(--muted)}
+@media (max-width:1000px){.hero,.roles{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(2,1fr)}.layers,.dir{grid-template-columns:1fr 1fr}.ribbon .lb{display:none}}
+</style></head><body>
+<main class="wrap">
+<section class="hero">
+  <div>
+    <div class="eyebrow">● Driver-Exception Agent · Jaipur DC</div>
+    <h1 class="line-in"><span>Late</span> <span style="animation-delay:.08s">trucks,</span><br><span style="animation-delay:.18s"><em>re-docked</em></span> <span style="animation-delay:.26s">in</span><br><span style="animation-delay:.34s">one</span> <span style="animation-delay:.42s">message.</span></h1>
+    <p class="lead rv">Drivers report delays on WhatsApp in English, Hinglish or Hindi. SetuHaul reads the words, checks every dock door against the rules, offers only slots that really work, and books the one they pick in a single checked transaction. Hard cases go to a coordinator with everything on one screen.</p>
+    <div class="ctas rv"><a class="btn pri" href="flow.html">See how it flows →</a><a class="btn" href="driver.html">Driver Messages</a><a class="btn" href="coordinator.html">Coordinator Day Board</a></div>
+  </div>
+  <div class="scene rv" id="scene">
+    <svg viewBox="0 0 600 552" aria-label="Animated: trucks crossing a bridge to the Jaipur DC dock doors">
+      <defs>
+        <linearGradient id="road" x1="0" x2="1"><stop offset="0" stop-color="#3B4253"/><stop offset="1" stop-color="#4A5266"/></linearGradient>
+        <path id="route" d="M-40 470 C 80 470, 120 400, 200 380 S 330 330, 380 300 S 470 250, 470 215"/>
+        <g id="truck"><rect x="-22" y="-9" width="30" height="18" rx="3" fill="#FFFFFF"/><rect x="8" y="-7" width="13" height="14" rx="3" fill="#FFB020"/><rect x="15" y="-5" width="5" height="5" rx="1" fill="#0b1122"/></g>
+        <g id="truckR"><rect x="-22" y="-9" width="30" height="18" rx="3" fill="#7FE3FF"/><rect x="8" y="-7" width="13" height="14" rx="3" fill="#22D3B6"/><rect x="15" y="-5" width="5" height="5" rx="1" fill="#0b1122"/></g>
+      </defs>
+      <!-- stars -->
+      <g fill="#fff" opacity="0"><circle cx="60" cy="50" r="1.2"/><circle cx="140" cy="90" r="1"/><circle cx="250" cy="40" r="1.3"/><circle cx="520" cy="60" r="1"/><circle cx="420" cy="30" r="1.2"/><circle cx="330" cy="110" r=".9"/></g>
+      <!-- warehouse -->
+      <g transform="translate(330 70)">
+        <rect x="0" y="40" width="240" height="120" rx="6" fill="#FFFFFF" stroke="#CFC5B0"/>
+        <path d="M-6 44 L120 0 L246 44" fill="none" stroke="#B9AE96" stroke-width="3"/>
+        <text x="120" y="68" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#8A7A5C" letter-spacing="2">JAIPUR DC</text>
+        <g>
+          <rect class="door" x="14" y="98" width="30" height="50" rx="3" style="animation-delay:0s"/>
+          <rect class="door" x="51" y="98" width="30" height="50" rx="3" style="animation-delay:1s"/>
+          <rect x="88" y="98" width="30" height="50" rx="3" fill="#FBE3E4" stroke="#D9363E" stroke-dasharray="3 3"/>
+          <rect class="door" x="125" y="98" width="30" height="50" rx="3" style="animation-delay:2s"/>
+          <rect x="162" y="98" width="30" height="50" rx="3" fill="#DDF3FA" stroke="#0B8FB3"/>
+          <rect class="door" x="199" y="98" width="30" height="50" rx="3" style="animation-delay:3s"/>
+        </g>
+        <g font-family="IBM Plex Mono" font-size="9" fill="#8A7A5C" text-anchor="middle"><text x="29" y="160">D1</text><text x="66" y="160">D2</text><text x="103" y="160" fill="#D9363E">D3</text><text x="140" y="160">D4</text><text x="177" y="160" fill="#0B8FB3">D5</text><text x="214" y="160">D6</text></g>
+      </g>
+      <!-- road + bridge (setu) -->
+      <use href="#route" stroke="url(#road)" stroke-width="34" fill="none" stroke-linecap="round"/>
+      <use href="#route" stroke="#FFD27A" stroke-width="1.5" fill="none" stroke-dasharray="10 12" opacity=".7"><animate attributeName="stroke-dashoffset" from="0" to="-44" dur="1.2s" repeatCount="indefinite"/></use>
+      <g stroke="#C25E00" stroke-width="2.5" fill="none" opacity=".85">
+        <path d="M150 410 Q 230 300 320 345"/>
+        <g stroke-width="1.4" opacity=".7"><path d="M175 386v20"/><path d="M200 362v36"/><path d="M225 346v44"/><path d="M250 338v46"/><path d="M275 336v42"/><path d="M300 340v34"/></g>
+      </g>
+      <!-- trucks moving -->
+      <use href="#truck"><animateMotion dur="7s" repeatCount="indefinite" rotate="auto"><mpath href="#route"/></animateMotion></use>
+      <use href="#truckR"><animateMotion dur="7s" begin="2.3s" repeatCount="indefinite" rotate="auto"><mpath href="#route"/></animateMotion></use>
+      <use href="#truck"><animateMotion dur="7s" begin="4.6s" repeatCount="indefinite" rotate="auto"><mpath href="#route"/></animateMotion></use>
+      <!-- radar / clock -->
+      <g transform="translate(90 170)">
+        <circle r="46" fill="rgba(255,255,255,.5)" stroke="#E0C9A0"/><circle r="30" fill="none" stroke="#E0C9A0"/>
+        <path d="M0 0 L0 -46" stroke="#0B8A78" stroke-width="2"><animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="4s" repeatCount="indefinite"/></path>
+        <circle cx="18" cy="-22" r="3" fill="#FFB020"><animate attributeName="opacity" values="0;1;0" dur="4s" repeatCount="indefinite"/></circle>
+        <circle cx="-24" cy="10" r="3" fill="#FF5D6C"><animate attributeName="opacity" values="0;1;0" dur="4s" begin="1.6s" repeatCount="indefinite"/></circle>
+        <text y="66" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#8A7A5C">ETA RADAR</text>
+      </g>
+    </svg>
+    <div class="bub d"><small>DRIVER · 09:34</small>Traffic after Shahpura. Reaching around 11:20. Any slot after 12?</div>
+    <div class="bub a"><small>SETUHAUL</small>1) Dock D4 · 12:40 PM<br>2) Dock D2 · 1:00 PM<br>3) Dock D1 · 2:00 PM</div>
+    <div class="bub c"><small>✓ BOOKED · APT-N0004</small>Dock D4, 12:40 PM. Gate by 12:25 PM.</div>
+  </div>
+</section>
+
+<section class="roles">
+  <a class="role drv rv" href="driver.html">
+    <div class="eyebrow" style="color:var(--teal)">For drivers · WhatsApp messages</div>
+    <h2>Driver Messages</h2>
+    <p>Fourteen real conversations from 4 August, playable message by message. Tap the driver's reply, pick a slot, watch what the agent checks behind every answer.</p>
+    <ul><li>English, Hinglish and Hindi</li><li>One question at most, then options</li><li>Race lost? Fresh options in the same reply</li></ul>
+    <svg class="art" viewBox="0 0 200 200"><rect x="50" y="20" width="110" height="190" rx="20" fill="#1F2633" stroke="#0B8A78" stroke-width="2"/><rect x="62" y="50" width="70" height="22" rx="8" fill="#DCF8C6"/><rect x="78" y="80" width="72" height="34" rx="8" fill="#fff"/><rect x="62" y="122" width="40" height="18" rx="8" fill="#DCF8C6"/><rect x="74" y="148" width="76" height="22" rx="8" fill="#0B8A78"/></svg>
+  </a>
+  <a class="role crd rv" href="coordinator.html">
+    <div class="eyebrow">For coordinators · Console</div>
+    <h2>Coordinator Console</h2>
+    <p>Replay the morning on a live dock board, approve holds before their deadline, work the hand-off queue and compare scheduling policies.</p>
+    <ul><li>Dock board with breakdowns and maintenance</li><li>Hand-off records with computed options</li><li>Planner: 6 policies, one input</li></ul>
+    <svg class="art" viewBox="0 0 200 200"><rect x="20" y="40" width="200" height="140" rx="14" fill="#1F2633" stroke="#DB7E00" stroke-width="2"/><g fill="#FFB020"><rect x="36" y="64" width="60" height="12" rx="4"/><rect x="100" y="84" width="80" height="12" rx="4" fill="#22D3B6"/><rect x="50" y="104" width="44" height="12" rx="4" fill="#9B8CFF"/><rect x="110" y="124" width="70" height="12" rx="4"/><rect x="40" y="144" width="90" height="12" rx="4" fill="#FF5D6C"/></g></svg>
+  </a>
+</section>
+
+<section class="kpis">
+  <div class="card kpi rv"><div class="v" data-to="10" data-suf=" / 13">0</div><div class="l">Driver cases settled without a person</div><div class="s">The other 3 went to a person by design</div></div>
+  <div class="card kpi rv"><div class="v" data-to="1" data-suf=" min">0</div><div class="l">Median time to a usable answer</div><div class="s">First message → booked / closed</div></div>
+  <div class="card kpi rv"><div class="v" data-to="2">0</div><div class="l">Median driver messages per case</div><div class="s">2 clarifying questions in 13 cases</div></div>
+  <div class="card kpi rv"><div class="v" data-to="0">0</div><div class="l">Slots promised twice</div><div class="s">50 of 50 races had exactly one winner</div></div>
+  <div class="card kpi rv"><div class="v" data-to="7" data-suf=" h">0</div><div class="l">Early warning on the reefer clash</div><div class="s">Flagged 09:16; driver wrote at 16:24</div></div>
+</section>
+
+<h2 class="sec-t rv">The morning at a glance</h2>
+<p class="sec-p rv">Events from the client's own snapshot, replayed at their own time, with what SetuHaul did in between. Open the Day Board to scrub through it.</p>
+<div class="ribbon rv" id="ribbon"><div class="axis"></div><div class="prog"></div></div>
+
+<h2 class="sec-t rv">Who owns each decision</h2>
+<p class="sec-p rv">Language at the edges, deterministic code in the middle. Nothing in the path lets a model choose a slot.</p>
+<div class="layers">
+  <div class="layer rv" style="--c:var(--blue)"><div class="n">01 · WORDS</div><h4>The model reads</h4><p>Rules first; an LLM only when rules return UNKNOWN, with a strict JSON schema. It can change what we ask, never what we book.</p></div>
+  <div class="layer rv" style="--c:var(--saffron)"><div class="n">02 · CAPACITY</div><h4>Code decides</h4><p>A 15-point feasibility check per slot, earmarks for scarce capacity, and a planner that only proposes.</p></div>
+  <div class="layer rv" style="--c:var(--teal)"><div class="n">03 · RECORD</div><h4>The database refuses</h4><p>One write lock, an overlap trigger and partial unique indexes. Conflicting writes cannot land.</p></div>
+  <div class="layer rv" style="--c:var(--coral)"><div class="n">04 · PEOPLE</div><h4>A person decides</h4><p>Safety, penalties, no-slot cases and data conflicts go to the right person by a channel that works.</p></div>
+</div>
+
+<h2 class="sec-t rv">Explore the prototype</h2>
+<div class="dir">
+  <a class="rv" href="brief.html" style="background:linear-gradient(135deg,#FFE7F0,#fff);border-color:#F5B8CF"><b>Brief Coverage</b><span>Every expectation → evidence</span></a>
+  <a class="rv" href="flow.html"><b>Flow & Architecture</b><span>Life of a Driver, Life of a Coordinator</span></a>
+  <a class="rv" href="driver.html"><b>Driver Messages</b><span>13 WhatsApp conversations, interactive</span></a>
+  <a class="rv" href="coordinator.html"><b>Day Board</b><span>Dock timeline replay, 08:20 → 16:30</span></a>
+  <a class="rv" href="handoffs.html"><b>Hand-offs</b><span>Approvals, safety, no-slot record</span></a>
+  <a class="rv" href="planner.html"><b>Planner</b><span>FCFS vs ours vs exhaustive, animated</span></a>
+  <a class="rv" href="insights.html"><b>Data Insights</b><span>36 findings, each with its SQL — run live</span></a>
+  <a class="rv" href="trucks.html"><b>Trucks</b><span>All 21 shipments, drivers and vehicles</span></a>
+  <a class="rv" href="integrity.html"><b>Integrity</b><span>10 drivers, 1 slot: the race simulator</span></a>
+  <a class="rv" href="how.html"><b>Inside a turn</b><span>Ten steps; the booking transaction</span></a>
+  <a class="rv" href="mvp2.html" style="background:linear-gradient(135deg,#EEEAFE,#fff);border-color:#C9BFF5"><b>MVP2 · GPS Tower</b><span>Live tracking, RAG flags, WhatsApp series</span></a>
+</div>
+</main>
+<script src="data.js"></script><script src="app.js"></script>
+<script>
+const EV=[[502,'08:22','Early truck takes free D4','var(--teal)'],[555,'09:15','D3 leveller breaks down','var(--coral)'],[556,'09:16','Monitor flags reefer clash','var(--saffron)'],[576,'09:36','Two drivers, one slot: one wins','var(--violet)'],[581,'09:41','Coordinator approves hold','var(--blue)'],[605,'10:05','Accident: shift manager paged','var(--coral)'],[610,'10:10','SHP1019 cancelled, slot freed','var(--muted)'],[984,'16:24','Reefer: hand-off to Neha','var(--saffron)']];
+const rb=$('#ribbon'),T0=490,T1=1000;
+EV.forEach((e,i)=>{const d=document.createElement('div');d.className='ev '+(i%2?'dn':'up');d.style.left=`calc(30px + (100% - 60px) * ${(e[0]-T0)/(T1-T0)})`;d.style.background=e[3];d.innerHTML=`<div class="lb"><b>${e[1]}</b>${e[2]}</div>`;rb.append(d)});
+new IntersectionObserver((es,o)=>{if(es[0].isIntersecting){$('.prog',rb).style.width='calc(100% - 60px)';$$('.ev',rb).forEach((d,i)=>setTimeout(()=>d.classList.add('on'),300+i*380));o.disconnect()}},{threshold:.4}).observe(rb);
+</script></body></html>

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Trucks · SetuHaul - Logistic Management</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<style>
+.fac{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:16px;margin-bottom:18px}
+.doors{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.dr{flex:1;min-width:64px;border-radius:12px;padding:10px 8px;text-align:center;border:1px solid var(--line);background:var(--bg2)}
+.dr b{font-family:var(--display);font-size:20px;display:block}
+.dr small{font-size:10.5px;color:var(--muted)}
+.dr.REEFER{border-color:rgba(127,227,255,.5)}.dr.HEAVY{border-color:rgba(155,140,255,.5)}
+.filters{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.search{flex:1;min-width:220px;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:10px 14px;color:var(--text);font:inherit}
+.eta{position:relative;height:8px;background:var(--bg2);border-radius:5px;width:140px;border:1px solid var(--line)}
+.eta i{position:absolute;top:-1px;height:8px;border-radius:5px;transition:width 1s cubic-bezier(.3,.7,.2,1),left 1s}
+tbody tr{cursor:pointer;animation:fin .4s both}
+@keyframes fin{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.ct{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.ct div{display:flex;justify-content:space-between;font-size:13px;border-bottom:1px solid var(--line);padding-bottom:6px}
+@media (max-width:1000px){.fac{grid-template-columns:1fr}}
+</style></head><body>
+<main class="wrap">
+<div class="page-head"><div><div class="eyebrow">● Fleet & shipments · 4 Aug 2026</div><h1>Every truck on the day</h1>
+<p>21 shipments, 15 drivers, 15 vehicles across Jaipur DC and the Gurugram Cross-Dock. The bar shows how far the latest ETA slipped from the original. Click a row for its booking history.</p></div></div>
+<div class="fac">
+ <div class="card rv"><h3>SetuHaul Jaipur Distribution Centre <span class="chip ok">06:00–22:00 · 30 min grace</span></h3><div class="doors" id="djai"></div></div>
+ <div class="card rv"><h3>Gurugram Cross-Dock <span class="chip">07:00–21:00</span></h3><div class="doors" id="dggn"></div></div>
+ <div class="card rv"><h3>Contacts</h3><div class="ct" id="ct"></div></div>
+</div>
+<div class="card">
+ <div class="filters"><input class="search" id="q" placeholder="Search shipment, driver, customer, city…">
+  <div class="seg" id="fp"><button class="on" data-v="">All</button><button data-v="CRITICAL">Critical</button><button data-v="HIGH">High</button><button data-v="NORMAL">Normal</button><button data-v="LOW">Low</button></div>
+  <div class="seg" id="fd"><button class="on" data-v="">Any door</button><button data-v="STANDARD">Standard</button><button data-v="REEFER">Reefer</button><button data-v="HEAVY">Heavy</button></div></div>
+ <div style="overflow:auto"><table class="t"><thead><tr><th>Shipment</th><th>Priority</th><th>Driver · vehicle</th><th>Customer · load</th><th>Door</th><th>ETA slip</th><th>Status</th><th>Chat</th></tr></thead><tbody id="tb"></tbody></table></div>
+</div>
+</main>
+<script src="data.js"></script><script src="app.js"></script>
+<script>
+const doorHtml=f=>SH.docks.filter(d=>d.facility_id===f).map(d=>`<div class="dr ${d.dock_type}"><b>${d.dock_code}</b><small>${d.dock_type.toLowerCase()}<br>${d.max_vehicle_weight_kg/1000} t</small></div>`).join('');
+$('#djai').innerHTML=doorHtml('FAC-JAI-01');$('#dggn').innerHTML=doorHtml('FAC-GGN-01');
+$('#ct').innerHTML=SH.contacts.map(c=>`<div><span>${esc(c.contact_name)} <span class="dim">· ${c.contact_role.replace(/_/g,' ').toLowerCase()}</span></span><span class="mono dim">${c.facility_id.slice(4,7)}</span></div>`).join('');
+let fp='',fd='';
+function render(){const q=$('#q').value.toLowerCase();
+ const rows=SH.ships.filter(s=>(!fp||s.priority_code===fp)&&(!fd||s.required_dock_type===fd)&&(!q||JSON.stringify([s,DRV[s.driver_id]]).toLowerCase().includes(q)));
+ $('#tb').innerHTML=rows.map((s,i)=>{const d=DRV[s.driver_id],v=VEH[s.vehicle_id],o=tsMin(s.original_eta_ts),l=tsMin(s.latest_eta_ts),slip=l-o,c=CASES[s.shipment_id];
+  return `<tr data-s="${s.shipment_id}" style="animation-delay:${i*25}ms"><td><b class="mono">${s.shipment_id}</b><div class="dim mono" style="font-size:11.5px">${s.order_reference}</div></td><td>${prioChip(s.priority_code)}</td>
+  <td>${esc(d.driver_name)}<div class="dim mono" style="font-size:11.5px">${v.registration_number} · ${v.vehicle_type_code}</div></td>
+  <td>${esc(s.customer_name)}<div class="dim" style="font-size:12px">${esc(s.product_category)} · ${(s.load_weight_kg/1000).toFixed(1)} t · ${esc(s.origin_city)}</div></td>
+  <td>${dockChip(s.required_dock_type)}</td>
+  <td><div class="eta"><i data-w="${Math.min(100,Math.abs(slip)/90*100)}" style="left:0;width:0;background:${slip>30?'var(--coral)':slip>0?'var(--saffron)':'var(--teal)'}"></i></div><div class="mono dim" style="font-size:11px;margin-top:4px">${ampm(o)} → ${ampm(l)} (${slip>0?'+':''}${slip}m)</div></td>
+  <td><span class="chip ${s.current_status==='CANCELLED'?'crit':s.current_status==='COMPLETED'?'ok':''}">${s.current_status.replace('_',' ')}</span></td>
+  <td>${c?`<a class="btn" style="padding:5px 10px;font-size:12px" href="driver.html#${c.toLowerCase()}" onclick="event.stopPropagation()">${c} →</a>`:'<span class="dim">—</span>'}</td></tr>`}).join('');
+ $$('#tb tr').forEach(r=>r.onclick=()=>shipmentDrawer(r.dataset.s));
+ requestAnimationFrame(()=>requestAnimationFrame(()=>$$('.eta i').forEach(i=>i.style.width=i.dataset.w+'%')));}
+$('#q').oninput=render;
+[['#fp',v=>fp=v],['#fd',v=>fd=v]].forEach(([s,set])=>$$(s+' button').forEach(b=>b.onclick=()=>{$$(s+' button').forEach(x=>x.classList.remove('on'));b.classList.add('on');set(b.dataset.v);render()}));
+render();
+</script></body></html>

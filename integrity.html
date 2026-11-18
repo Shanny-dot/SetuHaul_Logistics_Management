@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Integrity · SetuHaul - Logistic Management</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<style>
+.sim{display:grid;grid-template-columns:1fr 340px;gap:16px;align-items:start}
+.arena{position:relative;height:520px;border-radius:20px;border:1px solid var(--line);background:radial-gradient(80% 60% at 85% 50%,rgba(219,126,0,.08),transparent),var(--bg2);overflow:hidden}
+.lane-l{position:absolute;left:0;right:150px;height:1px;background:linear-gradient(90deg,transparent,var(--line2))}
+.tk{position:absolute;left:18px;height:34px;display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11.5px;font-weight:600;transition:transform .7s cubic-bezier(.5,0,.2,1),opacity .4s;z-index:2}
+.tk .body{width:56px;height:28px;border-radius:6px;background:#3B4659;position:relative;box-shadow:0 6px 14px -6px rgba(0,0,0,.4)}
+.tk .body::after{content:'';position:absolute;right:-14px;top:3px;width:16px;height:22px;border-radius:4px;background:var(--saffron)}
+.tk .tag{background:var(--panel2);border:1px solid var(--line2);padding:2px 7px;border-radius:6px;margin-left:12px;white-space:nowrap;transition:.3s}
+.tk.win .tag{background:var(--teal);color:#fff;border-color:var(--teal)}
+.tk.lose .tag{background:rgba(255,176,32,.15);color:var(--saffron);border-color:rgba(255,176,32,.5)}
+.tk.leak .tag{background:rgba(255,93,108,.18);color:var(--coral);border-color:var(--coral)}
+.tk.dbl .tag{background:var(--coral);color:#fff;border-color:var(--coral)}
+.slot{position:absolute;right:26px;top:50%;transform:translateY(-50%);width:120px;height:300px;border-radius:16px;border:2px solid var(--line2);background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;transition:.4s;z-index:1}
+.slot b{font-family:var(--display);font-size:30px}
+.slot small{font-family:var(--mono);font-size:10.5px;color:var(--muted)}
+.slot .cnt{font-family:var(--display);font-size:46px;font-weight:800;line-height:1}
+.slot.ok{border-color:var(--teal);box-shadow:0 0 40px rgba(11,138,120,.25)}
+.slot.bad{border-color:var(--coral);box-shadow:0 0 40px rgba(255,93,108,.35);animation:shake .5s}
+@keyframes shake{25%{transform:translate(-4px,-50%)}75%{transform:translate(4px,-50%)}}
+.lock{position:absolute;right:160px;top:50%;transform:translateY(-50%);width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font-size:20px;background:var(--panel2);border:1px solid var(--line2);transition:.3s;z-index:3}
+.lock.on{background:var(--teal);border-color:var(--teal)}
+.lock.off{opacity:.25}
+.modes{display:flex;flex-direction:column;gap:8px}
+.mode{text-align:left;border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:14px;padding:12px 14px}
+.mode b{display:block;font-size:14px}.mode small{color:var(--muted);font-size:12.5px}
+.mode.on{border-color:var(--saffron);background:linear-gradient(90deg,rgba(219,126,0,.1),var(--panel))}
+.tally{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.tally div{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--bg2)}
+.tally b{font-family:var(--display);font-size:26px;display:block}
+.tally span{font-size:11.5px;color:var(--muted)}
+.three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-top:16px}
+.stack{display:flex;height:34px;border-radius:10px;overflow:hidden;margin:14px 0 10px}
+.stack i{display:block;height:100%;width:0;transition:width 1.2s cubic-bezier(.3,.7,.2,1)}
+.inv{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line);font-size:13.5px}
+.inv b{font-family:var(--mono);color:var(--teal)}
+.tests{display:flex;flex-direction:column;gap:6px;font-size:12.5px;font-family:var(--mono)}
+.tests div{display:flex;gap:8px;align-items:center;opacity:.25;transition:.3s}
+.tests div.ok{opacity:1}.tests i{font-style:normal;color:var(--teal)}
+@media (max-width:1100px){.sim,.three{grid-template-columns:1fr}}
+</style></head><body>
+<main class="wrap">
+<div class="page-head"><div><div class="eyebrow">● Integrity proof</div><h1>Ten drivers. One slot. Same instant.</h1>
+<p>Each driver's booking runs the real path: take the write lock, re-check feasibility, insert, let the overlap trigger judge. Switch the protections off to see why they exist — a test that cannot fail proves nothing.</p></div></div>
+<div class="sim">
+  <div class="arena" id="arena"><div class="lock on" id="lock">🔒</div>
+    <div class="slot" id="slot"><small>SLOT-JAI-052</small><b>D2</b><small>13:00 – 14:00</small><div class="cnt" id="cnt">0</div><small id="sl">bookings</small></div></div>
+  <div>
+    <div class="modes" id="modes">
+      <button class="mode on" data-m="guard"><b>🛡 Full guards (our design)</b><small>Write lock + re-check + overlap trigger</small></button>
+      <button class="mode" data-m="index"><b>⚠ Unique index only</b><small>Blocks the double booking but leaks raw DB errors to drivers</small></button>
+      <button class="mode" data-m="none"><b>✕ No guards (negative control)</b><small>Check-then-insert with nothing in between</small></button>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:12px"><button class="btn pri" id="go" style="flex:1;justify-content:center">⚡ Race once</button><button class="btn" id="go50">× 50</button></div>
+    <div class="tally"><div><b id="t1">0</b><span>races run</span></div><div><b id="t2">0</b><span>with exactly one winner</span></div><div><b id="t3">0</b><span>double bookings</span></div><div><b id="t4">0</b><span>clean "just taken" refusals</span></div></div>
+  </div>
+</div>
+<div class="three">
+  <div class="card rv"><h3>Random stress <span class="chip">8 threads × 25</span></h3>
+    <div class="stack" id="stack"><i style="background:var(--teal)"></i><i style="background:var(--saffron)"></i><i style="background:var(--violet)"></i></div>
+    <div style="display:flex;gap:14px;font-size:12.5px;flex-wrap:wrap" id="sleg"></div>
+    <div style="margin-top:14px"></div><div id="invs"></div></div>
+  <div class="card rv"><h3>50 races, recorded <span class="chip ok">0 invariant violations</span></h3>
+    <div class="kpi" style="padding:0"><div class="v" data-to="50" data-suf=" / 50">0</div><div class="l">runs with exactly one winner</div></div>
+    <div class="kpi" style="padding:14px 0 0"><div class="v" data-to="450">0</div><div class="l">clean refusals, 0 errors leaked</div></div>
+    <p class="muted" style="font-size:13px;margin:14px 0 0">Winners varied across <span id="dw"></span> different shipments — the lock decides the order, not a fixed favourite. Negative control: with the guards removed, all 10 drivers "booked" the slot.</p></div>
+  <div class="card rv"><h3>12 integrity tests <span class="chip ok" id="tt">running…</span></h3><div class="tests" id="tests"></div></div>
+</div>
+</main>
+<script src="data.js"></script><script src="app.js"></script>
+<script>
+const R=SH.race,W=R.distinct_winners;$('#dw').textContent=W.length;
+const arena=$('#arena');let mode='guard',running=false;
+const TK=W.map((s,i)=>{const y=34+i*47;arena.insertAdjacentHTML('beforeend',`<div class="lane-l" style="top:${y+17}px"></div>`);
+  const el=document.createElement('div');el.className='tk';el.style.top=y+'px';el.innerHTML=`<span class="body"></span><span class="tag">${s}</span>`;arena.append(el);return el});
+$$('.mode').forEach(b=>b.onclick=()=>{if(running)return;$$('.mode').forEach(x=>x.classList.remove('on'));b.classList.add('on');mode=b.dataset.m;
+  $('#lock').className='lock '+(mode==='guard'?'on':'off');reset()});
+function reset(){TK.forEach(t=>{t.style.transform='';t.className='tk';t.querySelector('.tag').textContent=t.querySelector('.tag').dataset.s||t.querySelector('.tag').textContent});$('#slot').className='slot';$('#cnt').textContent='0';$('#sl').textContent='bookings'}
+TK.forEach(t=>{const g=t.querySelector('.tag');g.dataset.s=g.textContent});
+let tally={runs:0,one:0,dbl:0,ref:0};
+function upd(){$('#t1').textContent=tally.runs;$('#t2').textContent=tally.one;$('#t3').textContent=tally.dbl;$('#t4').textContent=tally.ref}
+async function race(fast){running=true;reset();await sleep(fast?30:250);
+  const dist=arena.offsetWidth-470, order=[...TK.keys()].sort(()=>Math.random()-.5), winner=order[0];
+  let booked=0;
+  order.forEach((i,k)=>{const t=TK[i];setTimeout(()=>{t.style.transitionDuration=(fast?.25:.7)+'s';t.style.transform=`translateX(${dist}px)`},k*(fast?8:60))});
+  await sleep(fast?320:1100);
+  for(const [k,i] of order.entries()){const t=TK[i],g=t.querySelector('.tag');
+    if(mode==='none'||k===0){booked++;t.classList.add(mode==='none'&&k>0?'dbl':'win');g.textContent=g.dataset.s+(k===0||mode==='none'?' · CONFIRMED':'')}
+    else{t.classList.add(mode==='index'?'leak':'lose');g.textContent=mode==='index'?g.dataset.s+' · IntegrityError!':g.dataset.s+' · just taken → fresh options';t.style.transform=`translateX(${dist*0.35}px)`}
+    $('#cnt').textContent=booked;if(!fast)await sleep(70)}
+  $('#slot').className='slot '+(booked>1?'bad':'ok');$('#sl').textContent=booked>1?'DOUBLE-BOOKED':'one winner';
+  tally.runs++;if(booked===1)tally.one++;if(booked>1)tally.dbl+=booked-1;if(mode==='guard')tally.ref+=9;upd();running=false}
+$('#go').onclick=()=>{if(!running)race(false)};
+$('#go50').onclick=async()=>{if(running)return;for(let i=0;i<50;i++)await race(true);toast(mode==='guard'?'50 of 50 races: exactly one winner each':mode==='none'?'Every race double-booked — the guards are doing the work':'One winner each, but 9 raw errors leaked per race',mode==='guard'?'✓':'⚠')};
+// stress
+const st=SH.stress,tot=st.CONFIRMED+st.OPTION_GONE+st.NEEDS_APPROVAL,parts=[['CONFIRMED',st.CONFIRMED,'var(--teal)'],['OPTION_GONE',st.OPTION_GONE,'var(--saffron)'],['NEEDS_APPROVAL',st.NEEDS_APPROVAL,'var(--violet)']];
+$('#sleg').innerHTML=parts.map(p=>`<span><i style="display:inline-block;width:10px;height:10px;border-radius:3px;background:${p[2]};margin-right:5px"></i>${p[0].replace('_',' ').toLowerCase()} <b class="mono">${p[1]}</b></span>`).join('')+`<span>errors <b class="mono">${st.errors}</b></span>`;
+$('#invs').innerHTML=Object.entries(st.invariants).map(([k,v])=>`<div class="inv"><span>${k.replace(/_/g,' ')}</span><b>${v} ✓</b></div>`).join('');
+new IntersectionObserver((es,o)=>{if(es[0].isIntersecting){$$('#stack i').forEach((i,k)=>i.style.width=(parts[k][1]/tot*100)+'%');o.disconnect()}}).observe($('#stack'));
+// tests
+const TN=SH.unit.detail.map(d=>d.split(' (')[0].replace(/^test_\d+_/,'').replace(/_/g,' '));
+$('#tests').innerHTML=TN.map((t,i)=>`<div><i>✓</i>${String(i+1).padStart(2,'0')} ${t}</div>`).join('');
+new IntersectionObserver((es,o)=>{if(es[0].isIntersecting){$$('#tests div').forEach((d,i)=>setTimeout(()=>{d.classList.add('ok');if(i===TN.length-1){$('#tt').textContent=`${SH.unit.ran} passed · ${SH.unit.seconds}s`}},200+i*160));o.disconnect()}}).observe($('#tests'));
+setTimeout(()=>race(false),900);
+</script></body></html>

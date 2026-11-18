@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Flow & Architecture · SetuHaul - Logistic Management</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<style>
+.sec-t{font-size:clamp(28px,3.4vw,44px);margin:80px 0 8px;line-height:1.05}
+.sec-p{color:var(--muted);max-width:780px;margin:0 0 24px;font-size:16px}
+.jump{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+/* architecture */
+.arch{display:grid;grid-template-columns:1fr 330px;gap:16px;align-items:start}
+.arch svg{width:100%;height:auto;display:block}
+.nd rect{transition:.3s;cursor:pointer}
+.nd:hover rect.b{stroke-width:2.2}
+.nd.dim{opacity:.25}
+.nd.hot rect.b{stroke-width:3;filter:drop-shadow(0 6px 14px rgba(219,126,0,.35))}
+.ed{fill:none;stroke:#D2C8B4;stroke-width:1.6;transition:.3s}
+.ed.hot{stroke:var(--saffron);stroke-width:2.6}
+.ed.dim{opacity:.25}
+.lbl{font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;font-size:14px;fill:var(--text);pointer-events:none}
+.sub{font-family:'IBM Plex Sans',system-ui,sans-serif;font-size:10.5px;fill:var(--muted);pointer-events:none}
+.cap{font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:10px;letter-spacing:.12em;fill:var(--dim)}
+.traces{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+.traces button{text-align:left;border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:10px 12px;font-size:13px;color:var(--text)}
+.traces button b{display:block;font-size:13.5px}
+.traces button small{color:var(--muted)}
+.traces button.on{border-color:var(--saffron);background:#FFF6E6}
+.det h4{font-size:20px;margin:6px 0 8px}
+.det p{font-size:13.5px;color:var(--muted);margin:0 0 10px}
+.det .own{font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:700}
+.tstep{font-size:13px;padding:8px 10px;border-radius:10px;background:var(--bg2);border:1px solid var(--line);margin-top:6px;opacity:.35;transition:.3s}
+.tstep.on{opacity:1;border-color:var(--saffron);background:#FFF6E6}
+/* life timelines */
+.life{position:relative;padding:20px 0 40px}
+.road{position:absolute;left:50%;top:0;bottom:0;width:10px;margin-left:-5px;border-radius:6px;background:repeating-linear-gradient(180deg,#E6E0D3 0 14px,#F2EEE5 14px 26px)}
+.road .fill{position:absolute;left:0;top:0;width:100%;border-radius:6px;height:0;background:linear-gradient(180deg,var(--c1),var(--c2))}
+.rider{position:absolute;left:50%;top:0;width:54px;height:54px;margin-left:-27px;border-radius:16px;background:var(--panel);border:2px solid var(--c1);display:grid;place-items:center;font-size:24px;z-index:3;box-shadow:0 12px 26px -12px rgba(0,0,0,.35);transition:top .15s linear}
+.stage{position:relative;display:grid;grid-template-columns:1fr 80px 1fr;align-items:center;margin:26px 0}
+.stage .dot{grid-column:2;justify-self:center;width:18px;height:18px;border-radius:50%;background:var(--panel);border:3px solid var(--line2);z-index:2;transition:.4s}
+.stage.in .dot{border-color:var(--c1);background:var(--c1);box-shadow:0 0 0 6px color-mix(in srgb,var(--c1) 18%,transparent)}
+.sc{border:1px solid var(--line);border-radius:18px;padding:18px 20px;background:var(--panel);box-shadow:0 10px 30px -24px rgba(40,32,10,.4);opacity:0;transition:opacity .7s,transform .7s cubic-bezier(.2,.8,.2,1)}
+.stage:nth-child(odd) .sc{grid-column:1;transform:translateX(-40px)}
+.stage:nth-child(even) .sc{grid-column:3;transform:translateX(40px)}
+.stage:nth-child(even) .dot{grid-row:1}
+.stage.in .sc{opacity:1;transform:none}
+.sc .tm{font-family:var(--mono);font-size:11.5px;color:var(--c1);font-weight:600;letter-spacing:.06em}
+.sc h4{font-size:20px;margin:4px 0 8px}
+.sc .g{font-size:13.5px;color:var(--muted);margin:0 0 10px}
+.sc .sh{font-size:13.5px;padding:10px 12px;border-radius:12px;background:var(--bg2);border:1px solid var(--line)}
+.sc .sh b{font-size:10.5px;letter-spacing:.14em;color:var(--c1);display:block;margin-bottom:3px}
+.sc .tools{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}
+.sc .tools span{font-family:var(--mono);font-size:10.5px;padding:3px 8px;border-radius:7px;background:var(--panel2);color:var(--muted)}
+.sc a.ex{display:inline-block;margin-top:10px;font-size:12.5px;color:var(--c1);font-weight:600;text-decoration:none}
+.fork{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.fork div{border-radius:10px;padding:8px 10px;font-size:12px;border:1px dashed var(--coral);color:var(--coral);background:#FFF5F5}
+.lifehead{display:flex;gap:18px;align-items:center;margin:80px 0 8px}
+.lifehead .ic{width:64px;height:64px;border-radius:20px;display:grid;place-items:center;font-size:30px;background:var(--panel);border:2px solid var(--c1)}
+.lifehead h2{font-size:clamp(28px,3.4vw,44px)}
+/* swimlane */
+.swim svg{width:100%;height:auto}
+.swim .ln{stroke-dasharray:600;stroke-dashoffset:600;transition:stroke-dashoffset 1.4s ease}
+.swim.in .ln{stroke-dashoffset:0}
+.swim .ev{opacity:0;transition:.5s}
+.swim.in .ev{opacity:1}
+
+/* layers */
+.layers5{display:flex;flex-direction:column;gap:10px}
+.ly{display:grid;grid-template-columns:200px 1fr;gap:14px;align-items:center;border:1px solid var(--line);border-radius:16px;padding:12px 14px;background:var(--panel);position:relative}
+.ly+.ly::before{content:'↓';position:absolute;top:-17px;left:96px;color:var(--dim);font-size:14px}
+.lt{font-family:var(--display);font-weight:700;font-size:15px}.lt small{font-family:var(--sans);font-weight:400;font-size:11.5px;color:var(--muted)}
+.lb{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.lb .bx{border:1px solid var(--line2);border-radius:12px;padding:8px 12px;font-weight:600;font-size:13px;background:var(--bg2)}
+.lb .bx small{display:block;font-weight:400;color:var(--muted);font-size:11.5px}
+.lb .bx.wide{flex:1;font-weight:500}.lb .bx a{color:var(--saffron2)}
+.lb .bx.llm{background:#E7F0FD;border-color:#2370C8;border-width:2px}
+.lb .bx.mv{background:#EEEAFE;border-color:#C9BFF5}
+.lb i{font-style:normal;color:var(--dim)}
+.ly{opacity:0;transform:translateY(14px);transition:.6s}.layers5.in .ly{opacity:1;transform:none}
+/* e2e */
+.e2e{display:grid;grid-template-columns:1fr 360px;gap:16px;align-items:start}
+.e2e svg{width:100%;height:auto}
+.fn rect{fill:#fff;stroke:#C9C1AE;stroke-width:1.4;transition:.3s}
+.fn.dec rect{stroke-dasharray:6 5}.fn.llm rect{fill:#E7F0FD;stroke:#2370C8;stroke-width:2.4}.fn.side rect{stroke:#F0A020;stroke-width:2}
+.fn text{font-family:'IBM Plex Sans',system-ui,sans-serif;text-anchor:middle;pointer-events:none}
+.fn .t1{font-weight:700;font-size:16px;fill:#18212F}.fn .t2{font-size:13px;fill:#586274}
+.fn.dim{opacity:.3}.fn.hot rect{stroke:#DB7E00;stroke-width:3.2;filter:drop-shadow(0 6px 14px rgba(219,126,0,.35))}
+.fe{fill:none;stroke:#C9C1AE;stroke-width:1.8}.fe.hot{stroke:#DB7E00;stroke-width:3}.fe.dim{opacity:.3}
+.fl{font:12.5px 'IBM Plex Sans',sans-serif;fill:#586274}
+.note2{margin-top:12px;font-size:13px;padding:12px 14px;border-radius:12px;background:#FFF6E6;border:1px solid #F3D7A6}
+/* before / after */
+.ba{margin-top:70px;border:1px solid var(--line);border-radius:24px;background:var(--panel);padding:22px;box-shadow:0 20px 50px -36px rgba(40,32,10,.45)}
+.bahead{display:flex;gap:16px;align-items:center;margin-bottom:16px}
+.bahead .ic{width:56px;height:56px;border-radius:18px;display:grid;place-items:center;font-size:26px;border:2px solid var(--c1);flex:none}
+.bahead h2{font-size:clamp(24px,2.8vw,34px)}
+.bahead .seg{margin-left:auto}
+.bagrid{display:grid;grid-template-columns:1.65fr 1fr;gap:18px;align-items:start}
+.brow{display:grid;grid-template-columns:120px 1fr 26px 1fr;gap:10px;align-items:stretch;margin-bottom:8px;opacity:0;transform:translateX(-14px);transition:.55s}
+.ba.in .brow{opacity:1;transform:none}
+.brow .st{font-family:var(--display);font-weight:700;font-size:14px;padding-top:10px;line-height:1.2}
+.brow .st small{display:block;font-family:var(--mono);font-weight:500;font-size:10.5px;color:var(--dim)}
+.cell{border-radius:12px;padding:9px 11px;font-size:13px;line-height:1.35;transition:.4s}
+.cell.b{background:#F4F1EA;color:#5B6372;border:1px solid #E6E0D3}
+.cell.b::before{content:'✕ ';color:var(--coral);font-weight:700}
+.cell.a{background:color-mix(in srgb,var(--c1) 9%,#fff);border:1px solid color-mix(in srgb,var(--c1) 35%,#fff)}
+.cell.a::before{content:'✓ ';color:var(--c1);font-weight:800}
+.cell .ev{display:inline-block;margin-left:4px;font-family:var(--mono);font-size:10.5px;padding:1px 6px;border-radius:5px;background:#fff;border:1px solid var(--line);color:var(--muted)}
+.brow .ar{display:grid;place-items:center;color:var(--c1);font-weight:800}
+.ba[data-m=before] .cell.a,.ba[data-m=after] .cell.b{opacity:.12;filter:grayscale(1)}
+.ba[data-m=before] .ar,.ba[data-m=after] .ar{opacity:.2}
+.colh{display:grid;grid-template-columns:120px 1fr 26px 1fr;gap:10px;font-size:11px;letter-spacing:.14em;font-weight:700;color:var(--dim);margin-bottom:6px}
+.pillars{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pl{border:1px solid var(--line);border-radius:16px;padding:14px;background:var(--bg2);opacity:0;transform:translateY(12px);transition:.6s}
+.ba.in .pl{opacity:1;transform:none}
+.pl .k{font-size:11px;letter-spacing:.14em;font-weight:700;color:var(--c1)}
+.pl .v{font-family:var(--display);font-size:24px;font-weight:800;line-height:1.05;margin:6px 0 4px}
+.pl .s{font-size:12px;color:var(--muted)}
+.pl .bb{display:flex;gap:6px;align-items:center;margin-top:8px;font-size:11.5px}
+.pl .bb span{padding:2px 7px;border-radius:6px}
+.pl .bb .o{background:#F4F1EA;color:#7A8291;text-decoration:line-through}
+.pl .bb .n{background:color-mix(in srgb,var(--c1) 14%,#fff);color:var(--text);font-weight:600}
+.pl.wide{grid-column:1/-1}
+@media (max-width:1100px){.e2e,.bagrid{grid-template-columns:1fr}.brow,.colh{grid-template-columns:90px 1fr 18px 1fr}.ly{grid-template-columns:1fr}}
+@media (max-width:1000px){.arch{grid-template-columns:1fr}.road,.rider{left:22px}.stage{grid-template-columns:44px 1fr}.stage .dot{grid-column:1}.stage .sc,.stage:nth-child(odd) .sc,.stage:nth-child(even) .sc{grid-column:2;transform:translateY(20px)}.fork{grid-template-columns:1fr}}
+</style></head><body>
+<main class="wrap">
+<div class="page-head"><div><div class="eyebrow">● Flow & Architecture</div><h1>From a WhatsApp message to a dock door</h1>
+<p>How the pieces fit, who owns each decision, and what a working day looks like for the two people this system serves: the driver on the road and the coordinator at Jaipur DC.</p>
+<div class="jump"><a class="btn" href="#architecture">Architecture</a><a class="btn" href="#layers">Five layers</a><a class="btn" href="#e2e">One exception, end to end</a><a class="btn" href="#life-driver">🚚 Life of a Driver</a><a class="btn" href="#life-coordinator">🎧 Life of a Coordinator</a><a class="btn" href="#meet">Where they meet</a></div></div></div>
+
+<h2 class="sec-t" id="architecture" style="margin-top:30px">Architecture</h2>
+<p class="sec-p">One small container, one database, one write path. Language at the edges, deterministic code in the middle. Click any box, or play a trace to watch a real case travel through it.</p>
+<div class="arch">
+  <div class="card" style="padding:12px"><svg id="asvg" viewBox="0 0 1200 660"></svg></div>
+  <div>
+    <div class="traces" id="traces"></div>
+    <div class="card det" id="det"></div>
+  </div>
+</div>
+
+<h2 class="sec-t" id="layers">Five layers — only two edge steps may use a model</h2>
+<p class="sec-p">The layered view from the solution design, mapped to what this prototype runs. Blue steps are the only places a language model is allowed; everything else is deterministic code.</p>
+<div class="layers5" id="layers5">
+ <div class="ly"><div class="lt">1 · Channels</div><div class="lb"><span class="bx">Driver chat<small>WhatsApp · EN / Hinglish / Hindi</small></span><span class="bx">Coordinator view<small>queue · day board · approve</small></span><span class="bx mv">GPS feed (MVP 2)<small>pings · geofence · ETA</small></span></div></div>
+ <div class="ly"><div class="lt">2 · API backend</div><div class="lb"><span class="bx wide">Verify sender (phone) · bind chat to its owner · drop duplicates · idempotency key · detect language in code</span></div></div>
+ <div class="ly"><div class="lt">3 · Conversation workflow<br><small>fixed path — the model never picks the next tool</small></div><div class="lb flowr"><span class="bx llm">Extract<small>rules → LLM only if UNKNOWN</small></span><i>→</i><span class="bx">Validate<small>schema, times, evidence</small></span><i>→</i><span class="bx">Resolve<small>which shipment</small></span><i>→</i><span class="bx">Clarify?<small>a rule decides</small></span><i>→</i><span class="bx">Offer · book<small>or escalate</small></span><i>→</i><span class="bx llm">Reply<small>catalogue + output guard</small></span></div></div>
+ <div class="ly"><div class="lt">4 · Services<br><small>tool calls from an allow-list</small></div><div class="lb"><span class="bx">Context service<small>read-only, everything at as_of</small></span><span class="bx">Scheduler<small>F1–F9 + 15 checks · facility plan</small></span><span class="bx">Booking service<small>the only code that writes bookings</small></span><span class="bx">Escalation router<small>person · channel · SLA</small></span></div></div>
+ <div class="ly"><div class="lt">5 · System of record</div><div class="lb"><span class="bx wide">SQLite snapshot (18 tables) + 12 added tables + 3 triggers → Postgres with EXCLUDE in the pilot · <a href="insights.html#new-tables">proposed MVP 2 tables →</a></span></div></div>
+</div>
+
+<h2 class="sec-t" id="e2e">One exception, end to end</h2>
+<p class="sec-p">A promise is made only after one transaction books the slot. Every path either asks one question, escalates with options, or books through one checked transaction. Pick a case to watch its path.</p>
+<div class="e2e">
+ <div class="card" style="padding:12px"><svg id="e2svg" viewBox="0 0 900 900"></svg></div>
+ <div><div class="traces" id="e2t"></div><div class="card det" id="e2d"></div>
+  <div class="note2"><b>Adapted from the solution design:</b> there, a pick takes a 3-minute hold and only "YES" books. Here the pick itself is the booking request, checked in one transaction — one fewer message for a driver on the road. A hold exists only while a coordinator decides.</div></div>
+</div>
+
+<div class="ba" id="life-driver" style="--c1:var(--teal)">
+ <div class="bahead"><div class="ic">🚚</div><div><div class="eyebrow" style="color:var(--teal)">Life of a Driver · before and after</div><h2>From phone tag to one message</h2></div><div class="seg baseg"><button data-m="both" class="on">Both</button><button data-m="before">Before</button><button data-m="after">After</button></div></div>
+ <div class="bagrid"><div class="rows" id="bad"></div><div class="pillars" id="pd"></div></div>
+</div>
+
+<div class="ba" id="life-coordinator" style="--c1:var(--saffron)">
+ <div class="bahead"><div class="ic">🎧</div><div><div class="eyebrow">Life of a Coordinator · before and after</div><h2>From relaying messages to making decisions</h2></div><div class="seg baseg"><button data-m="both" class="on">Both</button><button data-m="before">Before</button><button data-m="after">After</button></div></div>
+ <div class="bagrid"><div class="rows" id="bac"></div><div class="pillars" id="pc"></div></div>
+</div>
+
+<h2 class="sec-t" id="meet">Where the two lives meet</h2>
+<p class="sec-p">Most driver conversations never touch the coordinator. When they do, it is a hand-off with a deadline, and the answer flows straight back to the driver's WhatsApp.</p>
+<div class="card swim" id="swim"><svg viewBox="0 0 1200 310" id="ssvg"></svg></div>
+</main>
+<script src="data.js"></script><script src="app.js"></script>
+<script>
+/* ---------------- architecture ---------------- */
+const N={
+ drv:{x:20,y:70,w:150,h:64,l:'Driver',s:'WhatsApp · EN / Hing / Hindi',c:'#0B8A78',own:'People',d:'Writes in their own words. Identity comes from the verified phone number, never from what the message claims.'},
+ disp:{x:20,y:560,w:150,h:64,l:'Carrier dispatcher',s:'told when a booking is released',c:'#586274',own:'People',d:'Hears automatically when a booking is released because the truck can no longer reach its window (e.g. APT1018 at 09:45).'},
+ wa:{x:210,y:70,w:170,h:64,l:'WhatsApp webhook',s:'signature verified · dedupe',c:'#586274',own:'Channel',d:'Cloud API webhook. Same message ID, or the same text within 10 minutes, gets no second reply and no second ETA record.'},
+ wf:{x:430,y:40,w:470,h:600,l:'',s:'',c:'#DB7E00',box:true},
+ id:{x:455,y:80,w:200,h:58,l:'Conversation workflow',s:'fixed state machine · 10 steps',c:'#DB7E00',own:'Code decides',d:'Turns one message into one reply by calling tools in a known order. Nothing lets a model pick the next tool — it is a workflow, not an agent loop.'},
+ nlu:{x:680,y:80,w:200,h:58,l:'Language layer',s:'rules first: regex + word lists',c:'#2370C8',own:'Model reads',d:'Reads clock times, durations, ranges, choices, safety words and urgency claims with evidence. Hindi and Hinglish without a model call.'},
+ llm:{x:700,y:160,w:180,h:50,l:'LLM fallback',s:'Claude Haiku · strict JSON',c:'#6A55D6',own:'Model reads',d:'Called only when rules return UNKNOWN. No tools, no database, no phone number. Output is schema-checked; it can change what we ask, never what we book.'},
+ eta:{x:455,y:240,w:200,h:58,l:'ETA resolver',s:'late edge · plausibility checks',c:'#DB7E00',own:'Code decides',d:'Plans on the late side of each estimate and flags impossible ETAs (a truck on two trips, a truck still inside the DC).'},
+ feas:{x:680,y:240,w:200,h:58,l:'Feasibility engine',s:'15 checks per slot',c:'#DB7E00',own:'Code decides',d:'Door type, weight, unload length, changeover, breakdowns, maintenance, driver limits, earmarks. Every rejected slot keeps its reason.'},
+ plan:{x:455,y:330,w:200,h:58,l:'Scheduling tool',s:'priority + repair · proposes only',c:'#DB7E00',own:'Code decides',d:'Plans all trucks at the facility, sets 20-minute earmarks for scarce capacity, suggests swaps. It never books.'},
+ hm:{x:680,y:330,w:200,h:58,l:'Health monitor',s:'re-checks on every event',c:'#DB7E00',own:'Code decides',d:'Every dock event or ETA change re-checks all live bookings: OK, AT_RISK, CERTAIN_MISS or INVALID. Flagged the reefer clash 7 hours early.'},
+ cap:{x:455,y:420,w:200,h:58,l:'Capacity layer',s:'commit · hold · approve · swap',c:'#0B8A78',own:'Code decides',d:'Every booking re-checks and writes in one transaction. Idempotent on the WhatsApp message ID. Holds exist only while a coordinator decides.'},
+ esc:{x:680,y:420,w:200,h:58,l:'Escalation router',s:'right person · working channel',c:'#D9363E',own:'Person decides',d:'Picks the person and channel by reason and urgency; skips vacant roles and failed channels; sets an SLA.'},
+ rep:{x:455,y:510,w:425,h:58,l:'Reply catalogue + output guard',s:'34 templates × 3 languages · every dock & time must be in the evidence',c:'#2370C8',own:'Code decides',d:'"Booked" may appear only after a commit returned CONFIRMED. The guard blocked one of our own replies during development — and was right.'},
+ db:{x:960,y:300,w:210,h:80,l:'Managed Postgres',s:'EXCLUDE no-overlap · guard triggers',c:'#6A55D6',own:'Database refuses',d:'The last line of defence. Even if the code had a bug, overlapping time on one door, an overweight load or a closed slot cannot be written.'},
+ out:{x:960,y:440,w:210,h:64,l:'Outbox',s:'WhatsApp · SMS · e-mail · phone',c:'#586274',own:'Channel',d:'Nothing is sent outside a transaction. A sender drains committed messages to the right channel.'},
+ crd:{x:960,y:70,w:210,h:70,l:'Coordinator console',s:'Day Board · Hand-offs · Planner',c:'#DB7E00',own:'Person decides',d:'Approves holds, moves bookings, handles no-slot cases. Every approval is re-checked before anything is booked.'},
+ sm:{x:960,y:170,w:210,h:56,l:'Shift manager',s:'phone call for safety',c:'#D9363E',own:'Person decides',d:'Safety words stop all scheduling talk and page the shift manager by phone — Anita Joshi on 4 August.'}
+};
+const E=[['drv','wa'],['wa','id'],['id','nlu'],['nlu','llm'],['id','eta'],['eta','feas'],['feas','plan'],['plan','hm'],['feas','cap'],['cap','db'],['hm','esc'],['id','esc'],['cap','rep'],['rep','out'],['esc','out'],['out','drv'],['out','crd'],['out','sm'],['out','disp'],['crd','cap'],['db','hm']];
+const svg=$('#asvg'),NS='http://www.w3.org/2000/svg';
+function ctr(n,side){const o=N[n];return side==='r'?[o.x+o.w,o.y+o.h/2]:side==='l'?[o.x,o.y+o.h/2]:side==='t'?[o.x+o.w/2,o.y]:side==='b'?[o.x+o.w/2,o.y+o.h]:[o.x+o.w/2,o.y+o.h/2]}
+function path(a,b){const A=N[a],B=N[b];let p,q;
+  if(A.x+A.w<=B.x){p=ctr(a,'r');q=ctr(b,'l')}else if(B.x+B.w<=A.x){p=ctr(a,'l');q=ctr(b,'r')}else if(A.y+A.h<=B.y){p=ctr(a,'b');q=ctr(b,'t')}else{p=ctr(a,'t');q=ctr(b,'b')}
+  if(a==='out'&&b==='drv'){return `M${N.out.x} ${N.out.y+20} C 600 ${N.out.y+170}, 140 640, ${N.drv.x+60} ${N.drv.y+N.drv.h}`}
+  if(a==='crd'&&b==='cap'){return `M${N.crd.x} ${N.crd.y+50} C 920 200, 930 440, ${N.cap.x+N.cap.w} ${N.cap.y+12}`}
+  if(a==='id'&&b==='esc'){return `M${N.id.x+N.id.w-20} ${N.id.y+N.id.h} C 660 200, 900 300, ${N.esc.x+N.esc.w-30} ${N.esc.y}`}
+  const mx=(p[0]+q[0])/2,my=(p[1]+q[1])/2;
+  return Math.abs(p[0]-q[0])>Math.abs(p[1]-q[1])?`M${p[0]} ${p[1]} C ${mx} ${p[1]}, ${mx} ${q[1]}, ${q[0]} ${q[1]}`:`M${p[0]} ${p[1]} C ${p[0]} ${my}, ${q[0]} ${my}, ${q[0]} ${q[1]}`}
+let html='<defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#C9BEA6"/></marker></defs>';
+html+=`<rect x="${N.wf.x}" y="${N.wf.y}" width="${N.wf.w}" height="${N.wf.h}" rx="22" fill="#FFF9EE" stroke="#E9C88E" stroke-dasharray="6 6"/><text x="${N.wf.x+24}" y="${N.wf.y+24}" class="cap">ONE SMALL CONTAINER · PYTHON</text>`;
+html+=`<text x="960" y="56" class="cap">PEOPLE</text><text x="960" y="292" class="cap">SYSTEM OF RECORD</text><text x="20" y="56" class="cap">ON THE ROAD</text>`;
+E.forEach(([a,b],i)=>{html+=`<path id="e${i}" class="ed" data-a="${a}" data-b="${b}" d="${path(a,b)}" marker-end="url(#ah)"/>`});
+Object.entries(N).forEach(([k,o])=>{if(o.box)return;html+=`<g class="nd" data-k="${k}"><rect class="b" x="${o.x}" y="${o.y}" width="${o.w}" height="${o.h}" rx="14" fill="#fff" stroke="${o.c}" stroke-width="1.4"/><rect x="${o.x}" y="${o.y+12}" width="4" height="${o.h-24}" rx="2" fill="${o.c}"/>
+  <text x="${o.x+16}" y="${o.y+o.h/2-3}" class="lbl">${o.l}</text><text x="${o.x+16}" y="${o.y+o.h/2+14}" class="sub">${o.s}</text></g>`});
+// ambient packets
+const PK=[[0,'#0B8A78',0],[1,'#0B8A78',.5],[2,'#2370C8',1],[4,'#DB7E00',1.5],[5,'#DB7E00',2],[8,'#0B8A78',2.5],[9,'#6A55D6',3],[12,'#2370C8',3.5],[13,'#586274',4],[15,'#0B8A78',4.5],[16,'#DB7E00',2.2],[20,'#6A55D6',3.6]];
+PK.forEach(([e,c,b])=>{html+=`<circle r="5" fill="${c}" visibility="hidden"><set attributeName="visibility" to="visible" begin="${b}s"/><animateMotion dur="2.4s" begin="${b}s" repeatCount="indefinite"><mpath href="#e${e}"/></animateMotion></circle>`});
+svg.innerHTML=html;
+function showNode(k){const o=N[k];$('#det').innerHTML=`<div class="own" style="color:${o.c}">${o.own}</div><h4>${o.l}</h4><p>${o.s}</p><p style="color:var(--text)">${o.d}</p>`;
+  $$('.nd').forEach(n=>n.classList.toggle('hot',n.dataset.k===k))}
+$$('.nd').forEach(n=>n.onclick=()=>{stopTrace();showNode(n.dataset.k)});
+const TR={
+ delay:{t:'Delay → options → booked',s:'C07 · "Reaching around 11:20. Any slot after 12?"',p:['drv','wa','id','nlu','eta','feas','rep','out','drv','wa','id','cap','db','rep','out','drv'],n:['Driver writes on WhatsApp','Webhook verified; not a duplicate','Workflow starts a turn','Rules read ETA 11:20 and "after 12"','ETA recorded MEDIUM; old D4 slot is a certain miss','Three slots pass all 15 checks','Options from the catalogue, guard checks docks & times','Sent','Driver taps 1','—','—','Commit: lock, re-check, insert','Overlap trigger passes · APT-N0004','"Booked: Dock D4, 12:40 PM"','Sent','Booked in 2 minutes']},
+ noslot:{t:'No feasible slot → hand-off',s:'C14 · reefer, ETA 18:30, D5 in maintenance',p:['drv','wa','id','nlu','eta','feas','esc','out','crd','cap','db'],n:['Driver writes at 16:24','Webhook verified','Workflow turn','ETA 18:30 HIGH','Recorded; booking is a certain miss','0 options: every door rejected with a reason','Escalate NO_FEASIBLE_SLOT; skip the failed night-shift mailbox','Driver told not to go to the dock; e-mail + dashboard to Neha','Neha picks one of three computed options','Any booking she makes is re-checked','…and guarded by the database']},
+ safety:{t:'Safety → shift manager',s:'C12 · "accident ho gaya, helper ko chot…"',p:['drv','wa','id','nlu','esc','out','sm','drv'],n:['Driver writes in Hinglish','Webhook verified','Workflow turn','Safety words found (rules and evidence)','All scheduling stops · ESC-0003','Phone call + WhatsApp','Anita Joshi paged, 5-minute target','"Call 112 if anyone is hurt"']},
+ monitor:{t:'Breakdown → monitor → approval',s:'09:15 · D3 leveller fails',p:['db','hm','plan','esc','out','crd','cap','db','out','disp'],n:['Dock event written','Health monitor re-checks every booking','Planner proposes a whole-facility plan','Coordinator alert with options','E-mail + dashboard','Neha approves the SHP1005 move','Commit re-checks inside the lock','APT-N0002 · D4 09:35','Notices queued','Dispatchers told about released bookings']}
+};
+$('#traces').innerHTML=Object.entries(TR).map(([k,t])=>`<button data-k="${k}"><b>▶ ${t.t}</b><small>${t.s}</small></button>`).join('');
+let trun=0;function stopTrace(){trun++;$$('.nd,.ed').forEach(x=>x.classList.remove('dim','hot'));$$('#traces button').forEach(b=>b.classList.remove('on'))}
+async function trace(k){stopTrace();const id=trun,T=TR[k];$(`#traces button[data-k="${k}"]`).classList.add('on');
+  $$('.nd,.ed').forEach(x=>x.classList.add('dim'));
+  $('#det').innerHTML=`<div class="own" style="color:var(--saffron)">Trace</div><h4>${T.t}</h4><p>${T.s}</p>`+T.n.map((s,i)=>s==='—'?'':`<div class="tstep" id="ts${i}">${String(i+1).padStart(2,'0')} · ${s}</div>`).join('');
+  for(let i=0;i<T.p.length;i++){if(id!==trun)return;const k2=T.p[i];const nd=$(`.nd[data-k="${k2}"]`);nd.classList.remove('dim');$$('.nd').forEach(n=>n.classList.remove('hot'));nd.classList.add('hot');
+    if(i>0){const e=$$('.ed').find(e=>(e.dataset.a===T.p[i-1]&&e.dataset.b===k2)||(e.dataset.b===T.p[i-1]&&e.dataset.a===k2));if(e){e.classList.remove('dim');e.classList.add('hot')}}
+    $$('.tstep').forEach(s=>s.classList.remove('on'));$('#ts'+i)?.classList.add('on');await sleep(T.n[i]==='—'?250:850)}
+  await sleep(1200);if(id===trun){$$('.nd,.ed').forEach(x=>x.classList.remove('dim'))}}
+$$('#traces button').forEach(b=>b.onclick=()=>trace(b.dataset.k));
+showNode('cap');
+new IntersectionObserver((es,o)=>{if(es[0].isIntersecting){trace('delay');o.disconnect()}},{threshold:.4}).observe(svg);
+
+/* ---------------- five layers reveal ---------------- */
+new IntersectionObserver((es,o)=>{if(es[0].isIntersecting){$('#layers5').classList.add('in');$$('#layers5 .ly').forEach((l,i)=>l.style.transitionDelay=i*.12+'s');o.disconnect()}},{threshold:.2}).observe($('#layers5'));
+/* ---------------- one exception end to end ---------------- */
+const FN={msg:[150,20,340,72,'Driver message','on WhatsApp, any language',''],ver:[150,115,340,72,'Verify, dedupe, detect language','code only',''],ext:[150,210,340,72,'Extract facts','rules first → LLM to strict JSON if unknown','llm'],
+ clr:[150,305,340,72,'Shipment known? ETA firm?','rules decide','dec'],fnd:[150,400,340,72,'Find feasible slots','15 checks · score · facility plan',''],any:[150,495,340,72,'Any feasible slot?','','dec'],
+ off:[150,590,340,72,'Offer up to 3 slots','nothing reserved yet',''],pick:[150,685,340,72,'Driver picks one','the pick is the booking request',''],com:[150,780,340,72,'One transaction re-checks and books','lock · re-check · insert · DB guards',''],
+ rpl:[150,875,340,72,'Reply with the exact status','booked — or pending coordinator OK','llm'],
+ safe:[560,210,300,72,'Safety words → a person','shift manager by phone, 5 min','side'],ask:[560,305,300,72,'Ask one question','which order? what time exactly?','side'],esc:[560,495,300,72,'Escalate to coordinator','options attached; driver told plainly','side'],rep:[560,780,300,72,'Re-plan, offer next best','slot taken or changed since offer','side']};
+const FE=[['msg','ver'],['ver','ext'],['ext','clr'],['clr','fnd','clear'],['fnd','any'],['any','off','yes'],['off','pick'],['pick','com'],['com','rpl','committed'],['ext','safe','safety'],['clr','ask','unclear'],['ask','msg',"driver's next message"],['any','esc','none'],['com','rep','conflict'],['rep','off','fresh options']];
+$('#e2svg').setAttribute('viewBox','0 0 900 970');
+let eh='<defs><marker id="fa" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#B9AE96"/></marker></defs>';
+FE.forEach(([a,b,l],i)=>{const A=FN[a],B=FN[b];let d,lx,ly;
+  if(A[0]===B[0]){d=`M${A[0]+A[2]/2} ${A[1]+A[3]} L${B[0]+B[2]/2} ${B[1]}`;lx=A[0]+A[2]/2+10;ly=(A[1]+A[3]+B[1])/2+5}
+  else if(B[0]>A[0]){d=`M${A[0]+A[2]} ${A[1]+A[3]/2} L${B[0]} ${B[1]+B[3]/2}`;lx=(A[0]+A[2]+B[0])/2;ly=A[1]+A[3]/2-8}
+  else{const x=A[0]+A[2]/2;d=`M${x} ${A[1]} L${x} ${B[1]+B[3]/2} L${B[0]+B[2]} ${B[1]+B[3]/2}`;lx=x+8;ly=(A[1]+B[1])/2+30}
+  if(a==='ask'&&b==='msg'){d=`M${A[0]+A[2]/2} ${A[1]} L${A[0]+A[2]/2} ${B[1]+B[3]/2} L${B[0]+B[2]} ${B[1]+B[3]/2}`;lx=A[0]+A[2]/2+8;ly=140}
+  if(a==='rep'&&b==='off'){d=`M${A[0]+A[2]/2} ${A[1]} L${A[0]+A[2]/2} ${B[1]+B[3]/2} L${B[0]+B[2]} ${B[1]+B[3]/2}`;lx=A[0]+A[2]/2+8;ly=700}
+  eh+=`<path class="fe" id="fe${i}" data-a="${a}" data-b="${b}" d="${d}" marker-end="url(#fa)"/>${l?`<text class="fl" x="${lx}" y="${ly}" text-anchor="${B[0]>A[0]&&A[0]!==B[0]&&!(a==='ask'||a==='rep')?'middle':'start'}">${l}</text>`:''}`});
+Object.entries(FN).forEach(([k,n])=>{eh+=`<g class="fn ${n[6]}" data-k="${k}"><rect x="${n[0]}" y="${n[1]}" width="${n[2]}" height="${n[3]}" rx="14"/><text class="t1" x="${n[0]+n[2]/2}" y="${n[1]+(n[5]?31:42)}">${n[4]}</text>${n[5]?`<text class="t2" x="${n[0]+n[2]/2}" y="${n[1]+53}">${n[5]}</text>`:''}</g>`});
+eh+=`<circle id="e2p" r="9" fill="#DB7E00" opacity="0" style="transition:cx .45s,cy .45s,opacity .3s"/>`;
+$('#e2svg').innerHTML=eh;
+const ET={
+ c07:{t:'Clear path → booked',s:'C07 · "Reaching around 11:20. Any slot after 12?"',p:[['msg','09:34 · message arrives'],['ver','Verified DRV006 · new message · English'],['ext','ETA 11:20, "after 12" — read by rules, evidence kept'],['clr','One trip in transit, ETA is a time → clear'],['fnd','Old D4 10:00 is a certain miss; 3 slots pass'],['any','Yes'],['off','D4 12:40 · D2 1:00 · D1 2:00'],['pick','09:36 · driver taps 1'],['com','Won the race: re-check passes · APT-N0004'],['rpl','"Booked: Dock D4, 12:40 PM. Gate by 12:25."']],link:'driver.html#c07'},
+ c09:{t:'Unclear → one question',s:'C09 · "thoda late hoon bhai, traffic hai"',p:[['msg','09:42 · Hinglish'],['ver','Verified DRV010 · language hi-Latn'],['ext','Delay with no time → VAGUE'],['clr','ETA not firm'],['ask','"Kitne baje tak pahunchoge?" — the only question'],['msg','09:43 · "11:30 tak pahunch jaunga"'],['ver','Same thread, same language'],['ext','ETA 11:30 HIGH'],['clr','Clear'],['fnd','Current reefer booking D5 11:45 still feasible'],['rpl','"Booking still works — nothing to change"']],link:'driver.html#c09'},
+ c03:{t:'Conflict → re-plan → booked',s:'C03 · lost the 09:36 race',p:[['msg','09:19 · "I am late by one hour."'],['ver','Verified DRV013'],['ext','Delay 60 min → 11:00 MEDIUM, stated back'],['clr','Clear'],['fnd','3 slots'],['any','Yes'],['off','Options incl. D4 12:40'],['pick','09:36 · taps 3'],['com','Re-check: D4 12:40 just taken → OPTION_GONE'],['rep','"Sorry, just taken… nothing booked yet" + 3 fresh options'],['off','D1 11:30 · D2 1:00 · D4 1:35'],['pick','09:37 · taps 1'],['com','Re-check passes · APT-N0005'],['rpl','"Booked: Dock D1, 11:30 AM."']],link:'driver.html#c03'},
+ c14:{t:'No feasible slot → escalate',s:'C14 · reefer, ETA 18:30',p:[['msg','16:24 · "Can the reefer unload tonight?"'],['ver','Verified DRV015'],['ext','ETA 18:30 HIGH'],['clr','Clear'],['fnd','D5 maintenance 18:00–22:00; reefer needs D5'],['any','None — every door rejected with a reason'],['esc','ESC-0004 → Neha Bansal, respond by 16:39; driver told not to come to the dock']],link:'handoffs.html#esc-0004'},
+ c12:{t:'Safety → a person',s:'C12 · "bhai accident ho gaya…"',p:[['msg','10:05 · Hinglish'],['ver','Verified DRV011'],['ext','Safety words: accident, chot'],['safe','All scheduling stops · 112 advice · Anita Joshi paged by phone']],link:'driver.html#c12'}};
+$('#e2t').innerHTML=Object.entries(ET).map(([k,t])=>`<button data-k="${k}"><b>▶ ${t.t}</b><small>${t.s}</small></button>`).join('');
+let e2run=0;
+async function e2(k){const id=++e2run,T=ET[k];$$('#e2t button').forEach(b=>b.classList.toggle('on',b.dataset.k===k));
+  $$('.fn,.fe').forEach(x=>{x.classList.add('dim');x.classList.remove('hot')});const P=$('#e2p');P.setAttribute('opacity',1);
+  $('#e2d').innerHTML=`<div class="own" style="color:var(--saffron)">Path</div><h4>${T.t}</h4><p>${T.s}</p>`+T.p.map((s,i)=>`<div class="tstep" id="e2s${i}">${String(i+1).padStart(2,'0')} · ${s[1]}</div>`).join('')+`<a class="btn" style="margin-top:10px" href="${T.link}">Open the real case →</a>`;
+  for(let i=0;i<T.p.length;i++){if(id!==e2run)return;const k2=T.p[i][0],n=FN[k2],g=$(`.fn[data-k="${k2}"]`);g.classList.remove('dim');$$('.fn').forEach(x=>x.classList.remove('hot'));g.classList.add('hot');
+    if(i){const pv=T.p[i-1][0];const e=$$('.fe').find(e=>e.dataset.a===pv&&e.dataset.b===k2);if(e){e.classList.remove('dim');e.classList.add('hot')}}
+    P.setAttribute('cx',n[0]+n[2]-14);P.setAttribute('cy',n[1]+14);$$('#e2d .tstep').forEach(s=>s.classList.remove('on'));$('#e2s'+i)?.classList.add('on');await sleep(900)}}
+$$('#e2t button').forEach(b=>b.onclick=()=>e2(b.dataset.k));
+new IntersectionObserver((es,o)=>{if(es[0].isIntersecting){e2('c03');o.disconnect()}},{threshold:.3}).observe($('#e2svg'));
+/* ---------------- before / after ---------------- */
+const BD=[['Day before','T−1 day','No confirmation; the slot lives in the dispatcher\'s head.','18:00 WhatsApp brief: pickup, leave-by time, dock and slot.','MVP 2'],
+ ['On the road','no GPS','Nobody asks until it is too late — 13 of 20 trucks ran late, three bookings already certain misses.','Late-edge ETA, plausibility checks, a proactive check-in the moment a booking is at risk.','F06'],
+ ['Something slips','delay','Phone tag. 3 driver messages never got a reply; 10 of 12 threads still open.','One WhatsApp message in his own language; answer in a median 1 minute, at most one question.','F27'],
+ ['New slot','rebooking','Whoever calls first wins; the same slot was promised twice and nobody saw it for 3 days.','Only slots that truly fit; tapping one books it in a checked transaction; a lost race gets fresh options in the same reply.','F08'],
+ ['Gate and yard','arrival','Labelled LATE even inside the 30-min grace; no idea when he will be called.','"Your booking stands — queue position 2, call to dock about 9:50."','F19'],
+ ['When it goes wrong','exceptions','Escalation e-mail sent to a night-shift mailbox that bounces.','Accident → shift manager by phone in 5 min. No slot → told not to come; coordinator calls by a deadline.','F29']];
+const PD=[['EFFICIENCY','1 min · 2 msgs','median time to a usable answer · messages per case','phone tag','one chat'],['COMMUNICATION','3 languages','EN, Hinglish, Hindi + an 8-step proactive message series','silence','proactive'],['TRANSPARENCY','Exact status','"booked" only when booked; queue position; GPS ETA in MVP 2','guesswork','facts'],['CONTROL','His limits kept','"must leave by 13:30" binds every booking and swap','first caller wins','fair policy'],['SAFETY','5 min','safety words stop scheduling and page a person by phone','e-mail','phone call',1]];
+const BC=[['Start of shift','08:00','Plan in her head, phones, e-mail and chat; 5 coordinators for 280–360 loads.','One Day Board — every dock and truck; GPS tower flags red / amber / green.','scale'],
+ ['Routine delays','09:19–09:45','Every delay means calls, lookups and manual rebooking.','10 of 13 settled without her; she sees a notice for each change.','C01–C11'],
+ ['A dock breaks','09:15','Finds out when a truck reaches a broken door; an overweight booking sat unnoticed.','All bookings re-checked one minute after the event; the planner proposes; she approves in one click.','F01'],
+ ['Competing trucks','09:36','Loudest driver wins; a CRITICAL hospital load was booked on a dock too weak for it.','Priority from the record, scarce slots protected, swaps trialled and never break a deadline.','F01'],
+ ['Approvals and odd data','09:33','No record of decisions; history overwritten, so a double booking stayed hidden.','Holds with a deadline, data conflicts flagged, append-only history and audit trail.','F08'],
+ ['No slot tonight','16:24','Reefer clash unseen for 3 days; the warning went to a bouncing mailbox at 16:25.','Warned 7 hours early; one hand-off record with every door tried and 3 computed options.','F07']];
+const PC=[['EFFICIENCY','3 of 13','cases needed her — each arrived with options already computed','every case','exceptions only'],['COMMUNICATION','Automatic','drivers and dispatchers told by the system — no relaying','relay','no relay'],['TRANSPARENCY','One board','live docks, RAG trips and an audit trail of every decision','scattered','single view'],['CONTROL','Her policies','priority, earmarks, approvals — every override re-checked by the same guards','ad hoc','signed-off rules'],['EARLY WARNING','7 hours','reefer clash flagged at 09:16; driver wrote at 16:24','too late','early',1]];
+function buildBA(rowsEl,pillEl,R,P){rowsEl.innerHTML=`<div class="colh"><span>STAGE</span><span>BEFORE · from the client\'s data</span><span></span><span>AFTER · with SetuHaul</span></div>`+R.map((r,i)=>`<div class="brow" style="transition-delay:${i*.09}s"><div class="st">${r[0]}<small>${r[1]}</small></div><div class="cell b">${r[2]} <span class="ev">${r[4]}</span></div><div class="ar">→</div><div class="cell a">${r[3]}</div></div>`).join('');
+  pillEl.innerHTML=P.map((p,i)=>`<div class="pl ${p[5]?'wide':''}" style="transition-delay:${.3+i*.1}s"><div class="k">${p[0]}</div><div class="v">${p[1]}</div><div class="s">${p[2]}</div><div class="bb"><span class="o">${p[3]}</span>→<span class="n">${p[4]}</span></div></div>`).join('')}
+buildBA($('#bad'),$('#pd'),BD,PD);buildBA($('#bac'),$('#pc'),BC,PC);
+$$('.ba').forEach(b=>{new IntersectionObserver((es,o)=>{if(es[0].isIntersecting){b.classList.add('in');o.disconnect()}},{threshold:.2}).observe(b);
+  $$('.baseg button',b).forEach(x=>x.onclick=()=>{$$('.baseg button',b).forEach(y=>y.classList.remove('on'));x.classList.add('on');b.dataset.m=x.dataset.m})});
+
+/* ---------------- swimlane ---------------- */
+const X=m=>80+(m-480)/(1000-480)*1080;
+const DE=[[502,'08:22 early truck',36],[559,'09:19–09:45 delay chats, all booked',22],[573,'09:33 evening slot needs OK',40],[605,'10:05 accident',58],[984,'16:24 reefer: no slot',40]];
+const CE=[[556,'09:16 alert, plan, move approved',240],[581,'09:41 approves hold',256],[605,'10:05 shift manager paged',272],[984,'16:24 hand-off record',250]];
+const LINKS=[[573,581,'hold → approve'],[605,605,'safety'],[984,984,'ESC-0004']];
+let sh=`<text x="20" y="84" class="cap">DRIVER</text><text x="20" y="214" class="cap">COORD.</text>
+<line x1="80" y1="80" x2="1160" y2="80" stroke="#BFE5DD" stroke-width="6" stroke-linecap="round"/><line x1="80" y1="210" x2="1160" y2="210" stroke="#F6D9A8" stroke-width="6" stroke-linecap="round"/>`;
+for(let h=8;h<=16;h++)sh+=`<text x="${X(h*60)}" y="300" text-anchor="middle" class="cap">${String(h).padStart(2,'0')}:00</text><line x1="${X(h*60)}" y1="66" x2="${X(h*60)}" y2="224" stroke="#EEE8DC"/>`;
+LINKS.forEach(([a,b,l],i)=>{sh+=`<path class="ln" d="M${X(a)} 86 C ${X(a)} 145, ${X(b)} 145, ${X(b)} 204" stroke="#DB7E00" stroke-width="2" fill="none" stroke-dasharray="600" style="transition-delay:${.4+i*.3}s"/>`});
+DE.forEach(([m,l],i)=>{sh+=`<g class="ev" style="transition-delay:${i*.12}s"><circle cx="${X(m)}" cy="80" r="8" fill="#0B8A78" stroke="#fff" stroke-width="2"/><text x="${X(m)}" y="${DE[i][2]}" text-anchor="${m>900?'middle':'start'}" style="font:600 11px IBM Plex Sans;fill:#18212F">${l}</text></g>`});
+CE.forEach(([m,l],i)=>{sh+=`<g class="ev" style="transition-delay:${.3+i*.12}s"><circle cx="${X(m)}" cy="210" r="8" fill="#DB7E00" stroke="#fff" stroke-width="2"/><text x="${X(m)}" y="${CE[i][2]}" text-anchor="${m>900?'middle':'start'}" style="font:600 11px IBM Plex Sans;fill:#18212F">${l}</text></g>`});
+$('#ssvg').innerHTML=sh;
+new IntersectionObserver((es,o)=>{if(es[0].isIntersecting){$('#swim').classList.add('in');o.disconnect()}},{threshold:.4}).observe($('#swim'));
+</script></body></html>

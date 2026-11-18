@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hand-offs · SetuHaul - Logistic Management</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+Devanagari:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<style>
+.q{display:grid;grid-template-columns:380px 1fr;gap:18px;align-items:start}
+.list{display:flex;flex-direction:column;gap:10px;position:sticky;top:84px}
+.it{display:block;text-align:left;width:100%;border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:16px;padding:14px 16px;transition:.25s;position:relative;overflow:hidden}
+.it:hover{border-color:var(--line2);transform:translateX(3px)}
+.it.on{border-color:var(--saffron);background:linear-gradient(90deg,rgba(219,126,0,.08),var(--panel))}
+.it.done{opacity:.55}
+.it .r1{display:flex;justify-content:space-between;gap:8px;align-items:center;font-size:11.5px;color:var(--dim);font-family:var(--mono)}
+.it b{display:block;font-family:var(--display);font-size:16.5px;margin:6px 0 3px}
+.it small{color:var(--muted);font-size:12.5px}
+.it .bar{position:absolute;left:0;bottom:0;height:3px;background:var(--c,var(--saffron));transition:width 1s linear}
+.urg{font-size:10.5px;font-weight:700;letter-spacing:.06em;padding:2px 7px;border-radius:6px}
+.urg.CRITICAL{background:var(--coral);color:#fff}.urg.HIGH{background:var(--saffron);color:#fff}.urg.LOW{background:var(--panel2);color:var(--muted)}.urg.MEDIUM{background:var(--blue);color:#fff}
+.detail{min-height:600px}
+.detail h2{font-size:30px;line-height:1.1;margin:6px 0 10px}
+.sec{margin-top:22px}
+.sec h4{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);font-family:var(--sans);font-weight:600;margin-bottom:10px}
+.quote{font-size:17px;border-left:3px solid var(--teal);padding:8px 14px;background:rgba(11,138,120,.06);border-radius:0 12px 12px 0}
+.facts{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.fact{border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--bg2)}
+.fact .l{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.08em}
+.fact .v{font-family:var(--display);font-size:20px;font-weight:700;margin-top:4px}
+.rec{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:10px;cursor:pointer;transition:.2s;background:var(--bg2)}
+.rec:hover{border-color:var(--line2)}
+.rec.sel{border-color:var(--teal);background:rgba(34,211,182,.07)}
+.rec .n{width:28px;height:28px;border-radius:9px;background:var(--panel2);display:grid;place-items:center;font-weight:700;flex:none}
+.rec.sel .n{background:var(--teal);color:#fff}
+.tried{display:flex;gap:6px;flex-wrap:wrap}
+.door{width:64px;padding:8px 0;border-radius:10px;text-align:center;border:1px solid var(--line);font-family:var(--mono);font-size:12px;background:var(--bg2);position:relative}
+.door.x{border-color:rgba(255,93,108,.5);color:var(--coral)}
+.door.x::after{content:'✕';position:absolute;top:-7px;right:-6px;background:var(--coral);color:#fff;border-radius:50%;width:16px;height:16px;font-size:10px;line-height:16px}
+.route{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px}
+.node{border:1px solid var(--line2);border-radius:12px;padding:8px 12px;background:var(--bg2)}
+.node.skip{opacity:.45;text-decoration:line-through;border-style:dashed}
+.node.go{border-color:var(--teal);color:var(--teal)}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px;padding-top:18px;border-top:1px solid var(--line)}
+.count{font-family:var(--display);font-size:34px;font-weight:800}
+.steps{display:flex;flex-direction:column;gap:8px;margin-top:14px}
+.step{display:flex;gap:10px;align-items:center;font-size:13.5px;opacity:.25;transition:.4s}
+.step.on{opacity:1}.step i{width:22px;height:22px;border-radius:50%;border:2px solid var(--line2);display:grid;place-items:center;font-size:11px;font-style:normal;flex:none}
+.step.on i{background:var(--teal);border-color:var(--teal);color:#fff}
+.step.bad i{background:var(--coral);border-color:var(--coral);color:#fff}
+.wa{background:#EFE7DC;border-radius:14px;padding:14px;margin-top:12px}
+.wa div{background:#fff;color:#1b2430;padding:9px 12px;border-radius:10px;font-size:13.5px;max-width:520px;font-family:'Noto Sans Devanagari',var(--sans);animation:pop .4s}
+@keyframes pop{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.check label{display:flex;gap:10px;align-items:center;padding:10px 12px;border:1px solid var(--line);border-radius:12px;margin-bottom:8px;background:var(--bg2);cursor:pointer;font-size:14px}
+.check input{accent-color:var(--teal);width:18px;height:18px}
+@media (max-width:1000px){.q{grid-template-columns:1fr}.list{position:static}.facts{grid-template-columns:1fr 1fr}}
+</style></head><body>
+<main class="wrap">
+<div class="page-head"><div><div class="eyebrow">● Coordinator console · hand-off queue</div><h1>Cases that need a person</h1>
+<p>Everything SetuHaul cannot or must not decide lands here with the driver's own words, what was tried and why it failed, computed options and a deadline. Approvals are re-checked before anything is booked.</p></div>
+<div class="chip ok" style="font-size:13px;padding:8px 12px">Routed to: Neha Bansal (coordinator) · Anita Joshi (shift manager)</div></div>
+<div class="q"><aside class="list" id="list"></aside><section class="card detail" id="detail"></section></div>
+</main>
+<script src="data.js"></script><script src="app.js"></script>
+<script>
+const E=byId(SH.esc,'escalation_id');
+const ITEMS=[
+ {id:'move-shp1005',t:'09:16',urg:'HIGH',title:'Approve planner move · SHP1005',sub:'D3 broke down; truck already in the yard',kind:'move',c:'var(--saffron)'},
+ {id:'esc-0001',t:'09:33',urg:'HIGH',title:'Approval · SHP1020 on D1 at 7:30 PM',sub:'Hold HLD-0001 · decide by 09:48',kind:'approve',c:'var(--saffron)'},
+ {id:'esc-0002',t:'09:39',urg:'LOW',title:'Data conflict · DRV007 on two trucks',sub:'SHP1007 and SHP1016 both in transit',kind:'conflict',c:'var(--blue)'},
+ {id:'esc-0003',t:'10:05',urg:'CRITICAL',title:'Safety · accident reported',sub:'DRV011 · helper injured',kind:'safety',c:'var(--coral)'},
+ {id:'esc-0004',t:'16:24',urg:'HIGH',title:'No feasible slot · reefer SHP1015',sub:'Dairy for FreshBasket · D5 in maintenance',kind:'noslot',c:'var(--saffron)'},
+];
+const DONE={};
+function list(){const cur=location.hash.slice(1)||ITEMS[0].id;
+ $('#list').innerHTML=ITEMS.map(i=>`<button class="it ${i.id===cur?'on':''} ${DONE[i.id]?'done':''}" data-id="${i.id}" style="--c:${i.c}">
+  <div class="r1"><span>${i.t} · ${i.id.toUpperCase()}</span><span class="urg ${i.urg}">${DONE[i.id]?'RESOLVED':i.urg}</span></div>
+  <b>${i.title}</b><small>${i.sub}</small><span class="bar" style="width:${DONE[i.id]?100:i.urg==='CRITICAL'?92:i.urg==='HIGH'?60:25}%"></span></button>`).join('');
+ $$('.it').forEach(b=>b.onclick=()=>location.hash=b.dataset.id);}
+
+function header(i,extra=''){return `<div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><div class="eyebrow">${i.t} · ${i.id.toUpperCase()}</div><span class="urg ${i.urg}">${i.urg}</span></div><h2>${i.title}</h2>${extra}`}
+function stepsHtml(arr){return `<div class="steps">${arr.map(s=>`<div class="step"><i>✓</i>${s}</div>`).join('')}</div>`}
+async function runSteps(box,n,badAt){const st=$$('.step',box);for(let k=0;k<st.length;k++){await sleep(520);st[k].classList.add('on');if(k===badAt){st[k].classList.add('bad');st[k].querySelector('i').textContent='!'}}}
+
+const VIEW={
+move(i){const h=SH.log.find(e=>/proposal after the dock event/.test(e.title||''));const p=h.detail.proposal;
+ return header(i,`<p class="muted">The health monitor re-checked every booking after the D3 hydraulic leveller failed at 09:15. SHP1005 (HIGH, 20.5 t) is in the yard for a D3 booking that is now invalid twice over: the door is broken and 20.5 t exceeds D3's 20 t rating.</p>`)+
+ `<div class="sec"><h4>Planner proposal (proposes only — never books)</h4><div class="facts">
+  <div class="fact"><div class="l">Truck</div><div class="v">SHP1005</div></div><div class="fact"><div class="l">From</div><div class="v" style="color:var(--coral)">D3 · 09:00</div></div>
+  <div class="fact"><div class="l">To</div><div class="v" style="color:var(--teal)">D4 · ${p.SHP1005.start}</div></div><div class="fact"><div class="l">Wait</div><div class="v">${p.SHP1005.wait_min} min</div></div></div></div>
+ <div class="sec"><h4>Whole-facility plan after the event</h4><table class="t"><tr><th>Shipment</th><th>Priority</th><th>Proposed</th><th>Wait</th></tr>
+  ${h.detail.order.map(s=>`<tr><td><a href="#" onclick="shipmentDrawer('${s}');return false" style="color:var(--saffron)">${s}</a></td><td>${prioChip(SHIP[s].priority_code)}</td><td>${p[s]?`Dock ${p[s].dock} · ${p[s].start}`:'<span style="color:var(--coral)">No door today</span>'}</td><td>${p[s]?p[s].wait_min+' min':'—'}</td></tr>`).join('')}</table></div>
+ <div id="res"></div>
+ <div class="actions"><button class="btn ok" id="ap">Approve move</button><button class="btn bad" id="rj">Keep current booking</button></div>`},
+approve(i){const h=E['ESC-0001'].handoff;
+ return header(i,`<p class="muted">Sandeep Meena (DRV004) asked for a later evening slot in Hindi. Starts after 21:00 need approval, and here the records also show the same vehicle on another trip (SHP1004 is at the gate now) — a data conflict, so a person decides. A hold protects the slot until the deadline.</p>`)+
+ `<div class="sec"><h4>Driver said</h4><div class="quote" style="font-family:'Noto Sans Devanagari'">“शाम वाला” <span class="muted" style="font-size:13px">[the evening one] · then “1”</span></div></div>
+ <div class="sec"><div class="facts"><div class="fact"><div class="l">Slot held</div><div class="v">D1 · 19:30</div></div><div class="fact"><div class="l">Unload</div><div class="v">19:30–20:30</div></div>
+ <div class="fact"><div class="l">Rule triggered</div><div class="v" style="font-size:14px">Vehicle busy on SHP1004</div></div><div class="fact"><div class="l">Decide by</div><div class="v count" id="cd">15:00</div></div></div></div>
+ <div class="sec"><h4>If no decision</h4><p class="muted" style="margin:0">${esc(h.if_no_decision)}</p></div>
+ <div id="res"></div>
+ <div class="actions"><button class="btn ok" id="ap">Approve D1 · 7:30 PM</button><button class="btn bad" id="rj">Reject</button></div>`},
+conflict(i){const h=E['ESC-0002'].handoff;
+ return header(i,`<p class="muted">${esc(h.conflict)}. One of those ETAs cannot be true, and the plan relies on both. SetuHaul lowers its confidence in both, keeps booking SHP1016 (it is non-blocking) and asks a person.</p>`)+
+ `<div class="sec"><h4>Trips on DRV007 Nitin Patil</h4><div class="facts">${h.trips.map(s=>`<div class="fact"><div class="l">${s} · ${SHIP[s].priority_code}</div><div class="v" style="font-size:16px">${esc(SHIP[s].origin_city)} → Jaipur</div><div class="muted" style="font-size:12px">${VEH[SHIP[s].vehicle_id].registration_number} · ETA ${ampm(tsMin(SHIP[s].latest_eta_ts))}</div></div>`).join('')}
+ <div class="fact" style="grid-column:span 2"><div class="l">Knock-on risk</div><div style="font-size:13px;margin-top:6px">At 10:15 the monitor flags SHP1013 (D1 11:30) as at risk: SHP1007 is booked just before it. If SHP1007 arrives at the last minute, SHP1013 starts ~40 min late.</div></div></div></div>
+ <div class="sec"><h4>${esc(h.asked)}</h4><div class="check" id="cf"><label><input type="radio" name="c" value="a">DRV007 is driving SHP1016 (heavy). Find out who drives SHP1007.</label><label><input type="radio" name="c" value="b">DRV007 is driving SHP1007. Mark SHP1016's ETA unreliable and call the carrier.</label><label><input type="radio" name="c" value="c">Unknown — ask carrier CAR004's dispatcher, keep both flagged.</label></div></div>
+ <div id="res"></div><div class="actions"><button class="btn ok" id="ap">Record answer</button></div>`},
+safety(i){const h=E['ESC-0003'].handoff;
+ return header(i,`<p class="muted">Safety words stopped all scheduling talk at once. The driver was told to call 112 if anyone is hurt, and the shift manager was paged by phone — not e-mail — with a 5-minute response target.</p>`)+
+ `<div class="sec"><h4>Driver said (Hinglish)</h4><div class="quote">“${esc(h.driver_said)}”<div class="muted" style="font-size:13px;margin-top:4px">[brother, there's been an accident, my helper is hurt, I've pulled the truck to the side]</div></div></div>
+ <div class="sec"><h4>Routing</h4><div class="route"><span class="node">Safety words detected</span>→<span class="node go">Anita Joshi · Shift manager</span>→<span class="node">Phone call + WhatsApp</span>→<span class="node">SLA 10:10</span></div></div>
+ <div class="sec"><h4>Agent already did</h4><p style="margin:0">${esc(h.agent_action)}</p></div>
+ <div class="sec"><h4>Shift manager checklist</h4><div class="check" id="ck">${['Called the driver back (+91-9000010011)','Confirmed everyone is safe / 112 called if injured','Told carrier CAR003 and the consignee','Released any booking for this truck (none today)'].map(x=>`<label><input type="checkbox">${x}</label>`).join('')}</div></div>
+ <div id="res"></div><div class="actions"><button class="btn ok" id="ap" disabled>Close safety case</button></div>`},
+noslot(i){const h=E['ESC-0004'].handoff;const al=SH.log.find(e=>/reefer booking APT1015A/.test(e.title||''));
+ return header(i,`<p class="muted">SetuHaul never invents a slot. With D5 (the only reefer door) in maintenance from 18:00, no reefer start fits before the facility closes. The full record went to Neha Bansal; the night-shift address that bounces was skipped.</p>`)+
+ `<div class="sec" style="padding:14px 16px;border-radius:14px;border:1px solid rgba(255,176,32,.4);background:rgba(255,176,32,.06)"><b style="color:var(--saffron)">⏱ Warned 7 hours earlier</b><div style="font-size:13.5px;margin-top:4px">${esc(al.detail.why)}</div></div>
+ <div class="sec"><h4>Driver said · 16:24</h4><div class="quote">“${esc(h.driver_said)}”</div></div>
+ <div class="sec"><div class="facts"><div class="fact"><div class="l">ETA (driver)</div><div class="v">18:30 · ${h.eta.confidence}</div></div><div class="fact"><div class="l">Ready for dock</div><div class="v">${h.eta.release.slice(11,16)}</div></div>
+ <div class="fact"><div class="l">Current booking</div><div class="v" style="color:var(--coral)">D5 · 17:00</div></div><div class="fact"><div class="l">Load</div><div class="v" style="font-size:16px">Dairy · 15 t ❄</div></div></div></div>
+ <div class="sec"><h4>Every door tried</h4><div class="tried">${['D1','D2','D3','D4','D6'].map(d=>`<div class="door x" title="REEFER_DOCK_REQUIRED">${d}</div>`).join('')}<div class="door x" title="maintenance" style="border-color:var(--ice);color:var(--ice)">D5</div></div>
+ <div class="muted" style="font-size:12.5px;margin-top:8px">${h.why_no_slot.map(esc).join(' · ')} · 5 standard/heavy doors rejected: reefer dock required</div></div>
+ <div class="sec"><h4>Routing</h4><div class="route"><span class="node skip">OM004 night-shift mailbox (failed channel)</span>→<span class="node go">Neha Bansal · e-mail + dashboard</span>→<span class="node">Respond by 16:39</span></div></div>
+ <div class="sec"><h4>Computed options — choose one</h4><div id="recs">${h.recommendations.map((r,k)=>`<div class="rec" data-k="${k}"><span class="n">${k+1}</span><div>${esc(r)}</div></div>`).join('')}</div></div>
+ <div id="res"></div><div class="actions"><button class="btn ok" id="ap" disabled>Send decision</button><a class="btn" href="driver.html#c14">See the driver chat</a></div>`}
+};
+const ACT={
+move(){$('#ap').onclick=async()=>{$('#ap').disabled=$('#rj').disabled=true;$('#res').innerHTML=`<div class="sec"><h4>Booking transaction</h4>${stepsHtml(['BEGIN IMMEDIATE — write lock taken','Re-check feasibility now, lock held','Cancel APT1005 (D3) · Rescheduled','Insert booking · overlap trigger passes','Confirmed APT-N0002 · D4 at 09:35 · driver and yard told'])}</div>`;await runSteps($('#res'));DONE['move-shp1005']=1;list();toast('Moved SHP1005 to D4 · APT-N0002')};
+ $('#rj').onclick=()=>{toast('Kept current booking — note: it breaks D3 weight and breakdown rules','⚠')}},
+approve(){let s=15*60;const tm=setInterval(()=>{s-=7;if(s<=0||DONE['esc-0001']){clearInterval(tm);return}const el=$('#cd');if(!el){clearInterval(tm);return}el.textContent=String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')},100);
+ $('#ap').onclick=async()=>{clearInterval(tm);$('#ap').disabled=$('#rj').disabled=true;$('#res').innerHTML=`<div class="sec"><h4>Approval is re-checked before booking</h4>${stepsHtml(['Hold HLD-0001 still live (deadline 09:48)','Re-run 15-point feasibility with driver limits','Cancel APT1020 (D2 18:00) · Rescheduled','Confirmed APT-N0007 · D1 at 19:30','Driver notified in Hindi'])}<div class="wa" id="wa" hidden><div>पक्का हो गया: कोऑर्डिनेटर ने Jaipur DC, डॉक D1, 7:30 PM मंज़ूर कर दिया। गेट पर 7:15 PM तक पहुँचिए। रेफ़ APT-N0007।</div></div></div>`;await runSteps($('#res'));$('#wa').hidden=false;DONE['esc-0001']=1;list();toast('Approved · APT-N0007 confirmed')};
+ $('#rj').onclick=async()=>{clearInterval(tm);$('#ap').disabled=$('#rj').disabled=true;$('#res').innerHTML=`<div class="sec">${stepsHtml(['Hold HLD-0001 released','Slot D1 19:30 back in the pool','Driver told and re-offered fresh options'])}</div>`;await runSteps($('#res'));DONE['esc-0001']=1;list();toast('Rejected · hold released')}},
+conflict(){$('#ap').onclick=()=>{const v=$('input[name=c]:checked');if(!v){toast('Pick an answer first','!');return}DONE['esc-0002']=1;list();$('#res').innerHTML=`<div class="sec" style="color:var(--teal)">✓ Recorded. Confidence on the other trip stays LOW until confirmed; the monitor keeps watching SHP1013's 11:30 booking.</div>`;toast('Answer recorded on ESC-0002')}},
+safety(){const cks=$$('#ck input');cks.forEach(c=>c.onchange=()=>{$('#ap').disabled=!cks.every(x=>x.checked)});$('#ap').onclick=()=>{DONE['esc-0003']=1;list();$('#res').innerHTML='<div class="sec" style="color:var(--teal)">✓ Safety case closed by Anita Joshi. Scheduling for DRV011 stays suspended until a person re-opens it.</div>';toast('Safety case closed')}},
+noslot(){let pick=null;$$('.rec').forEach(r=>r.onclick=()=>{$$('.rec').forEach(x=>x.classList.remove('sel'));r.classList.add('sel');pick=+r.dataset.k;$('#ap').disabled=false});
+ $('#ap').onclick=async()=>{const msgs=['Good news: maintenance on Dock D5 now starts at 7:55 PM. Your reefer can unload 6:45–7:45 PM. Please be at the gate by 6:30 PM.','No reefer dock is free tonight. Please park in the yard with the reefer unit running; you will get the first reefer slot tomorrow. We are checking your e-way bill validity.','Please hold position — we are checking a reefer door at SetuHaul Gurugram Cross-Dock (closes 21:00). The coordinator will call you with the route.'];
+  $('#ap').disabled=true;$('#res').innerHTML=`<div class="sec"><h4>Decision sent</h4>${stepsHtml(['Decision logged on ESC-0004 by Neha Bansal',pick===0?'Maintenance team asked to move D5 start to 19:55':pick===1?'Overnight hold recorded · e-way bill check task created':'Gurugram coordinator Rohit Arora asked for D3 · road time to confirm','Driver message queued in the outbox'])}<div class="wa" id="wa" hidden><div>${msgs[pick]}</div></div></div>`;await runSteps($('#res'));$('#wa').hidden=false;DONE['esc-0004']=1;list();toast('Decision sent to Mohammed Salim')}}
+};
+function route(){const id=location.hash.slice(1)||ITEMS[0].id;const i=ITEMS.find(x=>x.id===id)||ITEMS[0];list();const d=$('#detail');d.style.opacity=0;d.style.transform='translateY(8px)';
+ setTimeout(()=>{d.innerHTML=VIEW[i.kind](i);ACT[i.kind]();d.style.transition='.35s';d.style.opacity=1;d.style.transform='none'},120)}
+addEventListener('hashchange',route);route();
+</script></body></html>
