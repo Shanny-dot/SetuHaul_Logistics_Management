@@ -3,9 +3,9 @@
 This runbook is for whoever runs the live test with the team's sandbox-joined handsets.
 
 **Status (19 Nov 2026):**
-- Everything below runs offline in tests, and end to end through the local simulator (section 5).
+- Everything below runs offline in tests, and end to end through the local simulator (section 7).
 - The live Twilio round trip in section 4 **has not been run yet**. It needs the team's handsets, a public URL (ngrok) and the Twilio credentials, and none of those were available to the build session.
-- Record the evidence in section 6 when you run it. Don't mark a row as passed without a screenshot and a trace id.
+- Record the evidence in section 7 when you run it. Don't mark a row as passed without a screenshot and a trace id.
 
 ## 1. What you need
 
@@ -76,6 +76,14 @@ set -a; . ../.env; set +a
 curl -s localhost:8000/readyz          # db ok, redis ok (or memory), twilio "account active", clock_mode snapshot
 ```
 
+Then, with ngrok running, run the pre-flight. It sends no WhatsApp message and prints no secret:
+
+```
+.venv/bin/python -I scripts/preflight.py --twilio-api
+```
+
+Fix every FAIL before you start. The WARN lines tell you which scenarios your handsets can play.
+
 The snapshot clock starts at the anchor and runs in real time. Move it forward between cases with the dev endpoint; it never goes back:
 
 ```
@@ -111,7 +119,28 @@ For every step, save a screenshot of the handset. Also save the trace from `curl
 | C12 clear | | `curl -s -X POST localhost:8000/console/safety/<ESC-…>/clear -H "Authorization: Bearer $TOKEN"` | Scheduling resumes for that driver |
 | C14 | 16:24 | `Evening traffic. ETA 6:30. Can the reefer unload tonight?` | "I'm sorry - I can't find a reefer dock …" plus a named person and a time |
 
-## 5. What to prove, and how to show it
+## 5. If nothing happens
+
+Run these first, in order:
+1. `.venv/bin/python -I scripts/preflight.py`
+2. `.venv/bin/python -I scripts/twilio_log_tail.py --hours 2`. This lists recent messages with their error codes, plus Debugger alerts.
+
+Console equivalent: **Monitor > Logs > Messaging** (filter by the sandbox number) and **Monitor > Logs > Errors**.
+
+| What you see | How to tell | Cause | Fix |
+|---|---|---|---|
+| No reply, and no POST in the uvicorn log | Twilio log: the inbound message is there, or the sandbox answered with its join instructions | **Join expired** (3 days) or never joined | Send `join <code>` from the handset again |
+| No reply; Twilio Debugger shows **11200** | uvicorn log shows `403` on `/webhook/twilio`; preflight `probe` FAILs | **Wrong URL or token.** The app validates against a different URL (old ngrok address, http vs https, a path typo) or a different auth token. | Set `TWILIO_WEBHOOK_BASE_URL` to exactly the current ngrok URL, paste the same URL into the Sandbox settings, and restart the app |
+| 11200 with a 404 or a timeout | uvicorn log shows nothing, or a 404 | Sandbox URL missing `/webhook/twilio`, or the app / ngrok is down | Fix the path; restart ngrok (a free ngrok URL changes on every restart) |
+| One reply: "This number is not registered with SetuHaul" | Trace status `UNKNOWN_SENDER` | **Unmapped phone.** The handset isn't in the demo DB copy. | Add it to the CSV, re-run `seed_demo_phones.py`, restart the app; check preflight `phones` |
+| The reply is about the wrong trip, "no slot", or the wrong times | `/readyz` `as_of` is not the time you expect | **Wrong clock.** `CLOCK_MODE=live`, an anchor off 4 Aug, or the clock already past the case's time | Use `CLOCK_MODE=snapshot`. `/dev/clock` only moves forward, so to go back, restart the app on a fresh `seed_demo_phones.py` copy |
+| `/dev/clock` returns 400 "never goes back" | | The snapshot clock is already later | As above: restart on a fresh copy |
+| A reply was decided but never arrives | `/console/outbox` shows the row `BLOCKED` / `FAILED` / `UNDELIVERED` with an `error_code` | 63016 (outside the 24 h window, or a proactive message without a template), 63015 (not joined), 63007 (wrong `TWILIO_WHATSAPP_FROM`) | See the code's hint in `twilio_log_tail.py`; templates are expected to be BLOCKED in the sandbox |
+| A row is stuck in `NEEDS_REVIEW` | `/console/alarms` shows `SEND_NEEDS_REVIEW` | A crash or timeout left the send unproven, and reconciliation found 0 or several matches it couldn't settle | Find the message in Twilio's log, then `POST /console/outbox/{id}/resolve` with `{"action":"sent","provider_sid":"SM…"}` or `{"action":"resend"}` |
+| Replies arrive slowly | | The sandbox sends 1 message every 3 s | Expected |
+| Nothing comes back after the driver sent STOP | Trace status `IGNORED_OPTED_OUT`; in the sandbox, `stop` also leaves the sandbox | The driver opted out | Send `START` (and `join <code>` in the sandbox) |
+
+## 6. What to prove, and how to show it
 
 | Claim | Evidence |
 |---|---|
@@ -120,7 +149,7 @@ For every step, save a screenshot of the handset. Also save the trace from `curl
 | A failed send shows its Twilio ErrorCode | Send to a number that has not joined the sandbox (or let a join expire). `/console/outbox` shows `FAILED` or `UNDELIVERED` with an `error_code` (e.g. 63015 / 63016), and `/console/alarms` has the alarm. |
 | A proactive message outside the window uses a template or is blocked | `curl -s -X POST localhost:8000/console/proactive/SHP1013 -H "Authorization: Bearer $TOKEN"`. With no `TWILIO_TPL_DRIVER_CHECKIN_SID`, `/console/outbox` shows `BLOCKED NO_TEMPLATE` plus a `SEND_BLOCKED` alarm. With a sandbox template SID, the handset gets the template. |
 
-## 6. Results
+## 7. Results
 
 ### Local simulator run (19 Nov 2026)
 
@@ -140,19 +169,21 @@ Run with `CHANNEL=sim` and `scripts/sim_play.py`. Webhooks were form-encoded and
 
 ### Live Twilio Sandbox run
 
-| Case | Screenshot | Trace id | Result |
-|---|---|---|---|
-| C03 | | | not run yet |
-| C06 | | | not run yet |
-| C07 | | | not run yet |
-| C12 | | | not run yet |
-| C14 | | | not run yet |
-| Replay books once | | | not run yet |
-| Stale tap | | | not run yet |
-| Failed send ErrorCode | | | not run yet |
-| Proactive template / blocked | | | not run yet |
+**Not run yet.** Fill this in during the live test. "Expected" is in sections 4 and 6. A row counts only with a screenshot and a trace id (`/dev/trace/<MessageSid>`).
 
-## 7. Known limits
+| Scenario | Handset | Expected | Actual | Screenshot | Trace id |
+|---|---|---|---|---|---|
+| | | | | | |
+| | | | | | |
+| | | | | | |
+| | | | | | |
+| | | | | | |
+| | | | | | |
+| | | | | | |
+| | | | | | |
+| | | | | | |
+
+## 8. Known limits
 
 - **List-picker reply field unknown.** Twilio doesn't document which inbound field carries a list-picker selection. The parser reads `ButtonPayload`, `ListId` and `InteractiveData`. With `MAX_OPTIONS_SHOWN = 3`, lists are not used today.
 - **No blind resend after a crash.** Twilio's Create Message has no idempotency key or client reference. So a per-attempt `send_ref` is stored before the call and carried in the signed status-callback URL (`?ref=`). A row left in SENDING is reconciled, not resent:

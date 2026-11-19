@@ -124,7 +124,7 @@ TWILIO_AUTH_TOKEN=sim-token .venv/bin/python -I scripts/sim_server.py          #
 | `setuhaul/chan_db.py` | Channel tables next to the engine's (the engine's `outbox` table is unchanged) |
 | `setuhaul/clock.py` `Clock` | `CLOCK_MODE=live|snapshot`; snapshot runs the 4 Aug world forward from `SNAPSHOT_ANCHOR` |
 | `templates/twilio_templates.yaml` | Templates to submit for approval; content SIDs come from `TWILIO_TPL_*_SID` |
-| `scripts/` | `sim_server.py`, `sim_play.py`, `seed_demo_phones.py`, `create_twilio_content.py` |
+| `scripts/` | `sim_server.py`, `sim_play.py`, `seed_demo_phones.py`, `create_twilio_content.py`, `preflight.py` (checks the live setup, sends nothing), `twilio_log_tail.py` (recent Twilio messages, error codes, Debugger alerts) |
 | `tests/test_twilio_channel.py` | 40 channel tests, including console-vs-Twilio parity on C03 and C06 |
 
 
