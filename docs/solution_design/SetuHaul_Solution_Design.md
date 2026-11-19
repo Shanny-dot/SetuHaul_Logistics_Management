@@ -443,6 +443,10 @@ is code, not a prompt.
 
 - **Safety.** A safety word from the rules or a SAFETY intent from the
   model stops scheduling, gives 112 advice and pages the shift manager.
+  The driver's shipments are then frozen until a coordinator clears the
+  case: the rule lives in `capacity._commit_core` (an option that would
+  release a frozen booking returns OPTION_GONE / SAFETY_FREEZE), with a
+  database trigger as the backstop (`chan_db.py`).
 
 - **Identity.** The sender is verified by phone number; a chat is bound
   to its own driver.

@@ -132,6 +132,55 @@ T = {
   "hi": "नमस्ते {name}, {order} ({facility}) का स्लॉट {slot} से है। क्या आप समय पर हैं?\n1) समय पर  2) देर हो रही है  3) मदद चाहिए"},
 }
 
+# Channel-layer messages (WhatsApp delivery, privacy, opt-out, safety hold). Same three languages,
+# same guard. None of them states a dock, a time or a booking unless the caller passes evidence.
+T.update({
+ "privacy_notice": {
+  "en": "SetuHaul dock assistant. We use your mobile number, your messages and your truck's trip details only to plan your dock slot and keep you safe. Messages are kept 90 days. Reply STOP to stop, or ask for a person any time.",
+  "hi-Latn": "SetuHaul dock sahayak. Aapka mobile number, message aur trip ki jaankari sirf dock slot tay karne aur aapki suraksha ke liye use hoti hai. Message 90 din rakhe jaate hain. Band karne ke liye STOP bhejiye, ya kabhi bhi insaan se baat maangiye.",
+  "hi": "SetuHaul डॉक सहायक। आपका मोबाइल नंबर, संदेश और ट्रिप की जानकारी सिर्फ़ डॉक स्लॉट तय करने और आपकी सुरक्षा के लिए उपयोग होती है। संदेश 90 दिन रखे जाते हैं। बंद करने के लिए STOP भेजिए, या कभी भी किसी व्यक्ति से बात माँगिए।"},
+ "please_type": {
+  "en": "Sorry, I can only read typed messages for now. Please type your message (for example: late by 1 hour, or reaching 11:30).",
+  "hi-Latn": "Maaf kijiye, abhi main sirf likha hua message padh sakta hoon. Kripya message type kijiye (jaise: 1 ghanta late, ya 11:30 tak pahunchunga).",
+  "hi": "माफ़ कीजिए, अभी मैं सिर्फ़ लिखा हुआ संदेश पढ़ सकता हूँ। कृपया संदेश टाइप कीजिए (जैसे: 1 घंटा देर, या 11:30 तक पहुँचूँगा)।"},
+ "location_noted": {
+  "en": "Thanks, I've noted your location. Please also type the time you expect to reach us.",
+  "hi-Latn": "Shukriya, aapki location note kar li. Kripya pahunchne ka time bhi likhiye.",
+  "hi": "धन्यवाद, आपकी लोकेशन नोट कर ली। कृपया पहुँचने का समय भी लिखिए।"},
+ "options_changed": {
+  "en": "Those options have changed, so nothing was booked from that tap. These are the current ones:\n",
+  "hi-Latn": "Woh options badal gaye hain, isliye us tap se kuch book nahi hua. Abhi ke options:\n",
+  "hi": "वे विकल्प बदल गए हैं, इसलिए उस टैप से कुछ बुक नहीं हुआ। अभी के विकल्प:\n"},
+ "offer_closed": {
+  "en": "Those options are closed, so nothing new was booked from that tap. Ask \"Is my slot still active?\" to see where you stand.",
+  "hi-Latn": "Woh options band ho chuke hain, us tap se kuch naya book nahi hua. \"Mera slot active hai?\" puchhiye.",
+  "hi": "वे विकल्प बंद हो चुके हैं, उस टैप से कुछ नया बुक नहीं हुआ। \"मेरा स्लॉट चालू है?\" पूछिए।"},
+ "opted_out": {
+  "en": "You will get no more messages from the SetuHaul dock assistant. Send START to turn them back on. For anything urgent call your dispatcher.",
+  "hi-Latn": "Ab aapko SetuHaul dock sahayak se message nahi aayenge. Wapas chalu karne ke liye START bhejiye. Zaroori kaam ho to dispatcher ko call kijiye.",
+  "hi": "अब आपको SetuHaul डॉक सहायक से संदेश नहीं आएँगे। फिर से चालू करने के लिए START भेजिए।"},
+ "opted_in": {
+  "en": "Messages are on again. Tell me what is happening with your trip.",
+  "hi-Latn": "Message phir se chalu hain. Batayiye trip mein kya ho raha hai.",
+  "hi": "संदेश फिर से चालू हैं। बताइए ट्रिप में क्या हो रहा है।"},
+ "unknown_sender": {
+  "en": "This number is not registered with SetuHaul. Please contact your dispatcher. / Yeh number SetuHaul mein registered nahi hai. Kripya apne dispatcher se sampark kijiye.",
+  "hi-Latn": "This number is not registered with SetuHaul. Please contact your dispatcher. / Yeh number SetuHaul mein registered nahi hai. Kripya apne dispatcher se sampark kijiye.",
+  "hi": "This number is not registered with SetuHaul. Please contact your dispatcher. / Yeh number SetuHaul mein registered nahi hai. Kripya apne dispatcher se sampark kijiye."},
+ "safety_hold": {
+  "en": "A person is handling your safety case ({ref}). I've added your message to it. If anyone is hurt, call 112. Scheduling is paused for you until they clear it.",
+  "hi-Latn": "Aapka safety case ({ref}) ek insaan dekh rahe hain. Aapka message usme jod diya hai. Koi ghayal ho to 112 par call kijiye. Unke clear karne tak scheduling ruki hai.",
+  "hi": "आपका सुरक्षा केस ({ref}) एक व्यक्ति देख रहे हैं। आपका संदेश उसमें जोड़ दिया है। कोई घायल हो तो 112 पर कॉल कीजिए।"},
+ "turn_error": {
+  "en": "Sorry, I could not finish that on our side. Nothing new was booked. I've asked a coordinator to contact you.",
+  "hi-Latn": "Maaf kijiye, hamari taraf se yeh poora nahi ho paya. Kuch naya book nahi hua. Coordinator ko aapse sampark karne ko bola hai.",
+  "hi": "माफ़ कीजिए, हमारी तरफ़ से यह पूरा नहीं हो पाया। कुछ नया बुक नहीं हुआ। कोऑर्डिनेटर को आपसे संपर्क करने को कहा है।"},
+ "staff_page": {
+  "en": "[{urgency}] {reason} {ref}: {summary} Respond by {by}. Reply ACK {ref} to take it."},
+ "staff_ack": {"en": "Thanks {name}: {ref} is yours. The next person in the chain will not be paged."},
+ "staff_help": {"en": "SetuHaul staff line. Reply ACK <case id> to take a case. The driver chat is for drivers only."},
+})
+
 
 def t(key, lang, **kw):
     table = T[key]
@@ -150,3 +199,29 @@ def guard(text, evidence):
     if re.search(r"^Booked|^Confirmed|Book ho gaya|बुक हो गया|पक्का हो गया|Confirm ho gaya", text) and not evidence.get("confirmed"):
         bad.append("claims booked without CONFIRMED commit")
     return bad
+
+
+OPTION_DOCK = re.compile(r"\b(D\d)\b")
+OPTION_TIME = re.compile(r"\b\d{1,2}:\d{2} (?:AM|PM)\b")
+
+
+def guard_options(options, evidence):
+    """Every dock and time in a button title or list description must be backed by the turn's evidence."""
+    bad = []
+    for o in options:
+        for field_ in (o.get("title", ""), o.get("desc", "")):
+            for d in OPTION_DOCK.findall(field_ or ""):
+                if d not in evidence.get("docks", set()):
+                    bad.append(f"option dock {d}")
+            for tm in OPTION_TIME.findall(field_ or ""):
+                if tm not in evidence.get("times", set()):
+                    bad.append(f"option time {tm}")
+            if re.search(r"\bbooked\b|confirm", field_ or "", re.I) and not evidence.get("confirmed"):
+                bad.append("option claims booked")
+    return bad
+
+
+def evidence_from_text(text):
+    """Docks and times stated in an already-guarded text (used to re-check a re-sent offer)."""
+    return {"docks": set(re.findall(r"(?:Dock|डॉक)\s+(D\d)", text or "")), "times": set(OPTION_TIME.findall(text or "")),
+            "confirmed": False}

@@ -103,6 +103,23 @@ def _why_gone(con, shipment_id, slot_id, as_of):
     return "NO_LONGER_FITS"
 
 
+SAFETY_FREEZE = "SAFETY_FREEZE"   # named reason: the option would release a booking under an open safety case
+
+
+def frozen_shipments(con, shipment_ids):
+    """Shipments under an open SAFETY freeze. The table belongs to the channel layer (chan_db.py);
+    a database without it (scenario run, integrity proof) has no freezes."""
+    ids = [s for s in shipment_ids if s]
+    if not ids:
+        return set()
+    try:
+        rs = con.execute(f"SELECT DISTINCT shipment_id FROM safety_freezes WHERE cleared_at IS NULL AND shipment_id IN ({','.join('?' * len(ids))})",
+                         ids).fetchall()
+    except sqlite3.OperationalError:
+        return set()
+    return {r[0] for r in rs}
+
+
 def driver_limits(con, shipment_id, as_of):
     """Stored driver limits (typed: EARLIEST_START, LATEST_GATE_OUT, ...). Re-applied at every commit."""
     out = {}
@@ -121,6 +138,11 @@ def _commit_core(con, shipment_id, slot_id, as_of, source, actor, approved=False
     o = match[0]
     if o["needs_approval"] and not approved:
         return {"ok": False, "code": "NEEDS_APPROVAL", "option": o}
+    owners = [one(con, "SELECT shipment_id FROM appointments WHERE appointment_id=?", a)["shipment_id"] for a in o["releases"]]
+    frozen = frozen_shipments(con, owners)
+    if frozen:                      # never auto-release a booking whose driver has an open safety case
+        _audit(con, as_of, actor, "RELEASE_BLOCKED_SAFETY_FREEZE", {"shipment": shipment_id, "slot": slot_id, "frozen": sorted(frozen)})
+        return {"ok": False, "code": "OPTION_GONE", "why": SAFETY_FREEZE, "slot_id": slot_id, "frozen": sorted(frozen)}
     ship = T.shipment(con, shipment_id)
     released = []
     for dead in o["releases"]:

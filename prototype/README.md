@@ -92,8 +92,41 @@ curl -s localhost:8000/console/holds -H "Authorization: Bearer <token>"
 | `WHATSAPP_APP_SECRET`, `WHATSAPP_VERIFY_TOKEN`, `WHATSAPP_TOKEN`, `WHATSAPP_PHONE_ID` | Live WhatsApp Cloud API |
 | `COGNITO_REGION`, `COGNITO_USER_POOL_ID`, `COGNITO_CLIENT_ID` | Coordinator sign-in with Cognito instead of demo tokens |
 
-Not yet exercised against live services: the WhatsApp Cloud API, Cognito, a real Redis server, LangSmith and
-the Anthropic API. Each is behind an environment variable and covered by offline tests or fakes.
+Not yet exercised against live services: the Twilio WhatsApp Sandbox (played end to end through the local simulator
+with Twilio-signed webhooks; the live round trip is in `../docs/twilio_live_test.md`), the WhatsApp Cloud API, Cognito,
+a real Redis server, LangSmith and the Anthropic API. Each is behind an environment variable and covered by offline tests or fakes.
+
+## WhatsApp through Twilio (CHANNEL=twilio | sim | console)
+
+The channel layer wraps the same engine; no decision code changed. Offer ids on every option (`opt:{offer}:{n}`),
+outbox delivery after COMMIT with retries and receipts, 24 h window vs templates, SAFETY freeze and a missed-SLA chain.
+
+```
+cd prototype && python3 -m venv .venv && .venv/bin/pip install -r requirements-prod.txt
+.venv/bin/python -I -m unittest discover -s tests -v                          # 76 tests (36 old + 40 channel)
+
+# Local simulator (no Twilio account needed): two terminals
+CHANNEL=sim CLOCK_MODE=snapshot SNAPSHOT_ANCHOR=2026-08-04T09:15:00+05:30 SETUHAUL_DEV=1 TWILIO_AUTH_TOKEN=sim-token \
+  TWILIO_SANDBOX=false .venv/bin/uvicorn app:app --port 8000
+TWILIO_AUTH_TOKEN=sim-token .venv/bin/python -I scripts/sim_server.py          # open http://127.0.0.1:8100
+.venv/bin/python -I scripts/sim_play.py                                        # or play C03, C06, C07, C12, C14 automatically
+
+# Live Twilio Sandbox: see ../docs/twilio_live_test.md
+```
+
+| Path | What it is |
+|---|---|
+| `setuhaul/channels/` | `Channel` protocol; `twilio_wa.py` (signature, parsing, send), `sim.py` (simulator), `console.py` (offline) |
+| `setuhaul/inbound.py` | One inbound message: dedupe, identity, rate limit, lock, STOP, privacy notice, offer binding, engine, render |
+| `setuhaul/outbox.py` | Delivery worker: claim, window/template choice, `send_ref` stored before the call, send, retry (429) / reconcile (5xx, network, crash) instead of blind resend, NEEDS_REVIEW, status callbacks, delivery alarm |
+| `setuhaul/offers.py` | Which list a tap or a typed number belongs to; stale taps never commit |
+| `setuhaul/safety.py` | SAFETY freeze set/clear (audited) and the missed-SLA chain. The rule itself is in `capacity._commit_core` (SAFETY_FREEZE); a DB trigger in `chan_db.py` is the backstop |
+| `setuhaul/chan_db.py` | Channel tables next to the engine's (the engine's `outbox` table is unchanged) |
+| `setuhaul/clock.py` `Clock` | `CLOCK_MODE=live|snapshot`; snapshot runs the 4 Aug world forward from `SNAPSHOT_ANCHOR` |
+| `templates/twilio_templates.yaml` | Templates to submit for approval; content SIDs come from `TWILIO_TPL_*_SID` |
+| `scripts/` | `sim_server.py`, `sim_play.py`, `seed_demo_phones.py`, `create_twilio_content.py`, `preflight.py` (checks the live setup, sends nothing), `twilio_log_tail.py` (recent Twilio messages, error codes, Debugger alerts) |
+| `tests/test_twilio_channel.py` | 40 channel tests, including console-vs-Twilio parity on C03 and C06 |
+
 
 ## What the prototype does not do
 

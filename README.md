@@ -58,7 +58,7 @@ python3 -I run_scheduler.py out/
 python3 -I scripts/audit.py data/setuhaul_freight_operations.db out/
 ```
 
-Each run starts from a fresh copy of the supplied database, so results are identical every time.
+Each run starts from a fresh copy of the supplied database. `run_scenarios.py` prints a byte-identical transcript on every run: its 09:36 two-driver race is released in a fixed, documented order (`SCENARIO_RACE=free` gives the free race). `run_integrity.py` keeps its races free, so which racer wins and the timings vary from run to run, while every invariant holds.
 
 ## Run the site locally
 

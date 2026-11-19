@@ -2,7 +2,8 @@
 
 Replays seed driver messages (with their seed IDs) plus a few new ones, interleaved
 with world events from the snapshot, through the real workflow and database.
-Two drivers choose the same slot in a true two-thread race.
+Two drivers choose the same slot at 09:36 (two threads, two connections), released in a fixed order so the
+transcript is identical on every run; SCENARIO_RACE=free releases them together.
 
 Run:  python3 -I run_scenarios.py out/
 Writes out/scenario_run.json (full trace) and out/scenario_metrics.json.
@@ -127,14 +128,31 @@ ib = [o["slot_id"] for o in ob].index(slot) + 1 if slot else 1
 system("09:36", "Race: both drivers choose the same slot at the same instant (two threads, two database connections)",
        {"slot": slot, "DRV013_choice": ia, "DRV013_offer_shown_at": "09:19", "DRV006_choice": ib, "DRV006_offer_shown_at": "09:34",
         "same_slot_offered_to_both": bool(common)})
+# Two threads, two database connections, both picks stamped 09:36. By default the picks are released in a
+# FIXED ORDER so the transcript is byte-identical on every run: DRV006 (C07) commits first, and DRV013 (C03)
+# is released only after DRV006's commit has returned, so DRV013 gets OPTION_GONE (TAKEN_BY_ANOTHER_TRUCK).
+# This is the order in the published out/scenario_console.txt. The free race (both released together, any
+# winner) is what the integrity proof exercises: tests/test_integrity.py, run_integrity.py, and
+# SCENARIO_RACE=free here (tests/test_scenario_determinism.py checks it keeps the invariants).
+FREE_RACE = os.environ.get("SCENARIO_RACE", "ordered") == "free"
+RACE_ORDER = ["DRV006", "DRV013"]
 barrier, results = threading.Barrier(2), {}
+released = {d: threading.Event() for d in RACE_ORDER}
+released[RACE_ORDER[0]].set()
 
 
 def go(drv, idx, ext):
     c2 = db.connect(DBP)
-    barrier.wait()
-    results[drv] = W.handle(c2, PH[drv], str(idx), D("09:36"), ext)
-    c2.close()
+    if FREE_RACE:
+        barrier.wait()
+    else:
+        released[drv].wait()
+    try:
+        results[drv] = W.handle(c2, PH[drv], str(idx), D("09:36"), ext)
+    finally:
+        c2.close()
+        if not FREE_RACE and drv != RACE_ORDER[-1]:
+            released[RACE_ORDER[RACE_ORDER.index(drv) + 1]].set()
 
 
 th = [threading.Thread(target=go, args=("DRV013", ia, "wa-9003-r1")), threading.Thread(target=go, args=("DRV006", ib, "wa-9001-r1"))]
