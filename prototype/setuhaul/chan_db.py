@@ -67,10 +67,10 @@ CREATE TABLE IF NOT EXISTS demo_world_applied (
     event_key TEXT PRIMARY KEY, applied_at TEXT NOT NULL
 );
 
--- SAFETY freeze, enforced by the database: while a person has not cleared a driver's safety case,
--- nothing may release that driver's booking ("Released by planner ...") or mark it NO_SHOW.
--- The engine (timeline/capacity) is unchanged; a commit that would release a frozen booking is
--- rolled back like any other guard trip, and the channel layer hands that turn to a person.
+-- SAFETY freeze, second layer. The rule lives in capacity._commit_core (an option that would release a
+-- frozen booking returns OPTION_GONE / SAFETY_FREEZE before any write). This trigger is the backstop for
+-- any path that bypasses it: nothing may release a frozen booking ("Released by planner ...") or mark it
+-- NO_SHOW while a person has not cleared the case; such a write is rolled back.
 CREATE TRIGGER IF NOT EXISTS trg_safety_freeze_no_release
 BEFORE UPDATE OF appointment_status ON appointments
 WHEN NEW.appointment_status IN ('CANCELLED', 'NO_SHOW')

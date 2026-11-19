@@ -330,7 +330,12 @@ def board(authorization: str = Header(default=""), x_setuhaul_as_of: str = Heade
     c = _coordinator(authorization)
     con = _con()
     try:
-        return planner.health(con, c["facility_id"], _as_of(x_setuhaul_as_of if DEV else None))
+        out = planner.health(con, c["facility_id"], _as_of(x_setuhaul_as_of if DEV else None))
+        frozen = capacity.frozen_shipments(con, [b.get("shipment_id") for b in out])
+        for b in out:                          # a frozen booking is never released or marked no-show
+            if b.get("shipment_id") in frozen:
+                b.update(frozen=True, action="SAFETY case open: do not release or mark no-show; clear the freeze first.")
+        return out
     finally:
         con.close()
 
@@ -519,7 +524,7 @@ def clear_safety(esc_id: str, authorization: str = Header(default="")):
     c = _coordinator(authorization)
     con = _con()
     try:
-        n = SF.clear(con, esc_id, c["name"], CLOCK.now())
+        n = SF.clear(con, esc_id, f"{c['contact_id']} {c['name']}" if c.get("contact_id") else c["name"], CLOCK.now())
         if not n:
             raise HTTPException(404, "no open freeze for this escalation")
         return {"cleared": esc_id, "shipments": n, "by": c["name"]}

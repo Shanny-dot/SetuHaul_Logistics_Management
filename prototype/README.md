@@ -120,7 +120,7 @@ TWILIO_AUTH_TOKEN=sim-token .venv/bin/python -I scripts/sim_server.py          #
 | `setuhaul/inbound.py` | One inbound message: dedupe, identity, rate limit, lock, STOP, privacy notice, offer binding, engine, render |
 | `setuhaul/outbox.py` | Delivery worker: claim, window/template choice, send, retry with backoff, status callbacks, delivery alarm |
 | `setuhaul/offers.py` | Which list a tap or a typed number belongs to; stale taps never commit |
-| `setuhaul/safety.py` | SAFETY freeze (DB trigger blocks auto-release and NO_SHOW) and the missed-SLA chain |
+| `setuhaul/safety.py` | SAFETY freeze set/clear (audited) and the missed-SLA chain. The rule itself is in `capacity._commit_core` (SAFETY_FREEZE); a DB trigger in `chan_db.py` is the backstop |
 | `setuhaul/chan_db.py` | Channel tables next to the engine's (the engine's `outbox` table is unchanged) |
 | `setuhaul/clock.py` `Clock` | `CLOCK_MODE=live|snapshot`; snapshot runs the 4 Aug world forward from `SNAPSHOT_ANCHOR` |
 | `templates/twilio_templates.yaml` | Templates to submit for approval; content SIDs come from `TWILIO_TPL_*_SID` |

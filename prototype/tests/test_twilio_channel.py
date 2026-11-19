@@ -297,6 +297,21 @@ class Http(unittest.TestCase):
         self.assertEqual(self.post(p, path="/webhook/twilio/status").status_code, 200)
         self.assertEqual(self.post(p, sig="x", path="/webhook/twilio/status").status_code, 403)
 
+    def test_coordinator_clears_freeze_with_audit(self):
+        con = db.connect(os.environ["SETUHAUL_DB"])
+        con.execute("INSERT INTO safety_freezes VALUES ('ESC-H001','DRV003','SHP1018','2026-08-04T09:40:00+05:30',NULL,NULL)")
+        con.close()
+        self.assertEqual(self.client.post("/console/safety/ESC-H001/clear").status_code, 401)
+        tok = self.client.post("/auth/dev-login", json={"user_id": "neha.bansal@setuhaul.example"}).json()["token"]
+        h = {"Authorization": f"Bearer {tok}"}
+        r = self.client.post("/console/safety/ESC-H001/clear", headers=h)
+        self.assertEqual((r.status_code, r.json()["shipments"]), (200, 1))
+        self.assertEqual(self.client.post("/console/safety/ESC-H001/clear", headers=h).status_code, 404)
+        con = db.connect(os.environ["SETUHAUL_DB"])
+        a = con.execute("SELECT actor FROM audit_log WHERE action='SAFETY_FREEZE_CLEARED'").fetchone()
+        con.close()
+        self.assertEqual(a[0], "CON001 Neha Bansal")
+
     def test_health(self):
         self.assertEqual(self.client.get("/healthz").json(), {"ok": True})
         r = self.client.get("/readyz").json()
@@ -664,6 +679,99 @@ class Safety(unittest.TestCase):
         self.assertEqual(tr["status"], "STAFF_ACK")
         w.at("10:20")
         self.assertEqual(SF.sla_sweep(w.con, w.clock.now(), w.real(), w.s), [])
+
+
+# ====================================================================== SAFETY freeze rule in capacity.py
+@need_twilio
+class SafetyFreezeRule(unittest.TestCase):
+    """At 09:45, SHP1018's 12:00 D2 booking (APT1018, DRV003) is CERTAIN_MISS, so committing SLOT-JAI-019
+    for another truck auto-releases it. Under a SAFETY freeze that release must never happen."""
+
+    def world(self, hm="09:45"):
+        w = World(self)
+        w.at(hm)
+        demo_world.apply_due(w.con, at(hm))
+        return w
+
+    def freeze_1018(self, w):
+        w.con.execute("INSERT INTO safety_freezes VALUES ('ESC-T001','DRV003','SHP1018',?,NULL,NULL)", (iso(at("09:40")),))
+
+    def apt1018(self, w):
+        return tuple(w.con.execute("SELECT appointment_status, is_current FROM appointments WHERE appointment_id='APT1018'").fetchone())
+
+    def test_control_without_freeze_the_booking_is_released(self):
+        w = self.world()
+        res = K.commit(w.con, "SHP1013", "SLOT-JAI-019", at("09:45"))
+        self.assertEqual((res["code"], res["released"]), ("CONFIRMED", ["APT1018"]))
+        self.assertEqual(self.apt1018(w), ("CANCELLED", 0))
+
+    def test_code_path_returns_named_reason_and_writes_nothing(self):
+        w = self.world()
+        self.freeze_1018(w)
+        res = K.commit(w.con, "SHP1013", "SLOT-JAI-019", at("09:45"), idem_key="t:freeze")
+        self.assertEqual((res["ok"], res["code"], res["why"], res["frozen"]), (False, "OPTION_GONE", K.SAFETY_FREEZE, ["SHP1018"]))
+        self.assertEqual(self.apt1018(w), ("CONFIRMED", 1))
+        self.assertEqual(len(w.bookings("SHP1013")), 0)
+        self.assertTrue(w.con.execute("SELECT 1 FROM audit_log WHERE action='RELEASE_BLOCKED_SAFETY_FREEZE'").fetchone())
+
+    def test_trigger_only_path_when_code_is_bypassed(self):
+        w = self.world()
+        self.freeze_1018(w)
+        real = K.frozen_shipments
+        K.frozen_shipments = lambda con, ids: set()                     # simulate a path that skips the rule
+        try:
+            with self.assertRaises(sqlite3.IntegrityError) as cm:
+                K.commit(w.con, "SHP1013", "SLOT-JAI-019", at("09:45"))
+        finally:
+            K.frozen_shipments = real
+        self.assertIn("SAFETY_FREEZE", str(cm.exception))
+        self.assertEqual(self.apt1018(w), ("CONFIRMED", 1))               # whole transaction rolled back
+        self.assertEqual(len(w.bookings("SHP1013")), 0)
+
+    def _offer_d2_noon(self, w):
+        w.post(C03, "I am late by one hour.", hm="09:19")
+        opts = [d for d in w.deliveries(C03) if d["kind"] == "DRIVER_REPLY"][-1]["payload"]["options"]
+        o = next(o for o in opts if o["title"] == "D2 12:00 PM")
+        self.freeze_1018(w)
+        return o
+
+    def test_other_driver_gets_remaining_options_not_a_handoff(self):
+        w = World(self)
+        o = self._offer_d2_noon(w)
+        tr = w.tap(C03, o["id"], o["title"], hm="09:21")
+        self.assertIn("book:OPTION_GONE (SAFETY_FREEZE)", tr["tools"])
+        self.assertEqual(tr["state"], "OPTIONS_SHOWN")
+        self.assertIsNone(w.con.execute("SELECT 1 FROM escalations WHERE driver_id='DRV013'").fetchone())
+        self.assertEqual(self.apt1018(w), ("CONFIRMED", 1))
+        fresh = w.last_reply(C03)["options"]
+        self.assertNotIn("D2 12:00 PM", [x["title"] for x in fresh])
+        self.assertEqual(w.tap(C03, fresh[0]["id"], fresh[0]["title"], hm="09:22")["state"], "BOOKED")
+        self.assertEqual(self.apt1018(w), ("CONFIRMED", 1))
+
+    def test_other_driver_handed_off_only_when_no_option_left(self):
+        from setuhaul import timeline as TL
+        w = World(self)
+        o = self._offer_d2_noon(w)
+        real = TL.options
+        TL.options = lambda *a, **kw: ([], {"NO_CAPACITY": 1}) if kw.get("exclude_slots") else real(*a, **kw)
+        try:
+            tr = w.tap(C03, o["id"], o["title"], hm="09:21")
+        finally:
+            TL.options = real
+        self.assertIn("book:OPTION_GONE (SAFETY_FREEZE)", tr["tools"])
+        self.assertEqual(tr["state"], "ESCALATED")
+        self.assertTrue(w.con.execute("SELECT 1 FROM escalations WHERE driver_id='DRV013' AND reason_code='NO_FEASIBLE_SLOT'").fetchone())
+        self.assertEqual(self.apt1018(w), ("CONFIRMED", 1))
+
+    def test_clear_is_audited_and_lifts_the_rule(self):
+        w = self.world()
+        self.freeze_1018(w)
+        self.assertEqual(SF.clear(w.con, "ESC-T001", "CON003 Anita Joshi", at("09:46"), note="driver safe"), 1)
+        a = w.con.execute("SELECT actor, detail_json FROM audit_log WHERE action='SAFETY_FREEZE_CLEARED'").fetchone()
+        self.assertEqual(a["actor"], "CON003 Anita Joshi")
+        self.assertEqual(json.loads(a["detail_json"])["shipments"], ["SHP1018"])
+        self.assertEqual(SF.clear(w.con, "ESC-T001", "CON003 Anita Joshi", at("09:47")), 0)
+        self.assertEqual(K.commit(w.con, "SHP1013", "SLOT-JAI-019", at("09:47"))["code"], "CONFIRMED")
 
 
 # ====================================================================== parity

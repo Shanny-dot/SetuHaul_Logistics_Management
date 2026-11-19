@@ -55,6 +55,7 @@ def freeze(con, driver_id, escalation_id, as_of, location=None):
                   "frozen": "auto-release, no-show marking and nudges paused until a person clears this case"})
         con.execute("UPDATE escalations SET handoff_json=?, shipment_id=COALESCE(shipment_id, ?) WHERE escalation_id=?",
                     (json.dumps(h, default=str, ensure_ascii=False), last, escalation_id))
+        K._audit(con, as_of, "channel:safety", "SAFETY_FREEZE_SET", {"escalation": escalation_id, "driver": driver_id, "shipments": ids})
     return ids
 
 
@@ -66,11 +67,16 @@ def add_followup(con, escalation_id, text, as_of):
         con.execute("UPDATE escalations SET handoff_json=? WHERE escalation_id=?", (json.dumps(h, default=str, ensure_ascii=False), escalation_id))
 
 
-def clear(con, escalation_id, who, as_of):
+def clear(con, escalation_id, who, as_of, note=""):
+    """A person clears the freeze (coordinator console). Audited; scheduling, release and nudges resume."""
     with write_txn(con):
+        ships = [r["shipment_id"] for r in rows(con, "SELECT shipment_id FROM safety_freezes WHERE escalation_id=? AND cleared_at IS NULL",
+                                                escalation_id)]
         n = con.execute("UPDATE safety_freezes SET cleared_at=?, cleared_by=? WHERE escalation_id=? AND cleared_at IS NULL",
                         (iso(as_of), who, escalation_id)).rowcount
-        con.execute("UPDATE escalations SET status='CLOSED' WHERE escalation_id=? AND reason_code='SAFETY'", (escalation_id,))
+        if n:
+            con.execute("UPDATE escalations SET status='CLOSED' WHERE escalation_id=? AND reason_code='SAFETY'", (escalation_id,))
+            K._audit(con, as_of, who, "SAFETY_FREEZE_CLEARED", {"escalation": escalation_id, "shipments": ships, "note": note})
     return n
 
 
