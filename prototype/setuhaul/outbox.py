@@ -7,13 +7,24 @@
     status webhook: queued -> sent -> delivered -> read, or failed/undelivered + ErrorCode (+ alarm)
     delivery SLA: SENT but not delivered after DELIVERY_ALARM_MIN -> reply-time alarm + phone fallback
 
-Idempotency: a row with a provider SID is never sent again; a claimed row cannot be claimed twice.
-Known gap: if the process dies after Twilio accepted a message but before the SID is stored, the
-claim expires and the row is retried (Twilio's Messages API has no idempotency key).
+No double send. Twilio's Create Message has no idempotency key or client reference (Message resource
+docs, checked 2026-11-19), so we make our own:
+    claim            QUEUED/RETRY -> SENDING (claimed_until)
+    before the call  send_ref (unique, per attempt), send_started_real and the exact body are COMMITTED
+    the call         the status callback URL carries ?ref=<send_ref> (Twilio signs the full URL)
+    after the call   provider SID stored -> SENT
+A row left in SENDING (crash, timeout, 5xx) is never re-claimed for sending. reconcile() decides:
+    no send_ref                  the call was never made                -> RETRY
+    a signed callback with ref   proof it went out                      -> SENT (SID from the callback)
+    Twilio lookup (To, From, time window, body): exactly one match      -> SENT with that SID
+                                                  none (lookup succeeded) -> RETRY (proven not accepted)
+                                                  several / lookup keeps failing / no lookup -> NEEDS_REVIEW + alarm
+A person resolves NEEDS_REVIEW (console): mark sent with a SID, or release for one more send.
 """
 import json
 import logging
 import random
+import uuid
 from datetime import timedelta
 
 from . import config as C
@@ -27,6 +38,8 @@ from .tracing import mask
 
 log = logging.getLogger("setuhaul.outbox")
 CLAIM_S = 60
+RECONCILE_AFTER_S = 30            # give the provider time to record an in-flight request before looking it up
+RECONCILE_MAX_LOOKUPS = 3
 RANK = {"queued": 0, "accepted": 0, "sending": 0, "sent": 1, "delivered": 2, "read": 3}
 TERMINAL_BAD = {"failed", "undelivered"}
 
@@ -58,13 +71,12 @@ def _backoff(attempt):
 
 def claim(con, real_now, limit=20):
     with write_txn(con):
-        due = rows(con, """SELECT msg_id FROM wa_delivery WHERE provider_sid IS NULL AND
-                           (status IN ('QUEUED','RETRY') AND next_attempt_real<=?
-                            OR status='SENDING' AND claimed_until_real<=?)
-                           ORDER BY created_real, msg_id LIMIT ?""", iso(real_now), iso(real_now), limit)
+        due = rows(con, """SELECT msg_id FROM wa_delivery WHERE provider_sid IS NULL AND status IN ('QUEUED','RETRY')
+                           AND next_attempt_real<=? ORDER BY created_real, msg_id LIMIT ?""", iso(real_now), limit)
         ids = [d["msg_id"] for d in due]
         for mid in ids:
-            con.execute("""UPDATE wa_delivery SET status='SENDING', attempts=attempts+1, claimed_until_real=?, updated_real=?
+            con.execute("""UPDATE wa_delivery SET status='SENDING', attempts=attempts+1, claimed_until_real=?, updated_real=?,
+                           send_ref=NULL, send_started_real=NULL, sent_body=NULL
                            WHERE msg_id=? AND provider_sid IS NULL""",
                         (iso(real_now + timedelta(seconds=CLAIM_S)), iso(real_now), mid))
         return ids
@@ -113,6 +125,10 @@ def drain(con, channel, settings, clock, limit=20, pace=None):
             continue
         if pace:
             pace()
+        final.send_ref = f"{mid}.{d['attempts']}.{uuid.uuid4().hex[:12]}"
+        with write_txn(con):                         # the reference exists BEFORE the provider can accept anything
+            con.execute("""UPDATE wa_delivery SET send_ref=?, send_started_real=?, sent_body=?, updated_real=? WHERE msg_id=?""",
+                        (final.send_ref, iso(clock.real_now()), final.body or "", iso(clock.real_now()), mid))
         res = channel.send(final)
         real_now = clock.real_now()
         with write_txn(con):
@@ -123,6 +139,10 @@ def drain(con, channel, settings, clock, limit=20, pace=None):
                             (st, channel.name, res.provider_id, res.sent_kind or final.kind, iso(real_now), iso(real_now), mid))
                 con.execute("UPDATE outbox SET status='SENT' WHERE msg_id=?", (mid,))
                 out.append((mid, "SENT"))
+            elif res.ambiguous:                      # 5xx / network: it MAY have gone out; reconcile() decides, never a blind retry
+                con.execute("""UPDATE wa_delivery SET claimed_until_real=?, error_code=?, error_message=?, updated_real=? WHERE msg_id=?""",
+                            (iso(real_now), res.error_code, res.error_message, iso(real_now), mid))
+                out.append((mid, "UNCERTAIN:" + str(res.error_code)))
             elif res.retryable and d["attempts"] < C.SEND_MAX_ATTEMPTS:
                 nxt = real_now + timedelta(seconds=_backoff(d["attempts"]))
                 con.execute("""UPDATE wa_delivery SET status='RETRY', next_attempt_real=?, claimed_until_real=NULL, error_code=?,
@@ -147,6 +167,13 @@ def apply_status(con, st, real_now):
         return False
     with write_txn(con):
         d = one(con, "SELECT * FROM wa_delivery WHERE provider_sid=?", st.provider_id)
+        if not d and st.ref:                         # a callback for an attempt whose SID we never stored: proof it went out
+            d = one(con, "SELECT * FROM wa_delivery WHERE send_ref=? AND provider_sid IS NULL", st.ref)
+            if d:
+                con.execute("""UPDATE wa_delivery SET provider_sid=?, status='SENT', sent_real=COALESCE(sent_real, ?), claimed_until_real=NULL,
+                               updated_real=? WHERE msg_id=?""", (st.provider_id, iso(real_now), iso(real_now), d["msg_id"]))
+                con.execute("UPDATE outbox SET status='SENT' WHERE msg_id=?", (d["msg_id"],))
+                d = one(con, "SELECT * FROM wa_delivery WHERE msg_id=?", d["msg_id"])
         if not d:
             return False
         new = (st.status or "").lower()
@@ -179,6 +206,87 @@ def _phone_fallback(con, d, real_now, why):
     con.execute("INSERT INTO outbox VALUES (?,?,?,?,?,?,?)",
                 (K._next_id(con, "outbox", "msg_id", "OUT-"), "PHONE_CALL", d["to_e164"], "PHONE_FALLBACK",
                  f"Call needed: WhatsApp {d['msg_id']} to this {d['role'].lower()} did not land ({why}).", "STUB", iso(real_now)))
+
+
+def _set(con, mid, real_now, **cols):
+    sets = ", ".join(f"{k}=?" for k in cols)
+    con.execute(f"UPDATE wa_delivery SET {sets}, updated_real=? WHERE msg_id=?", (*cols.values(), iso(real_now), mid))
+
+
+def reconcile(con, channel, settings, clock, min_age_s=RECONCILE_AFTER_S):
+    """Rows left in SENDING (crash, timeout, 5xx). Prove what happened; never resend on a guess."""
+    out = []
+    real_now = clock.real_now()
+    stale = rows(con, """SELECT * FROM wa_delivery WHERE status='SENDING' AND provider_sid IS NULL AND claimed_until_real<=?
+                         AND (send_started_real IS NULL OR send_started_real<=?)""",
+                 iso(real_now), iso(real_now - timedelta(seconds=min_age_s)))
+    lookup = getattr(channel, "lookup", None)
+    for d in stale:
+        mid = d["msg_id"]
+        if not d["send_ref"]:                        # died before the reference was stored: the call never happened
+            with write_txn(con):
+                _set(con, mid, real_now, status="RETRY", next_attempt_real=iso(real_now), claimed_until_real=None)
+            out.append((mid, "RETRY:NEVER_CALLED"))
+            continue
+        why, cands = None, None
+        if lookup is None:
+            why = f"adapter {channel.name} cannot look up sent messages"
+        else:
+            try:
+                started = ts(d["send_started_real"])
+                cands = lookup(d["to_e164"], started - timedelta(seconds=5), started + timedelta(seconds=CLAIM_S + 60))
+            except Exception as e:                    # lookup failed: try again later, then a person decides
+                n = d["reconcile_attempts"] + 1
+                with write_txn(con):
+                    if n >= RECONCILE_MAX_LOOKUPS:
+                        why = f"lookup failed {n} times ({type(e).__name__})"
+                    else:
+                        _set(con, mid, real_now, reconcile_attempts=n,
+                             claimed_until_real=iso(real_now + timedelta(seconds=_backoff(n))))
+                        out.append((mid, "LOOKUP_FAILED"))
+                        continue
+        if cands is not None:
+            taken = {r["provider_sid"] for r in rows(con, "SELECT provider_sid FROM wa_delivery WHERE provider_sid IS NOT NULL")}
+            cands = [c for c in cands if c["sid"] not in taken]
+            if d["sent_body"]:
+                cands = [c for c in cands if (c.get("body") or "") == d["sent_body"]]
+            if len(cands) == 1:
+                with write_txn(con):
+                    _set(con, mid, real_now, status="SENT", provider_sid=cands[0]["sid"], sent_real=iso(real_now), claimed_until_real=None,
+                         provider=channel.name)
+                    con.execute("UPDATE outbox SET status='SENT' WHERE msg_id=?", (mid,))
+                out.append((mid, "RECONCILED_SENT"))
+                continue
+            if not cands:                             # the lookup worked and nothing of ours is there: not accepted
+                with write_txn(con):
+                    _set(con, mid, real_now, status="RETRY", next_attempt_real=iso(real_now + timedelta(seconds=_backoff(d["attempts"]))),
+                         claimed_until_real=None, reconcile_attempts=0)
+                out.append((mid, "RETRY:NOT_FOUND"))
+                continue
+            why = f"{len(cands)} possible matches"
+        with write_txn(con):
+            _set(con, mid, real_now, status="NEEDS_REVIEW", claimed_until_real=None)
+            con.execute("UPDATE outbox SET status='NEEDS_REVIEW' WHERE msg_id=?", (mid,))
+            alarm(con, "SEND_NEEDS_REVIEW", mid, {"why": why, "send_ref": d["send_ref"], "to": mask(d["to_e164"]), "role": d["role"]}, real_now)
+        out.append((mid, "NEEDS_REVIEW"))
+    return out
+
+
+def resolve_review(con, msg_id, action, real_now, provider_sid=None, who="ops"):
+    """A person settles a NEEDS_REVIEW row: 'sent' (with the SID they found in Twilio) or 'resend' (one more attempt)."""
+    with write_txn(con):
+        d = one(con, "SELECT * FROM wa_delivery WHERE msg_id=? AND status='NEEDS_REVIEW'", msg_id)
+        if not d:
+            return False
+        if action == "sent":
+            _set(con, msg_id, real_now, status="SENT", provider_sid=provider_sid, sent_real=iso(real_now))
+            con.execute("UPDATE outbox SET status='SENT' WHERE msg_id=?", (msg_id,))
+        elif action == "resend":
+            _set(con, msg_id, real_now, status="RETRY", next_attempt_real=iso(real_now))
+        else:
+            raise ValueError("action must be sent or resend")
+        K._audit(con, real_now, who, "OUTBOX_REVIEW_" + action.upper(), {"msg_id": msg_id, "provider_sid": provider_sid})
+    return True
 
 
 def check_delivery_sla(con, real_now):

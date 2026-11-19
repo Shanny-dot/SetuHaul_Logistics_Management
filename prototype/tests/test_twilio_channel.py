@@ -44,22 +44,45 @@ def at(hm):
 
 
 class FakeMessage:
-    def __init__(self, sid, status="queued"):
-        self.sid, self.status = sid, status
+    def __init__(self, sid, status="queued", body="", to="", date_created=None):
+        self.sid, self.status, self.body, self.to, self.date_created = sid, status, body, to, date_created
+
+
+class Crash(BaseException):
+    """The process dies here: nothing after this line runs, no handler catches it."""
+
+
+CRASH_BEFORE, CRASH_AFTER = "crash-before-send", "crash-after-send"
 
 
 class FakeTwilio:
-    """client.messages.create(**kw): records calls; raises queued exceptions first."""
+    """client.messages.create(**kw) / .list(to, from_, limit). Queued failures run first:
+    an exception is raised, CRASH_BEFORE dies before Twilio sees the request, CRASH_AFTER dies after
+    Twilio accepted it (the message exists at Twilio, the caller never gets the SID)."""
 
-    def __init__(self):
-        self.calls, self.fail = [], []
+    def __init__(self, now=None):
+        self.calls, self.fail, self.log, self.now = [], [], [], now or (lambda: datetime.now(IST))
         self.messages = self
+        self.list_error = None
 
     def create(self, **kw):
+        f = self.fail.pop(0) if self.fail else None
+        if f == CRASH_BEFORE:
+            raise Crash("before send")
+        if isinstance(f, BaseException):
+            self.calls.append(kw)
+            raise f
         self.calls.append(kw)
-        if self.fail:
-            raise self.fail.pop(0)
-        return FakeMessage(f"SM{len(self.calls):032d}")
+        m = FakeMessage(f"SM{len(self.calls):032d}", body=kw.get("body") or "", to=kw["to"], date_created=self.now())
+        self.log.append(m)
+        if f == CRASH_AFTER:
+            raise Crash("after send, before the SID is stored")
+        return m
+
+    def list(self, to=None, from_=None, limit=50):
+        if self.list_error:
+            raise self.list_error
+        return [m for m in reversed(self.log) if m.to == to][:limit]
 
 
 class RealTime:
@@ -111,7 +134,7 @@ class World:
         self.real = RealTime()
         self.clock = Clock("snapshot", f"2026-08-04T{start}:00+05:30", _now=self.real)
         self.s = settings(channel=channel, **skw)
-        self.fake = FakeTwilio()
+        self.fake = FakeTwilio(now=self.real)
         self.ch = get_channel(self.s, client=self.fake) if channel == "twilio" else get_channel(self.s)
         self.store = SessionStore()
         self.svc = ChannelService(self.con_factory, self.store, self.ch, self.s, self.clock, demo_world=True)
@@ -155,6 +178,9 @@ class World:
 
     def drain(self):
         return OB.drain(self.con, self.ch, self.s, self.clock)
+
+    def reconcile(self):
+        return OB.reconcile(self.con, self.ch, self.s, self.clock)
 
     def bookings(self, sid):
         return self.con.execute("SELECT * FROM appointments WHERE shipment_id=? AND appointment_id LIKE 'APT-N%'", (sid,)).fetchall()
@@ -296,6 +322,21 @@ class Http(unittest.TestCase):
         p = {"MessageSid": "SMnope", "MessageStatus": "delivered"}
         self.assertEqual(self.post(p, path="/webhook/twilio/status").status_code, 200)
         self.assertEqual(self.post(p, sig="x", path="/webhook/twilio/status").status_code, 403)
+
+    def test_status_callback_ref_in_query_is_signed_and_reconciles(self):
+        con = db.connect(os.environ["SETUHAUL_DB"])
+        with db.write_txn(con):
+            mid = OB.enqueue(con, at("09:19"), datetime.now(IST), OutboundMessage(to_e164=C03, body="x"))
+            con.execute("UPDATE wa_delivery SET status='SENDING', send_ref='REF-HTTP-1' WHERE msg_id=?", (mid,))
+        con.close()
+        path = "/webhook/twilio/status?ref=REF-HTTP-1"
+        p = {"MessageSid": "SM" + "7" * 32, "MessageStatus": "sent"}
+        self.assertEqual(self.post(p, sig=signed(p, BASE + "/webhook/twilio/status"), path=path).status_code, 403)   # query is signed too
+        self.assertEqual(self.post(p, path=path).status_code, 200)
+        con = db.connect(os.environ["SETUHAUL_DB"])
+        r = con.execute("SELECT status, provider_sid FROM wa_delivery WHERE msg_id=?", (mid,)).fetchone()
+        con.close()
+        self.assertEqual(tuple(r), ("SENT", "SM" + "7" * 32))
 
     def test_coordinator_clears_freeze_with_audit(self):
         con = db.connect(os.environ["SETUHAUL_DB"])
@@ -500,20 +541,22 @@ class Outbox(unittest.TestCase):
         self.assertTrue(r["provider_sid"].startswith("SM"))
         call = w.fake.calls[-1]
         self.assertEqual((call["from_"], call["to"]), (SANDBOX, "whatsapp:" + C03))
-        self.assertEqual(call["status_callback"], BASE + "/webhook/twilio/status")
+        self.assertEqual(call["status_callback"], BASE + "/webhook/twilio/status?ref=" + r["send_ref"])
         self.assertIn("Reply 1, 2 or 3", call["body"])
 
-    def test_retry_with_backoff_then_success(self):
+    def test_429_retries_network_error_is_reconciled_first(self):
         from twilio.base.exceptions import TwilioRestException
         w = World(self)
         w.post(C03, "I am late by one hour.", hm="09:19")
         w.fake.fail = [TwilioRestException(429, "u", "Too Many Requests", code=20429), ConnectionError("reset")]
-        out = dict(w.drain())
-        self.assertEqual(sorted(v.split(":")[0] for v in out.values()), ["RETRY", "RETRY"])
-        self.assertEqual(w.drain(), [])                                   # not due yet
+        out = sorted(v for _, v in w.drain())
+        self.assertEqual(out, ["RETRY:20429", "UNCERTAIN:NETWORK"])           # 429 = not accepted; network = maybe
+        self.assertEqual(w.drain(), [])                                       # nothing due, nothing resent blindly
+        w.real.advance(seconds=OB.RECONCILE_AFTER_S + 1)
+        self.assertEqual([v for _, v in w.reconcile()], ["RETRY:NOT_FOUND"])  # Twilio has no such message: safe to send
         w.real.advance(seconds=C.SEND_BACKOFF_CAP_S + 1)
         self.assertEqual(sorted(v for _, v in w.drain()), ["SENT", "SENT"])
-        self.assertEqual(self.reply_row(w)["attempts"], 2)
+        self.assertEqual(len(w.fake.log), 2)
 
     def test_permanent_error_fails_with_error_code_alarm_and_phone_fallback(self):
         from twilio.base.exceptions import TwilioRestException
@@ -526,13 +569,15 @@ class Outbox(unittest.TestCase):
         self.assertEqual(len(w.alarms("SEND_FAILED")), 1)
         self.assertTrue(w.con.execute("SELECT 1 FROM outbox WHERE kind='PHONE_FALLBACK' AND status='STUB'").fetchone())
 
-    def test_claim_is_exclusive(self):
+    def test_claim_is_exclusive_and_never_reclaims_sending(self):
         w = World(self)
         w.post(C03, "I am late by one hour.", hm="09:19")
         a = OB.claim(w.con, w.real())
+        self.assertEqual(len(a), 2)
         self.assertEqual(OB.claim(w.con, w.real()), [])
-        w.real.advance(seconds=OB.CLAIM_S + 1)                            # a crashed worker's claim expires
-        self.assertEqual(sorted(OB.claim(w.con, w.real())), sorted(a))
+        w.real.advance(seconds=OB.CLAIM_S + 1)                            # a crashed worker's claim expires ...
+        self.assertEqual(OB.claim(w.con, w.real()), [])                   # ... but SENDING is never re-claimed for sending
+        self.assertEqual(sorted(v for _, v in w.reconcile()), ["RETRY:NEVER_CALLED"] * 2)   # no send_ref: the call never happened
 
     def test_status_progression_out_of_order_and_failure(self):
         w = World(self)
@@ -592,6 +637,116 @@ class Outbox(unittest.TestCase):
         self.assertEqual(w.con.execute("SELECT body FROM wa_inbound").fetchone()[0], "[purged]")
         self.assertEqual(w.deliveries(C03)[-1]["payload"]["body"], "[purged]")
         self.assertTrue(w.con.execute("SELECT 1 FROM escalations").fetchone() is None or True)   # facts stay
+
+
+# ====================================================================== crash at every step of a send
+@need_twilio
+class OutboxCrash(unittest.TestCase):
+    """The process dies at each step of sending one message; after restart it must go out exactly once."""
+
+    def setup(self):
+        w = World(self)
+        with db.write_txn(w.con):
+            OB.enqueue(w.con, at("09:19"), w.real(), OutboundMessage(to_e164=C03, body="Your booking: test"), kind="DRIVER_NOTICE")
+        w.con.execute("""INSERT INTO wa_contacts(e164, role, driver_id, last_inbound_real) VALUES (?, 'DRIVER', 'DRV013', ?)""",
+                      (C03, iso(w.real())))
+        return w
+
+    def row(self, w):
+        return dict(w.con.execute("SELECT * FROM wa_delivery").fetchone())
+
+    def restart(self, w):
+        w.real.advance(seconds=OB.CLAIM_S + OB.RECONCILE_AFTER_S + 1)
+        rec = w.reconcile()
+        w.real.advance(seconds=C.SEND_BACKOFF_CAP_S + 1)
+        return rec, w.drain()
+
+    def test_crash_before_send(self):
+        w = self.setup()
+        w.fake.fail = [CRASH_BEFORE]
+        with self.assertRaises(Crash):
+            w.drain()
+        r = self.row(w)
+        self.assertEqual((r["status"], r["provider_sid"]), ("SENDING", None))
+        self.assertTrue(r["send_ref"])                                     # stored before the call
+        rec, sent = self.restart(w)
+        self.assertEqual([v for _, v in rec], ["RETRY:NOT_FOUND"])
+        self.assertEqual([v for _, v in sent], ["SENT"])
+        self.assertEqual(len(w.fake.log), 1)
+
+    def test_crash_after_send_before_store(self):
+        w = self.setup()
+        w.fake.fail = [CRASH_AFTER]
+        with self.assertRaises(Crash):
+            w.drain()
+        self.assertEqual(len(w.fake.log), 1)                               # Twilio has it; we have no SID
+        rec, sent = self.restart(w)
+        self.assertEqual([v for _, v in rec], ["RECONCILED_SENT"])
+        self.assertEqual(sent, [])
+        r = self.row(w)
+        self.assertEqual((r["status"], r["provider_sid"]), ("SENT", w.fake.log[0].sid))
+        self.assertEqual(len(w.fake.log), 1)                               # never sent twice
+
+    def test_crash_after_store(self):
+        w = self.setup()
+        self.assertEqual([v for _, v in w.drain()], ["SENT"])
+        rec, sent = self.restart(w)                                        # restart after a clean store
+        self.assertEqual((rec, sent), ([], []))
+        self.assertEqual(len(w.fake.log), 1)
+
+    def test_crash_after_claim_before_reference(self):
+        w = self.setup()
+        real = OB._final_form
+        OB._final_form = lambda *a, **k: (_ for _ in ()).throw(Crash("between claim and reference"))
+        try:
+            with self.assertRaises(Crash):
+                w.drain()
+        finally:
+            OB._final_form = real
+        self.assertIsNone(self.row(w)["send_ref"])
+        rec, sent = self.restart(w)
+        self.assertEqual(([v for _, v in rec], [v for _, v in sent]), (["RETRY:NEVER_CALLED"], ["SENT"]))
+        self.assertEqual(len(w.fake.log), 1)
+
+    def test_signed_callback_with_ref_proves_the_send(self):
+        w = self.setup()
+        w.fake.fail = [CRASH_AFTER]
+        with self.assertRaises(Crash):
+            w.drain()
+        ref, sid = self.row(w)["send_ref"], w.fake.log[0].sid
+        self.assertIn(f"?ref={ref}", w.fake.calls[0]["status_callback"])
+        OB.apply_status(w.con, DeliveryStatus(sid, "delivered", ref=ref), w.real())
+        r = self.row(w)
+        self.assertEqual((r["status"], r["provider_sid"]), ("DELIVERED", sid))
+        self.assertEqual(self.restart(w), ([], []))
+
+    def test_ambiguous_lookup_needs_review_never_resends(self):
+        w = self.setup()
+        w.fake.fail = [CRASH_AFTER]
+        with self.assertRaises(Crash):
+            w.drain()
+        w.fake.log.append(FakeMessage("SM" + "9" * 32, body="Your booking: test", to="whatsapp:" + C03, date_created=w.real()))
+        rec, sent = self.restart(w)
+        self.assertEqual(([v for _, v in rec], sent), (["NEEDS_REVIEW"], []))
+        self.assertEqual(len(w.alarms("SEND_NEEDS_REVIEW")), 1)
+        self.assertEqual(len(w.fake.log), 2)                               # nothing new went out
+        self.assertTrue(OB.resolve_review(w.con, self.row(w)["msg_id"], "sent", w.real(), provider_sid=w.fake.log[0].sid, who="CON001"))
+        self.assertEqual(self.row(w)["status"], "SENT")
+        self.assertTrue(w.con.execute("SELECT 1 FROM audit_log WHERE action='OUTBOX_REVIEW_SENT'").fetchone())
+
+    def test_lookup_failing_repeatedly_needs_review(self):
+        w = self.setup()
+        w.fake.fail = [CRASH_AFTER]
+        with self.assertRaises(Crash):
+            w.drain()
+        w.fake.list_error = ConnectionError("twilio down")
+        outcomes = []
+        for _ in range(OB.RECONCILE_MAX_LOOKUPS):
+            w.real.advance(seconds=OB.CLAIM_S + OB.RECONCILE_AFTER_S + C.SEND_BACKOFF_CAP_S)
+            outcomes += [v for _, v in w.reconcile()]
+        self.assertEqual(outcomes, ["LOOKUP_FAILED"] * (OB.RECONCILE_MAX_LOOKUPS - 1) + ["NEEDS_REVIEW"])
+        self.assertEqual(w.drain(), [])
+        self.assertEqual(len(w.fake.log), 1)
 
 
 # ====================================================================== clock

@@ -27,6 +27,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 import uuid
+from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -148,7 +149,10 @@ def deliver(payload):
         body = v.get("1", "") if payload.get("kind") != "template" else f"[template {payload.get('template_ref')}] " + " | ".join(v.values())
     add_msg(to, {"dir": "out", "sid": sid, "body": body or "", "options": payload.get("options") or [], "status": "queued",
                  "kind": payload.get("kind"), "content_sid": payload.get("content_sid"), "outbox_id": payload.get("outbox_id"),
-                 "t": time.time()})
+                 "t": time.time(), "sent_body": payload.get("body") or "",
+                 "created": datetime.now(timezone.utc).isoformat(timespec="seconds")})
+    ref = payload.get("ref")
+    status_path = "/webhook/twilio/status" + (f"?ref={urllib.parse.quote(ref)}" if ref else "")
 
     def callbacks():
         seq = [("sent", None), ("undelivered", "63016")] if fail else [("sent", None), ("delivered", None), ("read", None)]
@@ -157,7 +161,7 @@ def deliver(payload):
             p = {"MessageSid": sid, "MessageStatus": st, "To": payload["to"], "From": SANDBOX_FROM, "AccountSid": "ACsimulator"}
             if code:
                 p.update(ErrorCode=code, ErrorMessage="Simulated: outside the allowed window")
-            post_form("/webhook/twilio/status", p)
+            post_form(status_path, p)
             with LOCK:
                 for m in STATE["messages"].get(to, []):
                     if m.get("sid") == sid:
@@ -199,6 +203,12 @@ class H(BaseHTTPRequestHandler):
             path = {"holds": "/console/holds", "handoffs": "/console/handoffs", "alarms": "/console/alarms", "outbox": "/console/outbox"}.get(what)
             if path:
                 return self._json(*app_json("GET", path))
+        if self.path.startswith("/api/lookup"):
+            to = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query).get("to", [""])[0]
+            with LOCK:
+                out = [{"sid": m["sid"], "body": m.get("sent_body", ""), "date_created": m["created"], "status": m.get("status")}
+                       for m in STATE["messages"].get(to, []) if m["dir"] == "out" and m.get("created")]
+            return self._json(200, out)
         if self.path == "/api/ready":
             return self._json(*app_json("GET", "/readyz", auth=False))
         self._json(404, {})

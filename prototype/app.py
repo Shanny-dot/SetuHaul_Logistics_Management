@@ -437,6 +437,7 @@ def worker_tick():
             demo_world.apply_due(con, as_of)
         SF.page_new(con, as_of, real, SETTINGS)
         SF.sla_sweep(con, as_of, real, SETTINGS)
+        OB.reconcile(con, CHANNEL, SETTINGS, CLOCK)          # rows left in SENDING: prove, never resend blindly
         sent = OB.drain(con, CHANNEL, SETTINGS, CLOCK, pace=PACE)
         OB.check_delivery_sla(con, CLOCK.real_now())
         if time.time() - _last_purge["t"] > 3600:
@@ -562,6 +563,22 @@ def outbox_view(authorization: str = Header(default="")):
         return [dict(dict(r), to_e164=mask(r["to_e164"])) for r in rs]
     finally:
         con.close()
+
+
+@app.post("/console/outbox/{msg_id}/resolve")
+def resolve_outbox(msg_id: str, body: dict, authorization: str = Header(default="")):
+    """Settle a NEEDS_REVIEW message after checking Twilio's log: {"action": "sent", "provider_sid": "SM..."} or {"action": "resend"}."""
+    c = _coordinator(authorization)
+    con = _con()
+    try:
+        ok = OB.resolve_review(con, msg_id, body.get("action"), CLOCK.real_now(), body.get("provider_sid"), who=c["name"])
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    finally:
+        con.close()
+    if not ok:
+        raise HTTPException(404, "no message awaiting review with this id")
+    return {"resolved": msg_id, "action": body.get("action")}
 
 
 @app.post("/dev/clock")

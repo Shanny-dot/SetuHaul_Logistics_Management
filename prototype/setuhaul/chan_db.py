@@ -42,7 +42,9 @@ CREATE TABLE IF NOT EXISTS wa_delivery (
     attempts INTEGER NOT NULL DEFAULT 0, next_attempt_real TEXT NOT NULL, claimed_until_real TEXT,
     error_code TEXT, error_message TEXT,
     created_real TEXT NOT NULL, sent_real TEXT, delivered_real TEXT, read_real TEXT, updated_real TEXT,
-    alarm_raised INTEGER NOT NULL DEFAULT 0, trace_id TEXT
+    alarm_raised INTEGER NOT NULL DEFAULT 0, trace_id TEXT,
+    send_ref TEXT UNIQUE, send_started_real TEXT, sent_body TEXT,   -- written BEFORE the provider call
+    reconcile_attempts INTEGER NOT NULL DEFAULT 0
 );
 CREATE INDEX IF NOT EXISTS ix_wa_delivery_due ON wa_delivery(status, next_attempt_real);
 CREATE TABLE IF NOT EXISTS ops_alarms (
@@ -82,8 +84,16 @@ END;
 """
 
 
+MIGRATIONS = [("wa_delivery", "send_ref", "TEXT"), ("wa_delivery", "send_started_real", "TEXT"),
+              ("wa_delivery", "sent_body", "TEXT"), ("wa_delivery", "reconcile_attempts", "INTEGER NOT NULL DEFAULT 0")]
+
+
 def ensure(con):
     con.executescript(SCHEMA)
+    for table, col, decl in MIGRATIONS:                  # databases made by the first version of this layer
+        if col not in {r[1] for r in con.execute(f"PRAGMA table_info({table})")}:
+            con.execute(f"ALTER TABLE {table} ADD COLUMN {col} {decl}")
+    con.execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_wa_delivery_send_ref ON wa_delivery(send_ref)")
 
 
 def alarm(con, kind, ref, detail, real_now, as_of=None):

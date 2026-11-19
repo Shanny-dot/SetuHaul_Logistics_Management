@@ -11,6 +11,7 @@ Outbound: client.messages.create(from_, to, body | content_sid + content_variabl
 """
 import json
 import logging
+from urllib.parse import parse_qs, urlparse, quote
 
 from .base import ChannelRequest, InboundMessage, OutboundMessage, DeliveryStatus, SendResult
 from .. import config as C
@@ -95,8 +96,19 @@ class TwilioChannel:
 
     def parse_status(self, request: ChannelRequest) -> DeliveryStatus:
         g = request.get
+        ref = (parse_qs(urlparse(request.url).query).get("ref") or [None])[0]
         return DeliveryStatus(provider_id=g("MessageSid") or g("SmsSid") or "", status=(g("MessageStatus") or g("SmsStatus") or "").lower(),
-                              error_code=g("ErrorCode") or None, error_message=g("ErrorMessage") or None, to_e164=e164(g("To")))
+                              error_code=g("ErrorCode") or None, error_message=g("ErrorMessage") or None, to_e164=e164(g("To")), ref=ref)
+
+    def lookup(self, to_e164, since, until):
+        """Messages we sent to this number around a send attempt (Messages list, filtered by To and From;
+        the window is applied here on date_created). Raises on any API error: the caller decides."""
+        out = []
+        for m in self.client.messages.list(to="whatsapp:" + normalise_phone(to_e164), from_=self.s.twilio_whatsapp_from, limit=50):
+            created = m.date_created
+            if created is not None and since <= created <= until:
+                out.append({"sid": m.sid, "body": m.body, "date_created": created, "status": m.status})
+        return out
 
     # ------------------------------------------------------------ outbound
     @property
@@ -110,7 +122,7 @@ class TwilioChannel:
         """The exact create() arguments. Separate from send() so tests can inspect it."""
         p = {"from_": self.s.twilio_whatsapp_from, "to": "whatsapp:" + normalise_phone(msg.to_e164)}
         if self.s.twilio_webhook_base_url:
-            p["status_callback"] = self.s.twilio_webhook_base_url + STATUS_PATH
+            p["status_callback"] = self.s.twilio_webhook_base_url + STATUS_PATH + (f"?ref={quote(msg.send_ref)}" if msg.send_ref else "")
         if msg.kind == "template":
             sid = self.s.template_sids.get(msg.template_ref or "")
             if not sid:
@@ -169,11 +181,11 @@ def classify_error(e):
     if TwilioRestException and isinstance(e, TwilioRestException):
         http = int(getattr(e, "status", 0) or 0)
         code = getattr(e, "code", None)
-        retry = http == 429 or http >= 500
         return SendResult(ok=False, status="error", error_code=str(code or http), error_message=str(getattr(e, "msg", e))[:300],
-                          retryable=retry)
+                          retryable=http == 429 or http >= 500, ambiguous=http >= 500)
     status = getattr(e, "status", None)
     if isinstance(status, int):
         return SendResult(ok=False, status="error", error_code=str(getattr(e, "code", status)), error_message=str(e)[:300],
-                          retryable=status == 429 or status >= 500)
-    return SendResult(ok=False, status="error", error_code="NETWORK", error_message=type(e).__name__, retryable=True)
+                          retryable=status == 429 or status >= 500, ambiguous=status >= 500)
+    # network error / timeout: the request may have reached Twilio
+    return SendResult(ok=False, status="error", error_code="NETWORK", error_message=type(e).__name__, retryable=True, ambiguous=True)

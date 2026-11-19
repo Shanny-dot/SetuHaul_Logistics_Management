@@ -155,7 +155,11 @@ Run with `CHANNEL=sim` and `scripts/sim_play.py`. Webhooks were form-encoded and
 ## 7. Known limits
 
 - **List-picker reply field unknown.** Twilio doesn't document which inbound field carries a list-picker selection. The parser reads `ButtonPayload`, `ListId` and `InteractiveData`. With `MAX_OPTIONS_SHOWN = 3`, lists are not used today.
-- **Possible double send after a crash.** If the process dies after Twilio accepts a message but before the SID is stored, the message can be sent twice. The Messages API has no idempotency key.
+- **No blind resend after a crash.** Twilio's Create Message has no idempotency key or client reference. So a per-attempt `send_ref` is stored before the call and carried in the signed status-callback URL (`?ref=`). A row left in SENDING is reconciled, not resent:
+  - a callback with its ref → SENT
+  - exactly one matching message in Twilio's log (To, From, time window, body) → SENT
+  - a successful lookup that finds nothing → retry
+  - anything else → NEEDS_REVIEW with an alarm. A person settles it with `POST /console/outbox/{id}/resolve`.
 - **No timestamp on inbound webhooks.** Replay protection is MessageSid dedupe (24 h in Redis, permanent in SQLite).
 - **Sandbox templates are generic.** Only Twilio's three samples can be used. Real templates are in `templates/twilio_templates.yaml`, ready for approval with a production sender.
 - **Phone call fallback is a stub.** It writes an outbox row with status `STUB`.

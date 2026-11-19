@@ -62,6 +62,7 @@ class OutboundMessage:
     offer_id: Optional[str] = None
     outbox_id: Optional[str] = None
     proactive: bool = False            # business-initiated: template only, whatever the window
+    send_ref: Optional[str] = None     # per-attempt key, stored BEFORE the API call; travels in the status callback URL
 
     def as_dict(self):
         d = asdict(self)
@@ -81,6 +82,7 @@ class DeliveryStatus:
     error_code: Optional[str] = None
     error_message: Optional[str] = None
     to_e164: Optional[str] = None
+    ref: Optional[str] = None          # our send_ref, from the ?ref= on the status callback URL
 
 
 @dataclass
@@ -92,6 +94,7 @@ class SendResult:
     error_message: Optional[str] = None
     retryable: bool = False            # 429, 5xx, network: try again later
     sent_kind: Optional[str] = None    # what actually went: text | interactive | template
+    ambiguous: bool = False            # 5xx / network: the provider MAY have accepted it -> reconcile, never blind retry
 
 
 class Channel(Protocol):
@@ -101,3 +104,4 @@ class Channel(Protocol):
     def parse_inbound(self, request: ChannelRequest) -> List[InboundMessage]: ...
     def parse_status(self, request: ChannelRequest) -> DeliveryStatus: ...
     def send(self, msg: OutboundMessage) -> SendResult: ...
+    # optional: lookup(to_e164, since, until) -> [{"sid", "body", "date_created", "status"}] for reconciliation
