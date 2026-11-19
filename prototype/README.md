@@ -40,6 +40,13 @@ Every run works on a fresh copy of `data/setuhaul_freight_operations.db`; the su
 | `setuhaul/replies.py` | Reply catalogue in three languages and the output guard |
 | `setuhaul/workflow.py` | The conversation state machine: one message in, one reply out |
 | `setuhaul/world.py` | Rewind and replay of the snapshot for the scenario run |
+| `app.py` | Production entry point (FastAPI): WhatsApp webhook, coordinator console API, sign-in |
+| `setuhaul/graph.py` | The same turn as a LangGraph `StateGraph` (verify, dedupe, read, safety, dispatch) |
+| `setuhaul/session_store.py` | Sessions, tokens, history, dedupe, per-driver lock, rate limit: Redis, or in memory |
+| `setuhaul/llm.py` | Optional LLM fallback reader: Claude Haiku via LangChain, strict JSON, checked in code |
+| `setuhaul/auth.py` | Driver identity from the signed WhatsApp webhook; coordinator sign-in (Cognito, or demo tokens) |
+| `setuhaul/tracing.py` | LangSmith tracing with phone numbers masked and guardrail tags |
+| `tests/test_production_layer.py` | 24 tests for the production layer (no network, no keys needed) |
 | `tests/test_integrity.py` | The 12 integrity tests |
 | `run_*.py` | Runners for the scenario, the integrity proof and the scheduler comparison |
 | `scripts/audit.py` | The data audit: one proof query per finding |
@@ -56,8 +63,40 @@ Every run works on a fresh copy of `data/setuhaul_freight_operations.db`; the su
 | `scheduler_results.json`, `gantt_fcfs.png`, `gantt_ours.png` | Six policies on the 09:45 snapshot, with sensitivity to the weights |
 | `scenario_world.db`, `scheduler_snapshot.db` | The databases at the end of each run, for inspection |
 
+## Production layer (optional)
+
+The engine above runs with the standard library only. The production layer wraps it without changing
+a decision: `tests/test_production_layer.py` checks that the LangGraph path gives exactly the same turns
+as `workflow.handle()`, and `run_scenarios.py` output is unchanged.
+
+```
+pip install -r requirements-prod.txt
+python3 -I -m unittest discover -s tests -p "test_production_layer.py" -v
+SETUHAUL_DEV=1 SETUHAUL_REWIND_TO=2026-08-04T08:20:00+05:30 uvicorn app:app --reload
+```
+
+Then, for the demo (no Meta account needed):
+
+```
+curl -s localhost:8000/dev/driver-message -H 'content-type: application/json' \
+  -d '{"phone":"+91-9000010013","text":"I am late by one hour.","as_of":"2026-08-04T09:19:00+05:30"}'
+curl -s localhost:8000/auth/dev-login -H 'content-type: application/json' -d '{"user_id":"neha.bansal@setuhaul.example"}'
+curl -s localhost:8000/console/holds -H "Authorization: Bearer <token>"
+```
+
+| Setting | Effect |
+|---|---|
+| `REDIS_URL` | Sessions in Redis; in memory if unset |
+| `ANTHROPIC_API_KEY` | Turns on the LLM fallback (only for messages the rules mark UNKNOWN); rules only if unset |
+| `LANGSMITH_TRACING=true`, `LANGSMITH_API_KEY` | One trace per driver turn, phone numbers masked |
+| `WHATSAPP_APP_SECRET`, `WHATSAPP_VERIFY_TOKEN`, `WHATSAPP_TOKEN`, `WHATSAPP_PHONE_ID` | Live WhatsApp Cloud API |
+| `COGNITO_REGION`, `COGNITO_USER_POOL_ID`, `COGNITO_CLIENT_ID` | Coordinator sign-in with Cognito instead of demo tokens |
+
+Not yet exercised against live services: the WhatsApp Cloud API, Cognito, a real Redis server, LangSmith and
+the Anthropic API. Each is behind an environment variable and covered by offline tests or fakes.
+
 ## What the prototype does not do
 
-* No live WhatsApp or LLM call. Where the design calls the LLM fallback, the prototype asks the driver a clarifying question instead.
-* Coordinator actions are function calls (`capacity.decide`, `capacity.swap`), not a screen.
+* The scenario run and integrity proof make no live WhatsApp or LLM call. Where the design calls the LLM fallback and no key is set, the workflow asks the driver a clarifying question instead.
+* The coordinator console is an API (`app.py`) plus the static portal pages; there is no separate console screen yet.
 * SQLite only. The Postgres DDL and the plan to re-run the proof on Postgres are in deliverables 3 and 5.

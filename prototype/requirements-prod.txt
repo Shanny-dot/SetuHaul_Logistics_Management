@@ -1,0 +1,12 @@
+# Production layer only. The engine itself (setuhaul/*.py except the files below) needs nothing beyond Python 3.11+.
+# Versions are the ones tests/test_production_layer.py passed with.
+fastapi==0.165.0          # app.py
+uvicorn==0.54.0           # app.py server
+httpx==0.28.1             # FastAPI TestClient (tests)
+redis==8.1.0              # session_store.py (REDIS_URL)
+langgraph==1.2.23         # graph.py
+langchain-core==1.8.3     # llm.py message types
+langchain-anthropic==1.7.11   # llm.py, Claude Haiku fallback reader
+langsmith==0.15.0         # tracing.py
+PyJWT[crypto]==2.15.0     # auth.py, Cognito token check (production)
+fakeredis==2.40.0         # tests only

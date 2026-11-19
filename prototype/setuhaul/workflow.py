@@ -98,20 +98,50 @@ class Session:
         self.tools.append(f"resolve_shipment:{sid}" + (f" ({basis})" if basis else ""))
 
     # ---------------------------------------------------------- entry point
-    def run(self):
+    # run() is the whole turn. It is split into named steps so that graph.py can wire the
+    # same steps as LangGraph nodes; each step returns a final result dict, or None to go on.
+    def step_verify(self):
         if not self.driver:
             return {"reply": None, "state": "UNKNOWN_SENDER", "tools": ["identify:REJECTED"]}
+        return None
+
+    def step_dedupe(self):
         dup = _dedupe(self.con, self.driver["driver_id"], self.text, self.as_of, self.external_id)
         if dup:
             return {"driver_id": self.driver["driver_id"], "reply": None, "state": self.conv["state"],
                     "tools": [f"dedupe:SUPPRESSED (same as {dup})"], "lang": self.lang, "shipment_id": self.conv["shipment_id"], "buttons": None}
+        return None
+
+    def step_read(self, llm_fallback=None, history=None):
+        """Rules first. Only if the rules return UNKNOWN is the optional LLM fallback asked (llm.py)."""
         self.lang = nlu.detect_lang(self.text, self.lang)
         self.x = x = nlu.extract(self.text, self.as_of)
+        if x.intent == "UNKNOWN" and not x.safety and llm_fallback is not None:
+            got = llm_fallback(self.text, self.as_of, history or [])
+            if got is not None:
+                self.tools.append("llm_fallback:" + got.intent)
+                self.x = x = got
         self.tools.append("read_message:" + x.intent)
-        if x.safety:
+        return None
+
+    def step_safety(self):
+        if self.x.safety:
             return self.safety()
-        if x.asks_human:
+        if self.x.asks_human:
             return self.to_human("HUMAN_REQUESTED", "MEDIUM")
+        return None
+
+    def run(self, llm_fallback=None, history=None):
+        for step in (self.step_verify, self.step_dedupe):
+            out = step()
+            if out is not None:
+                return out
+        self.step_read(llm_fallback, history)
+        return self.step_safety() or self.step_dispatch()
+
+    def step_dispatch(self):
+        """Everything after reading: route by conversation state and intent to a tool sequence."""
+        x = self.x
         st = self.conv["state"]
         if st == "OPTIONS_SHOWN":
             if x.choice and not x.eta and not x.delay_min:
@@ -560,6 +590,10 @@ def notify_swap(con, res, as_of):
     return out
 
 
-def handle(con, phone, text, as_of, external_id=None):
-    """One inbound driver message -> one structured turn result."""
-    return Session(con, phone, text, as_of, external_id).run()
+def handle(con, phone, text, as_of, external_id=None, llm_fallback=None, history=None):
+    """One inbound driver message -> one structured turn result.
+
+    llm_fallback: optional callable(text, as_of, history) -> nlu.Facts or None (see llm.py).
+    With None (the default, and in every test) the turn is fully deterministic.
+    """
+    return Session(con, phone, text, as_of, external_id).run(llm_fallback, history)
