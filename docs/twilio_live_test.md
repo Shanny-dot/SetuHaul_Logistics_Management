@@ -99,6 +99,13 @@ TOKEN=$(curl -s localhost:8000/auth/dev-login -H 'content-type: application/json
 
 ## 4. Cases on real handsets
 
+**Shortcut with one phone:** add `DEMO_PHONE=+91XXXXXXXXXX` to `.env`, keep ngrok running, then run `prototype/scripts/live_start.sh C03` (or C06, C07, C12, C14). It does four things:
+- stops the previous app;
+- maps your phone to that scenario's driver on a fresh database copy;
+- checks that ngrok's address matches `.env`;
+- starts the app and sets the clock.
+
+
 For every step, save a screenshot of the handset. Also save the trace from `curl -s localhost:8000/dev/trace/<MessageSid>`; the MessageSid is in the uvicorn log and in Twilio's message log.
 
 | Case | Clock | On the handset | Expect |
