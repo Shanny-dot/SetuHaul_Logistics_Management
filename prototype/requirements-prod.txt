@@ -10,3 +10,5 @@ langchain-anthropic==1.7.11   # llm.py, Claude Haiku fallback reader
 langsmith==0.15.0         # tracing.py
 PyJWT[crypto]==2.15.0     # auth.py, Cognito token check (production)
 fakeredis==2.40.0         # tests only
+twilio==9.13.0            # channels/twilio_wa.py: REST client, RequestValidator (signature check)
+PyYAML==6.0.3             # templates.py: templates/twilio_templates.yaml

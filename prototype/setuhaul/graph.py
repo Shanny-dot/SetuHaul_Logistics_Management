@@ -78,8 +78,11 @@ def _graph_for(llm_fallback):
 
 
 @traced("driver_turn")
-def run_turn(con, phone, text, as_of, external_id=None, history=None, llm_fallback=None, use_langgraph=True):
-    """One driver message -> one turn result. Same output as workflow.handle()."""
+def run_turn(con, phone, text, as_of, external_id=None, history=None, llm_fallback=None, use_langgraph=True, capture=None):
+    """One driver message -> one turn result. Same output as workflow.handle().
+
+    capture: optional dict; receives the turn's evidence (docks, times, confirmed) so the channel
+    layer can guard button titles against exactly what the tools returned. The result is unchanged."""
     session = Session(con, phone, text, as_of, external_id)
     state = {"session": session, "history": history or [], "result": None}
     graph = _graph_for(llm_fallback) if use_langgraph else None
@@ -92,4 +95,8 @@ def run_turn(con, phone, text, as_of, external_id=None, history=None, llm_fallba
             if out is not None:
                 break
     tag_current_run(out)
+    if capture is not None:
+        ev = getattr(session, "evidence", {}) or {}
+        capture["evidence"] = {"docks": set(ev.get("docks", ())), "times": set(ev.get("times", ())),
+                               "confirmed": bool(ev.get("confirmed"))}
     return out

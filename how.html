@@ -79,7 +79,7 @@ pre.schema{font-family:var(--mono);font-size:11.5px;background:#141B2A;border:1p
 </div>
 
 <h2 class="sec-t">From prototype to pilot</h2>
-<p class="sec-p">The decision engine runs in the demo. The production layer around it is now in the repository, with 24 offline tests; it has not yet run against live WhatsApp, Cognito, Redis, LangSmith or the Anthropic API.</p>
+<p class="sec-p">The decision engine runs in the demo. The production layer around it is now in the repository, with 64 offline tests (40 of them for the WhatsApp channel). The driver channel runs on WhatsApp through Twilio: it has been played end to end through a local simulator that sends Twilio-signed webhooks and delivery receipts, but a round trip on the live Twilio Sandbox has not been run yet (steps in docs/twilio_live_test.md). It has also not yet run against Cognito, a real Redis server, LangSmith or the Anthropic API.</p>
 <div class="card"><table class="t"><tr><th>Layer</th><th>Component · technology</th><th>File in the repo</th><th>Demo engine</th></tr>
 <tr><td>Inbound</td><td>FastAPI; WhatsApp Business Cloud API webhook, signature verified</td><td class="mono">app.py</td><td class="mono">workflow.handle(phone, text, as_of, external_id)</td></tr>
 <tr><td>Identity</td><td>Driver = WhatsApp number; coordinator = Cognito sign-in (email or mobile)</td><td class="mono">setuhaul/auth.py</td><td>Phone looked up in drivers</td></tr>

@@ -1,0 +1,56 @@
+# Business-initiated WhatsApp messages need an approved template (Content API content SID).
+# These are the templates SetuHaul will submit for WhatsApp approval in production.
+#
+# Sandbox: "You can't use custom message templates with the Sandbox" and business-initiated
+# messages may use only the sandbox's pre-approved test templates (Twilio WhatsApp Sandbox docs,
+# checked 2026-11-19). To demo a proactive message in the sandbox, set TWILIO_TPL_<NAME>_SID to the
+# content SID of the sandbox's "Appointment Reminders" sample (find it in Console > Messaging >
+# Content Template Builder) and map its variables below with sandbox_vars. With no SID set, the
+# message is NOT sent and an ops alarm is raised (outbox status BLOCKED, error NO_TEMPLATE).
+#
+# Variables are positional ({{1}}, {{2}} ...). WhatsApp rejects a body that starts or ends with a
+# variable or has two variables side by side (Twilio quick-reply docs), so every body below has text
+# around each variable.
+
+templates:
+  driver_checkin:
+    purpose: Booking health monitor asks a driver whose booking is AT_RISK whether they are on track.
+    env: TWILIO_TPL_DRIVER_CHECKIN_SID
+    category: UTILITY
+    vars: [name, order, facility, slot]
+    body:
+      en: "Hi {{1}}, this is SetuHaul about trip {{2}} to {{3}}. Your dock slot starts at {{4}}. Are you on track? Reply here with your arrival time."
+      hi-Latn: "Namaste {{1}}, SetuHaul se trip {{2}} ({{3}}) ke baare mein. Aapka dock slot {{4}} se hai. Kya aap time par hain? Pahunchne ka time yahan likhiye."
+      hi: "नमस्ते {{1}}, SetuHaul से ट्रिप {{2}} ({{3}}) के बारे में। आपका डॉक स्लॉट {{4}} से है। क्या आप समय पर हैं? पहुँचने का समय यहाँ लिखिए।"
+    sandbox_equivalent: "Appointment Reminders: 'Your appointment is coming up on {{1}} at {{2}}' (verify the exact text in your Console)"
+    sandbox_vars: {"1": slot_day, "2": slot}
+
+  driver_booking_update:
+    purpose: A reply that could not go out free-form because the driver's 24 h window closed (e.g. a late coordinator decision).
+    env: TWILIO_TPL_DRIVER_BOOKING_UPDATE_SID
+    category: UTILITY
+    vars: [order]
+    body:
+      en: "SetuHaul has an update on your dock booking for trip {{1}}. Reply to this message to see it."
+      hi-Latn: "SetuHaul ke paas trip {{1}} ki dock booking ka update hai. Dekhne ke liye is message ka jawab dijiye."
+      hi: "SetuHaul के पास ट्रिप {{1}} की डॉक बुकिंग का अपडेट है। देखने के लिए इस संदेश का जवाब दीजिए।"
+    sandbox_equivalent: "Order Notifications sample (verify text)"
+    sandbox_vars: {"1": order}
+
+  staff_page:
+    purpose: Page a facility contact (shift manager, coordinator, duty head) about an escalation. Always a template.
+    env: TWILIO_TPL_STAFF_PAGE_SID
+    category: UTILITY
+    vars: [urgency, ref, reason, by]
+    body:
+      en: "SetuHaul {{1}} case {{2}}: {{3}}. Please respond by {{4}}. Reply ACK {{2}} to take it."
+    sandbox_equivalent: "Appointment Reminders (verify text): 'Your appointment is coming up on {{1}} at {{2}}'"
+    sandbox_vars: {"1": ref, "2": by}
+
+  dispatch_notice:
+    purpose: Tell a carrier's dispatcher that a booking was released or a shipment needs re-planning (today sent by e-mail).
+    env: TWILIO_TPL_DISPATCH_NOTICE_SID
+    category: UTILITY
+    vars: [shipment, what]
+    body:
+      en: "SetuHaul notice for shipment {{1}}: {{2}}. Please check the SetuHaul console."

@@ -1,3 +1,9 @@
 __pycache__/
 *.pyc
 prototype/out/app_world.db*
+.env
+.env.*
+!.env.example
+prototype/.venv/
+prototype/out/demo_*.db*
+prototype/out/sim_*.json
