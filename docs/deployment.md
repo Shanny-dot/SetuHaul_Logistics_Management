@@ -12,7 +12,7 @@
   - Security: IMDSv2 only, CPU credits *standard*, no SSH key, no port 22. Administration through SSM Session Manager.
 - **Network:** one Elastic IP. Hostname `<ip-with-dashes>.sslip.io`, or any `DOMAIN` (DuckDNS or your own). The security group allows only 80 and 443.
 - **Containers (Docker Compose):**
-  - `caddy`: automatic HTTPS. It exposes **only** `/webhook/twilio`, `/webhook/twilio/status` and `/healthz`.
+  - `caddy`: automatic HTTPS. It serves the **project website** (the same static pages as GitHub Pages: top-level `*.html`, `*.js`, `*.css` and `videos/`) at `/`, and forwards only `/webhook/twilio`, `/webhook/twilio/status` and `/healthz` to the app. Every other path, including the rest of the repo, is 404.
   - `app`: FastAPI with **one** uvicorn worker, because SQLite has one writer and the engine uses `BEGIN IMMEDIATE`. The outbox worker runs inside it.
   - `redis`: 64 MB cap, `allkeys-lru`.
   - Memory caps: 128 / 512 / 96 MiB.

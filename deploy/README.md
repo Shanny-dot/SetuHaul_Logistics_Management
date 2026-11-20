@@ -28,7 +28,7 @@ Nothing else is created: no load balancer, NAT gateway, RDS, ElastiCache, Fargat
  Driver's WhatsApp -> Twilio Sandbox --HTTPS--> Elastic IP : 443
                                                    |
             EC2 t4g.micro (Amazon Linux 2023, Docker Compose)
-            +-- caddy  (HTTPS certificate; only /webhook/twilio, /webhook/twilio/status, /healthz are public)
+            +-- caddy  (HTTPS certificate; public: the project website at /, /webhook/twilio, /webhook/twilio/status, /healthz)
             +-- app    (FastAPI, 1 uvicorn worker, SQLite on /opt/setuhaul/data, outbox worker inside)
             +-- redis  (sessions, dedupe, locks; 64 MB cap)
             nightly backup -> private S3 bucket (30-day expiry); secrets <- SSM Parameter Store
@@ -203,7 +203,7 @@ If certificate issuance fails (Let's Encrypt limits certificates per domain, and
 | Area | What is in place | Where |
 |---|---|---|
 | Access | No SSH key, no port 22; Session Manager only. IMDSv2 only, hop limit 1, so containers can't reach the instance's credentials | `launch_instance.sh` |
-| Network | Only 80/443 open; only the two Twilio webhooks and `/healthz` reach the app; everything else returns 404 | security group, `Caddyfile` |
+| Network | Only 80/443 open; only the two Twilio webhooks and `/healthz` reach the app; the website's static pages (`*.html`, `*.js`, `*.css`, `videos/`) are served by Caddy; every other path returns 404 | security group, `Caddyfile` |
 | TLS | Automatic Let's Encrypt certificate; HSTS, `nosniff`, `X-Frame-Options`, no `Server` header | `Caddyfile` |
 | Edge limits | 256 KB request body cap; read/write/idle timeouts | `Caddyfile` |
 | Twilio | Every webhook signature checked before any processing; the exact public URL is enforced | app + `load-env.sh` |

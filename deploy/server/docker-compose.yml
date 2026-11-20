@@ -15,6 +15,7 @@ services:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - ${SETUHAUL_HOME:-/opt/setuhaul}/caddy/data:/data     # certificates survive restarts (avoids re-issuing)
       - ${SETUHAUL_HOME:-/opt/setuhaul}/caddy/config:/config
+      - ${SETUHAUL_HOME:-/opt/setuhaul}/src:/srv/site:ro      # website files; Caddyfile serves only *.html/*.js/*.css/videos/
     depends_on: [app]
     mem_limit: 128m
     security_opt: ["no-new-privileges:true"]

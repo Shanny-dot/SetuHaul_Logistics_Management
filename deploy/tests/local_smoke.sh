@@ -38,7 +38,7 @@ check_base() {   # prove which configuration the running app has
 }
 
 echo "== Caddy with deploy/server/Caddyfile (DOMAIN=localhost, local CA)"
-XDG_DATA_HOME="$T/caddy-data" XDG_CONFIG_HOME="$T/caddy-config" DOMAIN=localhost UPSTREAM="127.0.0.1:$APP_PORT" \
+XDG_DATA_HOME="$T/caddy-data" XDG_CONFIG_HOME="$T/caddy-config" DOMAIN=localhost UPSTREAM="127.0.0.1:$APP_PORT" SITE_ROOT="$ROOT" \
   HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT \
   "$CADDY" run --config "$ROOT/deploy/server/Caddyfile" --adapter caddyfile > "$T/caddy.log" 2>&1 &
 PIDS+=("$!")

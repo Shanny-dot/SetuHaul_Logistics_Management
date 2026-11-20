@@ -1,5 +1,7 @@
-# Public surface: ONLY Twilio's two webhooks and /healthz. Everything else (coordinator console, /dev/*,
-# /auth/dev-login, /readyz) answers 404 from outside and is used from the box itself via 127.0.0.1:8000.
+# Public surface: Twilio's two webhooks, /healthz, and the project WEBSITE (the static pages at the repo root:
+# *.html, *.js, *.css and videos/, the same files GitHub Pages serves). Everything else answers 404 from outside:
+# the coordinator console, /dev/*, /auth/dev-login, /readyz (used from the box via 127.0.0.1:8000), and every other
+# repo path (prototype/, deploy/, data/, docs/, .git, .env).
 # Caddy sets X-Forwarded-Proto/Host/For and keeps the original Host, so the app sees the public https URL
 # that Twilio signed (and TWILIO_WEBHOOK_BASE_URL is set to the same URL by load-env.sh).
 {
@@ -31,6 +33,12 @@
 	@public path /webhook/twilio /webhook/twilio/status /healthz
 	handle @public {
 		reverse_proxy {$UPSTREAM:app:8000}
+	}
+	# Website: top-level pages and assets only (a "*" in the middle of a path does not cross "/").
+	@site path / /*.html /*.js /*.css /videos/*
+	handle @site {
+		root * {$SITE_ROOT:/srv/site}
+		file_server
 	}
 	handle {
 		respond "Not found" 404
