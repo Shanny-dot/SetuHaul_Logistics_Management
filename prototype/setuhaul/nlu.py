@@ -34,10 +34,10 @@ def detect_lang(text, previous="en"):
         return "pa"
     if share.get("deva", 0) > 0.3:
         toks = set(re.split(r"[\s,.!?।]+", text))
-        mr, rj = len(toks & L.MARKERS["mr"]), len(toks & L.MARKERS["raj"])
+        mr, rj = len(toks & L.MARKERS["mr"]), len(toks & L.MARKERS["mwr"])
         if mr or rj:
-            return "mr" if mr > rj else "raj"
-        return previous if previous in ("mr", "raj") else "hi"
+            return "mr" if mr > rj else "mwr"
+        return previous if previous in ("mr", "mwr") else "hi"
     words = re.findall(r"[a-z]+", text.lower())
     hits = sum(w in HINGLISH for w in words)
     if len(words) <= 2 and hits == 0:
@@ -97,7 +97,7 @@ DUR_WORDS = [
     (r"two hours?|2 hours?|do ghante|दो घंटे", 120),
     (r"dhai ghante|ढाई घंटे", 150),
     (r"(?:one|an|1) hour|ek ghanta|एक घंटा", 60),
-] + L.DUR_WORDS                       # Gujarati, Marathi, Punjabi, Rajasthani durations
+] + L.DUR_WORDS                       # Gujarati, Marathi, Punjabi, Marwari durations
 
 
 def extract(text, as_of):

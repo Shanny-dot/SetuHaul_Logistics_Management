@@ -159,10 +159,10 @@
    ]
   },
   {
-   "id": "raj-vague",
-   "lang": "raj",
-   "language": "Rajasthani",
-   "native": "राजस्थानी",
+   "id": "mwr-vague",
+   "lang": "mwr",
+   "language": "Marwari",
+   "native": "मारवाड़ी",
    "title": "Vague delay: the bot asks for a time first",
    "mirrors": "C09",
    "driver": "DRV010",
@@ -173,7 +173,7 @@
      "text": "भाई म्हैं थोड़ो मोड़ो हूं, ट्रैफिक घणो है",
      "reply": "बतावण सारू धन्यवाद। Jaipur DC कित्ता बज्यां तांई पूगोला? 11:30 जियां टैम लिखो, जिऊं सही स्लॉट मिल सकै।",
      "state": "NEED_ETA",
-     "lang": "raj",
+     "lang": "mwr",
      "tools": [
       "read_message:REPORT_DELAY",
       "resolve_shipment:SHP1010",
@@ -188,7 +188,7 @@
      "text": "11:30 बज्यां तांई पूगसूं",
      "reply": "Jaipur DC में थांकै ट्रक सारू ऐ स्लॉट है (थे चुणोला जद ही बुक हुसी):\n1) डॉक D5 - 12:00 PM सूं सरू, लगभग 12:55 PM तांई खाली\n2) डॉक D5 - 1:00 PM सूं सरू, लगभग 1:55 PM तांई खाली\n3) डॉक D5 - 2:00 PM सूं सरू, लगभग 2:55 PM तांई खाली\nबुक करण सारू 1, 2 या 3 भेजो।",
      "state": "OPTIONS_SHOWN",
-     "lang": "raj",
+     "lang": "mwr",
      "tools": [
       "read_message:REPORT_DELAY",
       "record_eta:11:30 MEDIUM",
@@ -255,11 +255,11 @@
    ]
   },
   {
-   "id": "raj-later",
-   "lang": "raj",
-   "language": "Rajasthani",
-   "native": "राजस्थानी",
-   "title": "Rajasthani: arrival time with 'after 12'",
+   "id": "mwr-later",
+   "lang": "mwr",
+   "language": "Marwari",
+   "native": "मारवाड़ी",
+   "title": "Marwari: arrival time with 'after 12'",
    "mirrors": "C07",
    "driver": "DRV006",
    "name": "Manoj Sharma",
@@ -269,7 +269,7 @@
      "text": "शाहपुरा पछै ट्रैफिक घणो है। 11:20 बज्यां तांई पूगसूं। 12 बज्यां पछै कोई स्लॉट है कांई?",
      "reply": "Jaipur DC में थांकै ट्रक सारू ऐ स्लॉट है (थे चुणोला जद ही बुक हुसी):\n1) डॉक D2 - 12:00 PM सूं सरू, लगभग 12:45 PM तांई खाली\n2) डॉक D4 - 12:40 PM सूं सरू, लगभग 1:25 PM तांई खाली\n3) डॉक D2 - 1:00 PM सूं सरू, लगभग 1:45 PM तांई खाली\nबुक करण सारू 1, 2 या 3 भेजो।",
      "state": "OPTIONS_SHOWN",
-     "lang": "raj",
+     "lang": "mwr",
      "tools": [
       "read_message:REPORT_DELAY",
       "resolve_shipment:SHP1006 (the trip you are driving now)",
@@ -287,7 +287,7 @@
      "text": "दूजो",
      "reply": "बुक होग्यो: Jaipur DC, डॉक D4, 12:40 PM सूं। गेट माथै 12:25 PM तांई पूगो। रेफ APT-N0001।",
      "state": "BOOKED",
-     "lang": "raj",
+     "lang": "mwr",
      "tools": [
       "read_message:CHOOSE",
       "book:CONFIRMED APT-N0001",

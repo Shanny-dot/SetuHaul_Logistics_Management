@@ -38,7 +38,7 @@ def preview(name, values, lang="en"):
     """The text the template will show (for the trace, the simulator and the guard)."""
     t = load().get(name) or {}
     bodies = t.get("body") or {}
-    body = (pick(bodies, lang) if bodies else None) or name          # gu/mr/pa/raj -> hi -> en if not approved yet
+    body = (pick(bodies, lang) if bodies else None) or name          # gu/mr/pa/mwr -> hi -> en if not approved yet
     for i, v in enumerate(t.get("vars", []), 1):
         body = body.replace("{{%d}}" % i, str(values.get(v, "")))
     return body

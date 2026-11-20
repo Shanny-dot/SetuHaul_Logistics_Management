@@ -1,4 +1,4 @@
-"""Gujarati, Marathi, Punjabi and Rajasthani: detection, reading, replies, guard, and full turns.
+"""Gujarati, Marathi, Punjabi and Marwari: detection, reading, replies, guard, and full turns.
 
 Run:  python3 -I -m unittest tests.test_languages -v      (from the prototype folder)
 """
@@ -14,7 +14,7 @@ from setuhaul import nlu, replies as R, languages as L
 from setuhaul.clock import ts
 
 AS_OF = ts("2026-08-04T09:30:00+05:30")
-NEW = ["gu", "mr", "pa", "raj"]
+NEW = ["gu", "mr", "pa", "mwr"]
 
 
 def x(text):
@@ -27,7 +27,7 @@ class Detect(unittest.TestCase):
             "હું એક કલાક મોડો છું": "gu",
             "ਮੈਂ ਇੱਕ ਘੰਟਾ ਲੇਟ ਹਾਂ": "pa",
             "मला 45 मिनिटे उशीर होईल": "mr",
-            "भाई म्हैं थोड़ो मोड़ो हूं": "raj",
+            "भाई म्हैं थोड़ो मोड़ो हूं": "mwr",
             "मैं एक घंटा लेट हूँ": "hi",
             "thoda late hoon bhai": "hi-Latn",
             "I am late by one hour": "en",
@@ -145,7 +145,7 @@ class FullTurns(unittest.TestCase):
                     self.assertEqual(n["state"], e["state"])
 
     def test_replies_are_in_the_drivers_script_and_pass_the_guard(self):
-        block = {"gu": "gujr", "pa": "guru", "mr": "deva", "raj": "deva"}
+        block = {"gu": "gujr", "pa": "guru", "mr": "deva", "mwr": "deva"}
         for cid, lang, native, _ in self.convs:
             for n in native:
                 if n["reply"]:

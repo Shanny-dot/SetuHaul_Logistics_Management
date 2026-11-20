@@ -182,7 +182,7 @@ T.update({
 })
 
 
-# Gujarati, Marathi, Punjabi and Rajasthani (drafts for native review); missing keys fall back to Hindi.
+# Gujarati, Marathi, Punjabi and Marwari (drafts for native review); missing keys fall back to Hindi.
 from .replies_regional import REGIONAL, PHRASES, BOOKED_WORDS, DOCK_WORDS   # noqa: E402
 from .languages import pick, OR_WORD                                       # noqa: E402
 

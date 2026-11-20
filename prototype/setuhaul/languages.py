@@ -10,25 +10,25 @@ rules need. nlu.py reads this table; replies.py holds the reply text per languag
     gu       Gujarati            Gujarati       own (rest fall back to Hindi)
     mr       Marathi             Devanagari     own (rest fall back to Hindi)
     pa       Punjabi             Gurmukhi       own (rest fall back to Hindi)
-    raj      Rajasthani          Devanagari     own (rest fall back to Hindi)
+    mwr      Marwari             Devanagari     own (rest fall back to Hindi)
 
 How a language is recognised (no model call):
   * Gujarati and Gurmukhi have their own Unicode blocks, so the script decides.
-  * Marathi and Rajasthani are written in Devanagari, like Hindi, so marker words decide
-    (e.g. Marathi "आहे", "उशीर", "वाजता"; Rajasthani "कोनी", "मोड़ो", "म्हारो", "बज्यां").
+  * Marathi and Marwari are written in Devanagari, like Hindi, so marker words decide
+    (e.g. Marathi "आहे", "उशीर", "वाजता"; Marwari "कोनी", "मोड़ो", "म्हारो", "बज्यां").
     No markers: the thread keeps its earlier language, else Hindi.
-  * Romanised Gujarati, Marathi, Punjabi or Rajasthani is read as Hinglish (replies in Hinglish).
+  * Romanised Gujarati, Marathi, Punjabi or Marwari is read as Hinglish (replies in Hinglish).
 
 The new reply texts are drafts and must be reviewed by a native speaker before go-live.
-Rajasthani has no single standard; these drafts lean to Marwari as written around Jaipur.
+Marwari varies from district to district; these drafts follow Marwari as written around Jaipur and Jodhpur.
 """
 
 LANGS = {
     "en": "English", "hi-Latn": "Hinglish", "hi": "Hindi",
-    "gu": "Gujarati", "mr": "Marathi", "pa": "Punjabi", "raj": "Rajasthani",
+    "gu": "Gujarati", "mr": "Marathi", "pa": "Punjabi", "mwr": "Marwari",
 }
-NATIVE = {"en": "English", "hi-Latn": "Hinglish", "hi": "हिन्दी", "gu": "ગુજરાતી", "mr": "मराठी", "pa": "ਪੰਜਾਬੀ", "raj": "राजस्थानी"}
-FALLBACK = {"gu": "hi", "mr": "hi", "pa": "hi", "raj": "hi", "hi": "en", "hi-Latn": "en"}
+NATIVE = {"en": "English", "hi-Latn": "Hinglish", "hi": "हिन्दी", "gu": "ગુજરાતી", "mr": "मराठी", "pa": "ਪੰਜਾਬੀ", "mwr": "मारवाड़ी"}
+FALLBACK = {"gu": "hi", "mr": "hi", "pa": "hi", "mwr": "hi", "hi": "en", "hi-Latn": "en"}
 
 SCRIPTS = {                       # Unicode blocks
     "deva": ("ऀ", "ॿ"),
@@ -37,11 +37,11 @@ SCRIPTS = {                       # Unicode blocks
 }
 DIGITS = str.maketrans("०१२३४५६७८९૦૧૨૩૪૫૬૭૮૯੦੧੨੩੪੫੬੭੮੯", "012345678901234567890123456789")
 
-# Devanagari marker words that tell Marathi and Rajasthani apart from Hindi.
+# Devanagari marker words that tell Marathi and Marwari apart from Hindi.
 MARKERS = {
     "mr": set("""आहे आहेत आहोत उशीर उशिरा वाजता वाजेपर्यंत मी माझा माझी माझे माझ्या नाही नको येईन पोहोचेन पोहोचतो
 पोहोचते अपघात जखमी तास झाला झाली झाले होईल किती तुम्ही आणि आता सकाळी संध्याकाळी गाडी नंतर पहिला दुसरा तिसरा""".split()),
-    "raj": set("""म्हारो म्हारी म्हारा म्हारै म्हैं थारो थारी थांको थांकी कोनी छूं छो छै पूगसूं पूगूं पूगूंला पूगस्यूं
+    "mwr": set("""म्हारो म्हारी म्हारा म्हारै म्हैं थारो थारी थांको थांकी कोनी छूं छो छै पूगसूं पूगूं पूगूंला पूगस्यूं
 आसूं मोड़ो मोड़ा घणो घणी कांई कठे होग्यो होगी होसी लागसी बज्यां घंटो पछै अबार पैलो दूजो तीजो""".split()),
 }
 
@@ -73,7 +73,7 @@ ORDINALS = {                      # whole tokens only
 }
 YES = {"हो", "ठीक", "बरं", "हां", "હા", "બરાબર", "ઠીક", "ਹਾਂ", "ਠੀਕ"}
 NO = {"नको", "ना", "ના", "ਨਹੀਂ", "कोनी"}
-OR_WORD = {"hi-Latn": " ya ", "hi": " या ", "gu": " અથવા ", "mr": " किंवा ", "pa": " ਜਾਂ ", "raj": " या "}
+OR_WORD = {"hi-Latn": " ya ", "hi": " या ", "gu": " અથવા ", "mr": " किंवा ", "pa": " ਜਾਂ ", "mwr": " या "}
 SAFETY_WORDS = ["घायल", "एक्सीडेंट", "अपघात", "जखमी", "आग लागली", "पोलीस", "दवाखान",
                 "અકસ્માત", "ઈજા", "ઇજા", "આગ લાગી", "પોલીસ", "હોસ્પિટલ",
                 "ਹਾਦਸਾ", "ਐਕਸੀਡੈਂਟ", "ਸੱਟ", "ਜ਼ਖਮੀ", "ਜ਼ਖ਼ਮੀ", "ਅੱਗ ਲੱਗ", "ਪੁਲਿਸ", "ਹਸਪਤਾਲ"]
@@ -88,7 +88,7 @@ def script_share(text):
 
 
 def pick(table, lang):
-    """table[lang], else its fallback chain (gu/mr/pa/raj -> hi -> en)."""
+    """table[lang], else its fallback chain (gu/mr/pa/mwr -> hi -> en)."""
     while lang not in table and lang in FALLBACK:
         lang = FALLBACK[lang]
     return table[lang] if lang in table else table["en"]

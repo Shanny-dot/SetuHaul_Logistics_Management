@@ -114,7 +114,7 @@
 <main class="wrap">
 <div class="page-head"><div><div class="eyebrow">● Driver Messages · WhatsApp channel</div><h1>Every driver conversation from 4 August</h1>
 <p>Choose a driver. Tap <b>send</b> to post their real message, tap a slot to book it, or press <b>Auto-play</b>. The right panel shows what SetuHaul checked before each reply.</p></div>
-<div style="display:flex;gap:10px;align-items:center"><a class="btn" href="#languages">ગુ · म · ਪੰ · रा — 7 languages ↓</a><label class="toggle"><input type="checkbox" id="gloss" checked> English gloss for Hindi / Hinglish</label></div></div>
+<div style="display:flex;gap:10px;align-items:center"><a class="btn" href="#languages">ગુ · म · ਪੰ · मा — 7 languages ↓</a><label class="toggle"><input type="checkbox" id="gloss" checked> English gloss for Hindi / Hinglish</label></div></div>
 
 <div class="app">
   <aside class="cases" id="cases"></aside>
@@ -137,7 +137,7 @@
 
 <section class="lgx" id="languages">
  <div class="eyebrow">● Seven languages</div>
- <h2 class="sec-t" style="margin-top:6px">Drivers can now write in Gujarati, Marathi, Punjabi and Rajasthani</h2>
+ <h2 class="sec-t" style="margin-top:6px">Drivers can now write in Gujarati, Marathi, Punjabi and Marwari</h2>
  <p class="sec-p">Same engine, same checks, same booking. These conversations were run through the real workflow on the 4 August data (<span class="mono">scripts/language_demo.py</span>); the right column is the same conversation sent in English, so you can see the meaning and that the outcome is identical. Reply texts in the new languages are drafts for review by a native speaker.</p>
  <div class="lgtabs" id="lgtabs"></div>
  <div class="lgconvs" id="lgconvs"></div>
@@ -149,7 +149,7 @@
   <h3>Where the change was made</h3>
   <table class="t">
    <tr><th>File</th><th>What changed</th></tr>
-   <tr><td>setuhaul/languages.py</td><td>New: the language list, scripts (Gujarati, Gurmukhi, Devanagari), native digits, marker words that tell Marathi and Rajasthani from Hindi, and the reading vocabulary per language (o'clock words, durations, late words, "after", ordinals, yes/no, safety words).</td></tr>
+   <tr><td>setuhaul/languages.py</td><td>New: the language list, scripts (Gujarati, Gurmukhi, Devanagari), native digits, marker words that tell Marathi and Marwari from Hindi, and the reading vocabulary per language (o'clock words, durations, late words, "after", ordinals, yes/no, safety words).</td></tr>
    <tr><td>setuhaul/nlu.py</td><td>Detects the four languages; reads times, durations, "after 12", choices, slot references and safety words in each. No model call.</td></tr>
    <tr><td>setuhaul/replies_regional.py</td><td>New: 30 reply texts in each language (drafts for native review). Anything not yet translated falls back to Hindi.</td></tr>
    <tr><td>setuhaul/replies.py</td><td>Merges the new texts; the output guard now reads ડૉક / ਡੌਕ / डॉक and the "booked" words of every language, so no reply can claim a booking or a dock the database did not produce.</td></tr>

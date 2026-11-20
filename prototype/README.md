@@ -130,12 +130,12 @@ TWILIO_AUTH_TOKEN=sim-token .venv/bin/python -I scripts/sim_server.py          #
 
 ## Driver languages
 
-Drivers can write in English, Hinglish, Hindi, Gujarati, Marathi, Punjabi and Rajasthani. Detection and reading
+Drivers can write in English, Hinglish, Hindi, Gujarati, Marathi, Punjabi and Marwari. Detection and reading
 are rules only (no model call); replies come from the reviewed catalogue in the driver's language.
 
 | File | Change |
 |---|---|
-| `setuhaul/languages.py` | Language list, scripts, native digits, Marathi/Rajasthani marker words, reading vocabulary per language |
+| `setuhaul/languages.py` | Language list, scripts, native digits, Marathi/Marwari marker words, reading vocabulary per language |
 | `setuhaul/nlu.py` | Detects the languages; reads times, durations, "after 12", choices, slot references and safety words in each |
 | `setuhaul/replies_regional.py` | 30 reply texts per new language (drafts for native review); the rest fall back to Hindi |
 | `setuhaul/replies.py` | Merges them; the output guard reads every language's dock word and "booked" words |
@@ -149,8 +149,8 @@ python3 -I scripts/language_demo.py out/
 python3 -I -m unittest discover -s tests -p "test_languages.py" -v
 ```
 
-Limits: romanised Gujarati, Marathi, Punjabi or Rajasthani is read as Hinglish and answered in Hinglish. Rajasthani
-has no single standard; the drafts lean to Marwari as written around Jaipur. All new reply texts need a native
+Limits: romanised Gujarati, Marathi, Punjabi or Marwari is read as Hinglish and answered in Hinglish. Marwari
+varies from district to district; the drafts follow Marwari as written around Jaipur and Jodhpur. All new reply texts need a native
 speaker's review before go-live, and each language's WhatsApp templates need separate approval.
 
 ## What the prototype does not do

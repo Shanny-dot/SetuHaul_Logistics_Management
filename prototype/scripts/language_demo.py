@@ -1,4 +1,4 @@
-"""Language demo: the same driver conversations in Gujarati, Marathi, Punjabi and Rajasthani.
+"""Language demo: the same driver conversations in Gujarati, Marathi, Punjabi and Marwari.
 
 Each conversation runs twice through the real engine on a fresh copy of the 4 August world
 (rewound to 08:20): once in the driver's language and once with the English wording, so the
@@ -36,14 +36,14 @@ CONVERSATIONS = [
     ("pa-delay", "pa", "Tyre repaired, gives an arrival time, books", "C05", "DRV012", [
         ("09:29", "ਟਾਇਰ ਠੀਕ ਹੋ ਗਿਆ। ਮੈਂ 11:10 ਵਜੇ ਤੱਕ ਪਹੁੰਚ ਜਾਵਾਂਗਾ।", "Tyre repaired. I can reach 11:10."),
         ("09:30", "ਪਹਿਲਾ", "1")]),
-    ("raj-vague", "raj", "Vague delay: the bot asks for a time first", "C09", "DRV010", [
+    ("mwr-vague", "mwr", "Vague delay: the bot asks for a time first", "C09", "DRV010", [
         ("09:42", "भाई म्हैं थोड़ो मोड़ो हूं, ट्रैफिक घणो है", "I am a bit late, lots of traffic"),
         ("09:43", "11:30 बज्यां तांई पूगसूं", "I will reach by about 11:30")]),
     ("gu-safety", "gu", "Accident: scheduling stops, shift manager paged", "C12", "DRV011", [
         ("10:05", "અકસ્માત થયો છે, હેલ્પરને ઈજા થઈ છે, ટ્રક બાજુમાં ઊભો રાખ્યો છે", "accident happened, helper is hurt, truck parked on the side")]),
     ("pa-safety", "pa", "Accident in Punjabi", "C12", "DRV011", [
         ("10:05", "ਭਾਜੀ ਹਾਦਸਾ ਹੋ ਗਿਆ, ਹੈਲਪਰ ਨੂੰ ਸੱਟ ਲੱਗੀ ਹੈ", "accident happened, the helper is hurt")]),
-    ("raj-later", "raj", "Rajasthani: arrival time with 'after 12'", "C07", "DRV006", [
+    ("mwr-later", "mwr", "Marwari: arrival time with 'after 12'", "C07", "DRV006", [
         ("09:34", "शाहपुरा पछै ट्रैफिक घणो है। 11:20 बज्यां तांई पूगसूं। 12 बज्यां पछै कोई स्लॉट है कांई?",
          "Traffic after Shahpura. Reaching around 11:20. Any slot after 12?"),
         ("09:35", "दूजो", "2")]),
