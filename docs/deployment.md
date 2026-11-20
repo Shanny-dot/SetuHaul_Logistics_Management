@@ -1,6 +1,6 @@
 # Deployment: AWS demo configuration (pilot-demo)
 
-**Status (20 Nov 2026): deployed and live in Sydney (ap-southeast-2)**, on the Free plan. One real WhatsApp round trip ran through the AWS server (see below). The runbook is `deploy/README.md`.
+**Status:** deployed in Sydney (ap-southeast-2) on the Free plan on 20 Nov 2026, demonstrated on real WhatsApp (see below), and **torn down the same day** with `deploy/aws/teardown.sh`. A final backup was kept off AWS by the owner, and nothing remains on AWS. Redeploy with the runbook `deploy/README.md` (about 15 minutes).
 
 > **This is a demo / pilot-demo configuration, not the production design.** It runs the whole service on one small machine with SQLite, to let drivers try SetuHaul on real WhatsApp for under US$10 a month. The production path in the Decision Register (one container plus a managed Postgres database, then Doc A's AWS design at scale) is unchanged.
 
