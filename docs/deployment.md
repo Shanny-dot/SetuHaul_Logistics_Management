@@ -1,6 +1,6 @@
 # Deployment: AWS demo configuration (pilot-demo)
 
-**Status:** files written and tested locally (20 Nov 2026); not yet deployed to AWS. The runbook is `deploy/README.md`.
+**Status (20 Nov 2026): deployed and live in Sydney (ap-southeast-2)**, on the Free plan. One real WhatsApp round trip ran through the AWS server (see below). The runbook is `deploy/README.md`.
 
 > **This is a demo / pilot-demo configuration, not the production design.** It runs the whole service on one small machine with SQLite, to let drivers try SetuHaul on real WhatsApp for under US$10 a month. The production path in the Decision Register (one container plus a managed Postgres database, then Doc A's AWS design at scale) is unchanged.
 
@@ -75,5 +75,8 @@ New AWS accounts receive $100 in Free Tier credits, plus up to $100 more for con
 | Backup → gzip → restore into a scratch DB → integrity + counts | `integrity_check: ok` |
 | Hardened Caddyfile (`caddy validate`, then the smoke test): HSTS/nosniff headers, no Server header, 300 KB request → 413 | pass |
 | App started from a **write-protected** copy of the code with a write-protected home (approximates the read-only container) | `/readyz` ok, signed webhook processed, replies queued, nothing written outside data/tmp |
-| Docker image build for linux/arm64 and the compose stack (`deploy/tests/smoke.sh`) | **Not run**: Docker is not installed on the build machine |
-| Anything on AWS | **Not run**: no AWS credentials on the build machine (script mode) |
+| Docker image build for linux/arm64 and the compose stack | Not run locally (no Docker here); **built and running on the AWS instance itself** (arm64) |
+| AWS resources created (after an EC2 `--dry-run` permission check) | role + instance profile, private S3 bucket (30-day expiry), SSM SecureString secrets, t4g.micro (IMDSv2, standard credits, no key), 10 GiB encrypted gp3, security group 80/443, one Elastic IP, recover alarm, US$15 budget |
+| Server health after first boot | `/readyz` ok (db, redis, Twilio credentials accepted); public `/healthz` 200 with a Let's Encrypt certificate for the sslip.io name; private `/readyz` 404 from the internet; memory 359/910 MiB, swap unused |
+| **Live WhatsApp round trip on AWS (C03)** | Inbound `SM95f9…` ("I am late by one hour.") → privacy notice + 3 options, both **read**; inbound `SMd945…` ("1") → **APT-N0001 CONFIRMED** (SHP1013, SLOT-JAI-047) and the "Booked" reply sent. Traces `87a65c64…`, `28385148…` |
+| Backup → S3 → download → restore into a scratch DB | `integrity_check: ok`; the new booking and the WhatsApp messages are in the restored copy |

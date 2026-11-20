@@ -180,7 +180,7 @@ Run with `CHANNEL=sim` and `scripts/sim_play.py`. Webhooks were form-encoded and
 
 | Scenario | Handset | Expected | Actual | Screenshot | Trace id |
 |---|---|---|---|---|---|
-| | | | | | |
+| C03 on the **AWS server** (20 Nov 2026) | owner's phone as DRV013 | options, then "Booked …" after `1` | options delivered and read; APT-N0001 CONFIRMED; "Booked" reply sent | (add) | `87a65c64…`, `28385148…` |
 | | | | | | |
 | | | | | | |
 | | | | | | |
