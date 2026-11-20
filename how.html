@@ -52,7 +52,7 @@ pre.schema{font-family:var(--mono);font-size:11.5px;background:#141B2A;border:1p
 <div class="txn"><div class="code" id="code"></div><div class="card explain" id="ex"></div></div>
 
 <h2 class="sec-t">The language layer and the LLM boundary</h2>
-<p class="sec-p">Rules read English, Hinglish and Hindi with no model call: clock times (11:30, 7 baje, 7 बजे), durations (dedh ghanta, डेढ़ घंटा), choices ("pehla"), safety words and urgency claims. A model is called only when rules return UNKNOWN.</p>
+<p class="sec-p">Rules read English, Hinglish, Hindi, Gujarati, Marathi, Punjabi and Marwari with no model call: clock times (11:30, 7 baje, 7 बजे), durations (dedh ghanta, डेढ़ घंटा), choices ("pehla"), safety words and urgency claims. A model is called only when rules return UNKNOWN.</p>
 <div class="lay3">
   <div class="card"><h3>Checks in code after the model replies</h3>
    <div class="plain"><b>TIMES</b>Every time must lie between as-of − 1 h and as-of + 24 h.</div>
@@ -95,7 +95,7 @@ pre.schema{font-family:var(--mono);font-size:11.5px;background:#141B2A;border:1p
 </main>
 <script src="data.js"></script><script src="app.js"></script>
 <script>
-const STEPS=[['Identify','Phone number → driver. Unknown numbers get no reply.',0],['Dedupe','Same message ID, or same text within 10 min → no second reply.',1],['Language','Script share + word list: EN, Hinglish, Hindi.',0],['Read facts','Regex → intent, ETA, limits, choice, with evidence.',0],['Safety words','Stop all scheduling; page the shift manager.',1],['Which shipment','Evidence ladder; ask only if it cannot decide.',0],['Record','ETA, window, limits; re-plan; refresh earmarks.',0],['Booking still works?','If yes, tell the driver to keep it.',0],['Options or escalate','Up to 3 feasible options, or a full hand-off.',1],['Reply + guard','Catalogue template, output guard, outbox.',0]];
+const STEPS=[['Identify','Phone number → driver. Unknown numbers get no reply.',0],['Dedupe','Same message ID, or same text within 10 min → no second reply.',1],['Language','Script share + word list: 7 languages (EN, Hinglish, Hindi, Gujarati, Marathi, Punjabi, Marwari).',0],['Read facts','Regex → intent, ETA, limits, choice, with evidence.',0],['Safety words','Stop all scheduling; page the shift manager.',1],['Which shipment','Evidence ladder; ask only if it cannot decide.',0],['Record','ETA, window, limits; re-plan; refresh earmarks.',0],['Booking still works?','If yes, tell the driver to keep it.',0],['Options or escalate','Up to 3 feasible options, or a full hand-off.',1],['Reply + guard','Catalogue template, output guard, outbox.',0]];
 const MSGS={
  c07:{lbl:'"Traffic after Shahpura. Reaching around 11:20. Any slot after 12?"',sub:'C07 · delay with a limit',out:['DRV006 Manoj Sharma','new message wa-9001','en','REPORT_DELAY · ETA 11:20 · earliest 12:00','none','SHP1006 (the trip you are driving)','ETA 11:20 MEDIUM recorded','CERTAIN_MISS on D4 10:00','3 options: D4 12:40, D2 1:00, D1 2:00','guard ✓ → outbox'],stop:null},
  dup:{lbl:'Same message, redelivered 1 minute later',sub:'C07 · WhatsApp retry',out:['DRV006 Manoj Sharma','SUPPRESSED — same as wa-9001'],stop:1},

@@ -31,13 +31,13 @@ Every run works on a fresh copy of `data/setuhaul_freight_operations.db`; the su
 | `setuhaul/config.py` | Every business number in one place (each one is in the Decision Register) |
 | `setuhaul/clock.py` | Explicit as-of time; no hidden "now" |
 | `setuhaul/db.py` | Connection, `BEGIN IMMEDIATE` write transaction, schema additions and triggers |
-| `setuhaul/nlu.py` | Language detection and rules-first reading of driver messages (English, Hinglish, Hindi) |
+| `setuhaul/nlu.py` | Language detection and rules-first reading of driver messages (English, Hinglish, Hindi, Gujarati, Marathi, Punjabi, Marwari) |
 | `setuhaul/eta.py` | The ETA we plan on: source order, confidence, late edge, plausibility checks |
 | `setuhaul/timeline.py` | Busy intervals per dock and the 15-point feasibility check |
 | `setuhaul/capacity.py` | Commit, hold, approve, sweep, cancel and swap, each in one transaction |
 | `setuhaul/planner.py` | Facility scheduling tool: plan, earmarks, health monitor, what-ifs, swap proposals |
 | `setuhaul/escalation.py` | Routing to the right person by a working channel |
-| `setuhaul/replies.py` | Reply catalogue in three languages and the output guard |
+| `setuhaul/replies.py` | Reply catalogue (English, Hinglish, Hindi; regional texts merged from replies_regional.py) and the output guard |
 | `setuhaul/workflow.py` | The conversation state machine: one message in, one reply out |
 | `setuhaul/world.py` | Rewind and replay of the snapshot for the scenario run |
 | `app.py` | Production entry point (FastAPI): WhatsApp webhook, coordinator console API, sign-in |

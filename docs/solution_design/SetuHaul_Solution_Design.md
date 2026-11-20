@@ -63,7 +63,8 @@ the steps are known in advance, and a wrong step means a double booking,
 so code chooses every next step and the model never picks a tool.
 
 1.  **Language at the edges, deterministic code in the middle.** Rules
-    read English, Hinglish and Hindi; a small LLM is a fallback that
+    read English, Hinglish, Hindi, Gujarati, Marathi, Punjabi and
+    Marwari; a small LLM is a fallback that
     must return strict JSON.
 
 2.  **Nothing is promised until one transaction books it.** Showing
@@ -101,7 +102,7 @@ so code chooses every next step and the model never picks a tool.
 | D14 | What a slot means                        | A start window; gate-in by start + grace; unloads may run past slot end                                      | F04, F05                          |
 | D15 | Architecture and cost                    | One container plus managed Postgres for the pilot                                                            | Review pack                       |
 | D16 | Where the LLM is used                    | Reading words only, after rules, strict JSON; replies from a catalogue                                       | C09                               |
-| D17 | Languages                                | Deterministic detection; English, Hinglish, Hindi templates                                                  | C06, C09, C12                     |
+| D17 | Languages                                | Deterministic detection; 7 languages (EN, Hinglish, Hindi, Gujarati, Marathi, Punjabi, Marwari)             | C06, C09, C12                     |
 | D18 | Earmarks                                 | Soft 20-minute protection for HIGH/CRITICAL and deadline trucks                                              | 09:45                             |
 | D19 | Swaps                                    | Coordinator only; trialled in a rolled-back transaction                                                      | C10, T12                          |
 | D20 | Proactive monitoring                     | Re-check every booking on every event                                                                        | 09:16, 09:56                      |
@@ -115,7 +116,7 @@ already computed.
 
 | Moment                     | Driver today                          | Driver with SetuHaul                                                   |
 |----------------------------|---------------------------------------|------------------------------------------------------------------------|
-| Running late               | Calls the warehouse, often no answer  | Sends one WhatsApp line in any of three languages                      |
+| Running late               | Calls the warehouse, often no answer  | Sends one WhatsApp line in any of seven languages                      |
 | Getting a new slot         | Waits for a call back; arrives hoping | Gets 2–3 feasible slots in about a minute and books with a tap         |
 | Slot taken by someone else | Finds out at the gate                 | Told "just taken", nothing booked, fresh options in the same reply     |
 | Accident or breakdown      | Same queue as everything else         | Scheduling stops; 112 advice; shift manager paged within 5 minutes     |
@@ -172,8 +173,9 @@ Conversation states · workflow.py
 1.  Verify the sender by phone and drop duplicates (same WhatsApp id, or
     the same text within 10 minutes).
 
-2.  Detect the language in code: English, Hinglish (Latin script) or
-    Hindi (Devanagari).
+2.  Detect the language in code: English, Hinglish (Latin script),
+    Hindi, Marathi or Marwari (Devanagari, told apart by word lists),
+    Gujarati or Punjabi (by script).
 
 3.  Extract with rules: clock times (11:30, 7 baje, 7 बजे), durations
     (one hour, dedh ghanta), ranges, order references, hints (evening,
@@ -427,7 +429,7 @@ is code, not a prompt.
 
 - **Output guard (replies.guard).** Every dock and every time in a reply
   must appear in the evidence from the database; "Booked" or "Confirmed"
-  (in any of the three languages) needs a CONFIRMED commit. A blocked
+  (in any of the seven languages) needs a CONFIRMED commit. A blocked
   reply is never sent and raises an ops alarm.
 
 - **LLM output checks.** Strict JSON schema with no extra fields; every
@@ -498,7 +500,8 @@ click.
 | R7 Arrival prep          | 30 minutes out: e-way bill, invoice and LR ready; dock and gate time               |
 | R8 Booking change        | Any booking, move or release                                                       |
 
-Templates exist in English and Hinglish; drivers who wrote in Hindi or
+Templates exist in English and Hinglish, with Gujarati, Marathi,
+Punjabi and Marwari bodies for check-in and booking updates; drivers who wrote in Hindi or
 Hinglish on 4 August (DRV004, DRV010, DRV011) get Hinglish. **Data
 sources in production:** a GPS box, FASTag through ULIP, SIM location or
 a driver app, stored in telematics_devices, gps_pings and trip_tracking.

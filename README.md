@@ -1,7 +1,7 @@
 # SetuHaul — Logistic Management
 
 Driver-Exception Agent for SetuHaul Logistics (FDE Academy challenge, Mini Project 2).
-Drivers report delays on WhatsApp in English, Hinglish or Hindi; SetuHaul reads the message, checks every dock door against the rules, offers only slots that really work, and books the one they pick in a single checked transaction. Hard cases go to a coordinator with everything on one screen. MVP 2 adds a GPS control tower with live trip status and an automated WhatsApp message series.
+Drivers report delays on WhatsApp in English, Hinglish, Hindi, Gujarati, Marathi, Punjabi or Marwari; SetuHaul reads the message, checks every dock door against the rules, offers only slots that really work, and books the one they pick in a single checked transaction. Hard cases go to a coordinator with everything on one screen. MVP 2 adds a GPS control tower with live trip status and an automated WhatsApp message series.
 
 **Live site:** https://sdaistudio.github.io/SetuHaul_Logistics_Management/
 

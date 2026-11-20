@@ -132,7 +132,7 @@ T = {
   "hi": "नमस्ते {name}, {order} ({facility}) का स्लॉट {slot} से है। क्या आप समय पर हैं?\n1) समय पर  2) देर हो रही है  3) मदद चाहिए"},
 }
 
-# Channel-layer messages (WhatsApp delivery, privacy, opt-out, safety hold). Same three languages,
+# Channel-layer messages (WhatsApp delivery, privacy, opt-out, safety hold). Same three core languages (regional ones fall back to Hindi),
 # same guard. None of them states a dock, a time or a booking unless the caller passes evidence.
 T.update({
  "privacy_notice": {

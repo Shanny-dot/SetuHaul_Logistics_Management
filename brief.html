@@ -177,7 +177,7 @@ table('t-doc',['Element in the solution design','In this prototype','Status / re
  ['Architecture: 5 layers, only 2 edge steps use an LLM','Flow & Architecture diagram: channel → API → fixed workflow → context / scheduler / booking services → database',OK+' '+L('flow.html#layers','Layers')],
  ['One exception, end to end (3 side exits)','Interactive flow with ask-one-question, escalate and re-plan exits',OK+' '+L('flow.html#e2e','Flow')],
  ['LLM extracts facts to strict JSON on every message','Rules read the message first; the LLM is called only when rules return UNKNOWN, same strict schema',AD+' same output, deterministic and cheaper; LLM fallback never fired on 4 Aug'],
- ['LLM writes every reply','Replies from 34 reviewed templates × 3 languages; output guard checks every dock and time',AD+' no invented facts; LLM wording optional'],
+ ['LLM writes every reply','Replies from 34 reviewed templates in 7 languages; output guard checks every dock and time',AD+' no invented facts; LLM wording optional'],
  ['Pick → 3-minute hold → "YES" books','Pick = booking in one checked transaction; holds only while a coordinator decides',AD+' saves a turn for a driver on the road; transaction is the hold'],
  ['Long unloads book two consecutive slots','Bookings are time intervals that may run past the slot end if the door is free',AD+' two slots wasted ~3 dock-hours/day at Jaipur'],
  ['Hard filters F1–F9','All nine inside the 15-point feasibility check',OK],
