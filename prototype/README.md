@@ -128,6 +128,31 @@ TWILIO_AUTH_TOKEN=sim-token .venv/bin/python -I scripts/sim_server.py          #
 | `tests/test_twilio_channel.py` | 40 channel tests, including console-vs-Twilio parity on C03 and C06 |
 
 
+## Driver languages
+
+Drivers can write in English, Hinglish, Hindi, Gujarati, Marathi, Punjabi and Rajasthani. Detection and reading
+are rules only (no model call); replies come from the reviewed catalogue in the driver's language.
+
+| File | Change |
+|---|---|
+| `setuhaul/languages.py` | Language list, scripts, native digits, Marathi/Rajasthani marker words, reading vocabulary per language |
+| `setuhaul/nlu.py` | Detects the languages; reads times, durations, "after 12", choices, slot references and safety words in each |
+| `setuhaul/replies_regional.py` | 30 reply texts per new language (drafts for native review); the rest fall back to Hindi |
+| `setuhaul/replies.py` | Merges them; the output guard reads every language's dock word and "booked" words |
+| `setuhaul/workflow.py` | Phrases built in code (ETA basis, approval reasons, "or") per language |
+| `templates/twilio_templates.yaml`, `setuhaul/templates.py` | Proactive templates per language (each needs its own WhatsApp approval) |
+| `tests/test_languages.py` | 16 tests: detection, reading, false-alarm checks, placeholders, guard, full turns |
+| `scripts/language_demo.py` | Runs 8 demo conversations in the new languages and in English; writes `out/language_demo.json` and the portal's `lang_data.js` |
+
+```
+python3 -I scripts/language_demo.py out/
+python3 -I -m unittest discover -s tests -p "test_languages.py" -v
+```
+
+Limits: romanised Gujarati, Marathi, Punjabi or Rajasthani is read as Hinglish and answered in Hinglish. Rajasthani
+has no single standard; the drafts lean to Marwari as written around Jaipur. All new reply texts need a native
+speaker's review before go-live, and each language's WhatsApp templates need separate approval.
+
 ## What the prototype does not do
 
 * The scenario run and integrity proof make no live WhatsApp or LLM call. Where the design calls the LLM fallback and no key is set, the workflow asks the driver a clarifying question instead.

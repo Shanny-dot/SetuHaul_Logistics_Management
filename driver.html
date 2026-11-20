@@ -2,7 +2,7 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Driver Messages · SetuHaul - Logistic Management</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+Devanagari:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+Devanagari:wght@400;600&family=Noto+Sans+Gujarati:wght@400;600&family=Noto+Sans+Gurmukhi:wght@400;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
 <style>
 .app{display:grid;grid-template-columns:300px 410px 1fr;gap:22px;align-items:start}
@@ -89,11 +89,32 @@
 .toggle input{accent-color:var(--teal)}
 @media (max-width:1200px){.app{grid-template-columns:260px 410px}.side{grid-column:1/-1}}
 @media (max-width:760px){.app{grid-template-columns:1fr}.cases{position:static;max-height:none;flex-direction:row;overflow-x:auto}.case{min-width:240px}.cg{display:none}.phone-wrap{position:static;display:flex;flex-direction:column;align-items:center}.phone{width:100%;max-width:390px;height:720px}}
+
+/* languages */
+.lgx{margin-top:56px}
+.lgtabs{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 16px}
+.lgtabs button{border:1px solid var(--line2);background:var(--panel);border-radius:999px;padding:8px 14px;font-weight:600;font-size:13.5px;color:var(--text)}
+.lgtabs button small{display:block;font-weight:400;font-size:11.5px;color:var(--muted)}
+.lgtabs button.on{background:var(--teal);color:#fff;border-color:var(--teal)}.lgtabs button.on small{color:#dff}
+.lgconvs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.lgconvs button{border:1px solid var(--line);background:var(--bg2);border-radius:12px;padding:7px 12px;font-size:12.5px;color:var(--text)}
+.lgconvs button.on{border-color:var(--saffron);background:#FFF6E6}
+.lggrid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.lgcol{border:1px solid var(--line);border-radius:18px;overflow:hidden;background:#EFE7DC}
+.lgcol h4{margin:0;padding:10px 14px;background:#0B5C4F;color:#fff;font-size:13.5px;display:flex;justify-content:space-between}
+.lgcol h4 small{opacity:.8;font-weight:400}
+.lgchat{padding:12px;display:flex;flex-direction:column;gap:6px;min-height:200px;background-image:radial-gradient(rgba(11,92,79,.07) 1px,transparent 1.4px);background-size:16px 16px}
+.lgchat .msg{max-width:92%;animation:pop .35s both}
+.msg.gujr{font-family:'Noto Sans Gujarati',var(--sans)}.msg.guru{font-family:'Noto Sans Gurmukhi',var(--sans)}
+.lgtools{font-family:var(--mono);font-size:10.5px;color:#4f6b52;margin-top:6px;white-space:normal}
+.lgchg{margin-top:16px}
+.lgchg td:first-child{font-family:var(--mono);font-size:12.5px;white-space:nowrap}
+@media (max-width:900px){.lggrid{grid-template-columns:1fr}}
 </style></head><body>
 <main class="wrap">
 <div class="page-head"><div><div class="eyebrow">● Driver Messages · WhatsApp channel</div><h1>Every driver conversation from 4 August</h1>
 <p>Choose a driver. Tap <b>send</b> to post their real message, tap a slot to book it, or press <b>Auto-play</b>. The right panel shows what SetuHaul checked before each reply.</p></div>
-<div style="display:flex;gap:10px;align-items:center"><label class="toggle"><input type="checkbox" id="gloss" checked> English gloss for Hindi / Hinglish</label></div></div>
+<div style="display:flex;gap:10px;align-items:center"><a class="btn" href="#languages">ગુ · म · ਪੰ · रा — 7 languages ↓</a><label class="toggle"><input type="checkbox" id="gloss" checked> English gloss for Hindi / Hinglish</label></div></div>
 
 <div class="app">
   <aside class="cases" id="cases"></aside>
@@ -113,6 +134,33 @@
     <div class="card"><h3>Behind each reply <span class="chip">audit trail</span></h3><div class="turns" id="turns"><div class="empty">Send the driver's message to see the tools the workflow calls.</div></div></div>
   </section>
 </div>
+
+<section class="lgx" id="languages">
+ <div class="eyebrow">● Seven languages</div>
+ <h2 class="sec-t" style="margin-top:6px">Drivers can now write in Gujarati, Marathi, Punjabi and Rajasthani</h2>
+ <p class="sec-p">Same engine, same checks, same booking. These conversations were run through the real workflow on the 4 August data (<span class="mono">scripts/language_demo.py</span>); the right column is the same conversation sent in English, so you can see the meaning and that the outcome is identical. Reply texts in the new languages are drafts for review by a native speaker.</p>
+ <div class="lgtabs" id="lgtabs"></div>
+ <div class="lgconvs" id="lgconvs"></div>
+ <div class="lggrid">
+  <div class="lgcol"><h4><span id="lgname">—</span><small id="lgdriver"></small></h4><div class="lgchat" id="lgnative"></div></div>
+  <div class="lgcol"><h4><span>Same conversation in English</span><small id="lgcase"></small></h4><div class="lgchat" id="lgeng"></div></div>
+ </div>
+ <div class="card lgchg">
+  <h3>Where the change was made</h3>
+  <table class="t">
+   <tr><th>File</th><th>What changed</th></tr>
+   <tr><td>setuhaul/languages.py</td><td>New: the language list, scripts (Gujarati, Gurmukhi, Devanagari), native digits, marker words that tell Marathi and Rajasthani from Hindi, and the reading vocabulary per language (o'clock words, durations, late words, "after", ordinals, yes/no, safety words).</td></tr>
+   <tr><td>setuhaul/nlu.py</td><td>Detects the four languages; reads times, durations, "after 12", choices, slot references and safety words in each. No model call.</td></tr>
+   <tr><td>setuhaul/replies_regional.py</td><td>New: 30 reply texts in each language (drafts for native review). Anything not yet translated falls back to Hindi.</td></tr>
+   <tr><td>setuhaul/replies.py</td><td>Merges the new texts; the output guard now reads ડૉક / ਡੌਕ / डॉक and the "booked" words of every language, so no reply can claim a booking or a dock the database did not produce.</td></tr>
+   <tr><td>setuhaul/workflow.py</td><td>The small phrases built in code (ETA basis, approval reasons, "or" between choices) come in each language.</td></tr>
+   <tr><td>templates/twilio_templates.yaml · templates.py</td><td>Proactive WhatsApp templates in the four languages; each language needs its own WhatsApp approval.</td></tr>
+   <tr><td>setuhaul/llm.py</td><td>The fallback reader's prompt lists the seven languages.</td></tr>
+   <tr><td>tests/test_languages.py</td><td>16 new tests: detection, reading, no false safety alarm (e.g. આગળ "ahead"), placeholders, guard, and every demo conversation end to end. All 113 tests pass; the 4 August scenario output is unchanged.</td></tr>
+   <tr><td>Database (proposed)</td><td>driver_preferences.language stores each driver's language once known, so proactive messages go out in it.</td></tr>
+  </table>
+ </div>
+</section>
 </main>
 <script src="data.js"></script><script src="app.js"></script>
 <script>
@@ -284,4 +332,30 @@ $('#next').onclick=()=>{const i=ORDER.indexOf(C);location.hash=ORDER[(i+1)%ORDER
 $('#auto').onclick=()=>{if(branch||idx>=steps.length)loadCase(C);autoplay=!autoplay;$('#auto').textContent=autoplay?'❚❚ Pause':'▶ Auto-play';if(autoplay)prepComposer()};
 function route(){const h=location.hash.slice(1).toUpperCase();loadCase(META[h]?h:'C03')}
 addEventListener('hashchange',route);route();
-</script></body></html>
+</script><script src="lang_data.js"></script>
+<script>
+(function(){
+ if(!window.LANGDEMO)return;
+ const C=LANGDEMO.conversations, langs=[...new Set(C.map(c=>c.lang))];
+ const scr=l=>l==='gu'?'gujr':l==='pa'?'guru':'dev';
+ const esc=t=>(t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');
+ let cur=langs[0];
+ function bubble(text,me,cls,tools){return `<div class="msg ${me?'me':'bot'} ${cls}">${esc(text)}${tools?`<div class="lgtools">${esc(tools.join(' · '))}</div>`:''}<span class="tm">${me?'✓✓':''}</span></div>`}
+ function show(id){const c=C.find(x=>x.id===id);
+  document.querySelectorAll('#lgconvs button').forEach(b=>b.classList.toggle('on',b.dataset.id===id));
+  document.getElementById('lgname').textContent=c.native+' · '+c.language;
+  document.getElementById('lgdriver').textContent=c.name+' · '+c.driver;
+  document.getElementById('lgcase').textContent='mirrors '+c.mirrors;
+  const n=[],e=[];c.turns.forEach(t=>{n.push(bubble(t.text,true,scr(c.lang)));e.push(bubble(t.text_en,true,''));
+    if(t.reply){n.push(bubble(t.reply,false,scr(c.lang),t.tools));e.push(bubble(t.reply_en,false,''))}});
+  document.getElementById('lgnative').innerHTML=n.join('');document.getElementById('lgeng').innerHTML=e.join('')}
+ function lang(l){cur=l;document.querySelectorAll('#lgtabs button').forEach(b=>b.classList.toggle('on',b.dataset.l===l));
+  const cs=C.filter(c=>c.lang===l);
+  document.getElementById('lgconvs').innerHTML=cs.map(c=>`<button data-id="${c.id}">${esc(c.title)}</button>`).join('');
+  document.querySelectorAll('#lgconvs button').forEach(b=>b.onclick=()=>show(b.dataset.id));show(cs[0].id)}
+ document.getElementById('lgtabs').innerHTML=langs.map(l=>{const c=C.find(x=>x.lang===l);return `<button data-l="${l}">${c.native}<small>${c.language}</small></button>`}).join('');
+ document.querySelectorAll('#lgtabs button').forEach(b=>b.onclick=()=>lang(b.dataset.l));
+ lang(cur);
+})();
+</script>
+</body></html>

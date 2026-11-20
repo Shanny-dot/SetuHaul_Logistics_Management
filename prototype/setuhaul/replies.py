@@ -182,21 +182,38 @@ T.update({
 })
 
 
+# Gujarati, Marathi, Punjabi and Rajasthani (drafts for native review); missing keys fall back to Hindi.
+from .replies_regional import REGIONAL, PHRASES, BOOKED_WORDS, DOCK_WORDS   # noqa: E402
+from .languages import pick, OR_WORD                                       # noqa: E402
+
+for _lang, _texts in REGIONAL.items():
+    for _k, _v in _texts.items():
+        T[_k][_lang] = _v
+
+DOCK_RE = r"(?:Dock|डॉक|" + "|".join(DOCK_WORDS) + r")\s+(D\d)"
+
+
 def t(key, lang, **kw):
-    table = T[key]
-    return table.get(lang, table["en"]).format(**kw)
+    return pick(T[key], lang).format(**kw)
+
+
+def phrase(key, lang, en, hi_latn, hi):
+    """A small phrase built in workflow.py, in the driver's language (Hindi fallback for the new ones)."""
+    table = dict(PHRASES.get(key, {}), en=en, **{"hi-Latn": hi_latn, "hi": hi})
+    return pick(table, lang)
 
 
 def guard(text, evidence):
     """Return [] if every dock and time in text is backed by evidence, else the violations."""
     bad = []
-    for d in re.findall(r"(?:Dock|डॉक)\s+(D\d)", text):
+    for d in re.findall(DOCK_RE, text):
         if d not in evidence.get("docks", set()):
             bad.append("dock " + d)
     for tm in re.findall(r"\b\d{1,2}:\d{2} (?:AM|PM)\b", text):
         if tm not in evidence.get("times", set()):
             bad.append("time " + tm)
-    if re.search(r"^Booked|^Confirmed|Book ho gaya|बुक हो गया|पक्का हो गया|Confirm ho gaya", text) and not evidence.get("confirmed"):
+    if re.search(r"^Booked|^Confirmed|Book ho gaya|बुक हो गया|पक्का हो गया|Confirm ho gaya|" + "|".join(BOOKED_WORDS), text) \
+            and not evidence.get("confirmed"):
         bad.append("claims booked without CONFIRMED commit")
     return bad
 
@@ -223,5 +240,5 @@ def guard_options(options, evidence):
 
 def evidence_from_text(text):
     """Docks and times stated in an already-guarded text (used to re-check a re-sent offer)."""
-    return {"docks": set(re.findall(r"(?:Dock|डॉक)\s+(D\d)", text or "")), "times": set(OPTION_TIME.findall(text or "")),
+    return {"docks": set(re.findall(DOCK_RE, text or "")), "times": set(OPTION_TIME.findall(text or "")),
             "confirmed": False}
