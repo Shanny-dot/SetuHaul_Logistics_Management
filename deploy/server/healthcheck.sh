@@ -19,3 +19,9 @@ compose ps --format '      {{.Service}}: {{.State}} {{.Health}}' 2>/dev/null || 
 free -m | awk 'NR==2{printf "      memory used %s/%s MiB\n",$3,$2} NR==3{printf "      swap used   %s/%s MiB\n",$3,$2}'
 if dmesg 2>/dev/null | grep -qi 'out of memory\|oom-kill'; then echo "WARN  the kernel has killed a process for memory (dmesg | grep -i oom)"; fi
 df -h / | awk 'NR==2{print "      disk used " $3 " of " $2}'
+LAST="$(ls -1t "$SETUHAUL_HOME"/backups/demo_world-*.db.gz 2>/dev/null | head -1 || true)"
+if [ -z "$LAST" ]; then echo "WARN  no backup yet (sudo $SRC/deploy/server/backup.sh)"
+elif [ $(( $(date +%s) - $(stat -c %Y "$LAST" 2>/dev/null || stat -f %m "$LAST") )) -gt 93600 ]; then echo "WARN  last backup is older than 26 h: $(basename "$LAST") (see /var/log/setuhaul-backup.log)"
+else echo "OK    last backup $(basename "$LAST")"; fi
+[ -s "$SETUHAUL_HOME/watchdog.failures" ] && [ "$(cat "$SETUHAUL_HOME/watchdog.failures")" != 0 ] && echo "WARN  watchdog: $(cat "$SETUHAUL_HOME/watchdog.failures") failed check(s) in a row"
+true

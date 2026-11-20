@@ -188,6 +188,28 @@ If certificate issuance fails (Let's Encrypt limits certificates per domain, and
 
 ---
 
+## Production hardening (all inside the same US\$10 box)
+
+| Area | What is in place | Where |
+|---|---|---|
+| Access | No SSH key, no port 22; Session Manager only. IMDSv2 only, hop limit 1, so containers can't reach the instance's credentials | `launch_instance.sh` |
+| Network | Only 80/443 open; only the two Twilio webhooks and `/healthz` reach the app; everything else returns 404 | security group, `Caddyfile` |
+| TLS | Automatic Let's Encrypt certificate; HSTS, `nosniff`, `X-Frame-Options`, no `Server` header | `Caddyfile` |
+| Edge limits | 256 KB request body cap; read/write/idle timeouts | `Caddyfile` |
+| Twilio | Every webhook signature checked before any processing; the exact public URL is enforced | app + `load-env.sh` |
+| Secrets | SSM SecureString; `.env` is root-only (600); never printed; values typed hidden | `put_secrets.sh`, `load-env.sh` |
+| Containers | App runs as uid 10001 with a **read-only filesystem**, all Linux capabilities dropped and `no-new-privileges`; memory caps on all three containers | `docker-compose.yml`, `Dockerfile` |
+| Disk | Docker logs rotate (10 MB × 3 per container); journald capped at 200 MB | `bootstrap.sh` |
+| Patching | `dnf-automatic` applies security updates daily. **Reboot monthly by hand**: `sudo reboot`, then `reset-demo.sh` | `bootstrap.sh` |
+| Recovery | Docker restarts crashed containers; the **watchdog** restarts a hung app after 3 failed `/readyz` checks; the CloudWatch alarm recovers the instance on hardware failure; Docker `live-restore` keeps containers running through a Docker update | `watchdog.sh`, `create_alarm_and_budget.sh` |
+| Deploys | Image per commit; automatic rollback if `/readyz` fails | `update.sh` |
+| Data | Nightly integrity-checked backup to S3 (30 days); `healthcheck.sh` warns if the last backup is older than 26 h; restore procedure tested | `backup.sh`, `restore-check.sh` |
+| Cost | Budget emails at \$8 / \$10; `teardown.sh` releases the Elastic IP | `create_alarm_and_budget.sh`, `teardown.sh` |
+
+What "production-ready" does **not** mean here: one machine in one availability zone, SQLite, no high availability, and logs only on the box. The production design for real pilot volume is the managed-Postgres path in the project documents.
+
+Logs: `/var/log/setuhaul-bootstrap.log`, `/var/log/setuhaul-backup.log`, `/var/log/setuhaul-watchdog.log`, and `sudo docker compose … logs app`.
+
 ## If something goes wrong
 
 | Symptom | Check | Fix |
@@ -225,6 +247,7 @@ If certificate issuance fails (Let's Encrypt limits certificates per domain, and
 | `server/update.sh`, `healthcheck.sh` | Deploy with automatic rollback; health, memory, OOM and disk report |
 | `server/backup.sh`, `sqlite_backup.py`, `setuhaul-backup.cron`, `restore-check.sh` | Nightly backup to S3; restore test |
 | `server/reset-demo.sh` | Fresh demo world, phones mapped, clock set per scenario |
+| `server/watchdog.sh`, `setuhaul-watchdog.cron` | Every 5 minutes: restart the app after 3 failed `/readyz` checks |
 | `.env.template` | Every variable the app reads, with demo defaults (no secrets) |
 | `tests/local_smoke.sh` | No-Docker test: real Caddyfile + app + signed webhook + backup/restore |
 | `tests/smoke.sh` | Docker test: builds the arm64 image and runs the real compose stack |

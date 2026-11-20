@@ -2,7 +2,7 @@
 
   python3 checks.py --public https://localhost:8443 --local http://127.0.0.1:8000 --token <test token> --phone +919800000013
 
-1. public /healthz through Caddy (HTTPS)                     -> 200
+1. public /healthz through Caddy (HTTPS)                     -> 200, security headers, 300 KB body -> 413
 2. local /readyz                                            -> ok:true
 3. private paths through Caddy (/readyz, /auth/dev-login, /console/holds, /dev/clock) -> 404
 4. a Twilio-shaped webhook, signed locally for the PUBLIC URL, through Caddy -> 200, then the trace shows the turn ran
@@ -42,6 +42,14 @@ def sign(url, params, token):
 
 code, body = call(a.public + "/healthz")
 check("public /healthz through Caddy over HTTPS", code == 200 and '"ok"' in body, f"{code} {body[:80]}")
+req = urllib.request.Request(a.public + "/healthz")
+with urllib.request.urlopen(req, timeout=20, context=CTX) as r:
+    h = {k.lower(): v for k, v in r.headers.items()}
+check("security headers (HSTS, nosniff) and no Server header",
+      "max-age" in h.get("strict-transport-security", "") and h.get("x-content-type-options") == "nosniff" and "server" not in h,
+      str({k: h.get(k) for k in ("strict-transport-security", "x-content-type-options", "server")}))
+code, _ = call(a.public + "/webhook/twilio", b"Body=" + b"x" * 300_000, {"content-type": "application/x-www-form-urlencoded"})
+check("oversized request (300 KB) refused by Caddy", code == 413, str(code))
 code, body = call(a.local + "/readyz")
 check("local /readyz ok", code == 200 and '"ok":true' in body, f"{code} {body[:120]}")
 for path, method in (("/readyz", "GET"), ("/auth/dev-login", "POST"), ("/console/holds", "GET"), ("/dev/clock", "POST")):

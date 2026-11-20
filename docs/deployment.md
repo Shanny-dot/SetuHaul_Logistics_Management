@@ -22,6 +22,13 @@
 - **Monitoring:**
   - CloudWatch alarm on `StatusCheckFailed_System` with the EC2 **recover** action.
   - AWS Budget of US$10 with emails at $8 and $10.
+- **Hardening:**
+  - containers: read-only app container with no Linux capabilities, `no-new-privileges`;
+  - disk: Docker log rotation, journald cap;
+  - patching: daily security updates (`dnf-automatic`);
+  - recovery: a 5-minute watchdog;
+  - edge: HSTS and security headers, 256 KB request cap;
+  - backups: a warning if a backup is missed.
 - **Coordinator console and `/dev/*`:** reachable only from the machine itself (127.0.0.1), through a Session Manager terminal.
 
 ## Cost (list prices, ap-south-1, on-demand, checked 20 Nov 2026)
@@ -60,5 +67,7 @@ New AWS accounts receive $100 in Free Tier credits, plus up to $100 more for con
 | All six AWS scripts with `--dry-run` | each prints its plan and monthly cost; nothing created |
 | `deploy/tests/local_smoke.sh`: the real `Caddyfile` (Caddy 2.8.4) in front of the app started like the container (1 worker, proxy headers), on localhost with TLS | healthz, readyz, private paths 404 from outside, **signed Twilio webhook through the proxy → turn ran**, bad signature → 403. Passed both with `TWILIO_WEBHOOK_BASE_URL` set and with the URL rebuilt from `X-Forwarded-Proto/Host` |
 | Backup → gzip → restore into a scratch DB → integrity + counts | `integrity_check: ok` |
+| Hardened Caddyfile (`caddy validate`, then the smoke test): HSTS/nosniff headers, no Server header, 300 KB request → 413 | pass |
+| App started from a **write-protected** copy of the code with a write-protected home (approximates the read-only container) | `/readyz` ok, signed webhook processed, replies queued, nothing written outside data/tmp |
 | Docker image build for linux/arm64 and the compose stack (`deploy/tests/smoke.sh`) | **Not run**: Docker is not installed on the build machine |
 | Anything on AWS | **Not run**: no AWS credentials on the build machine (script mode) |

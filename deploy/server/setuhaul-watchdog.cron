@@ -1,0 +1,2 @@
+# SetuHaul watchdog: restart the app if /readyz fails 3 checks in a row. Installed to /etc/cron.d/setuhaul-watchdog.
+*/5 * * * * root /opt/setuhaul/src/deploy/server/watchdog.sh >> /var/log/setuhaul-watchdog.log 2>&1

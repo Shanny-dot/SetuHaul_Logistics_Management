@@ -13,8 +13,25 @@ BUILDX_V=v0.17.1
 [ "$(uname -m)" = aarch64 ] || echo "WARNING: expected aarch64 (t4g), got $(uname -m)"
 
 echo "== packages"
-dnf install -y docker git cronie python3 >/dev/null
-systemctl enable --now docker crond
+dnf install -y docker git cronie python3 dnf-automatic >/dev/null
+
+echo "== docker defaults: log rotation (10 MB x 3 per container), live-restore"
+mkdir -p /etc/docker
+cat > /etc/docker/daemon.json <<'J'
+{"log-driver": "json-file", "log-opts": {"max-size": "10m", "max-file": "3"}, "live-restore": true}
+J
+systemctl enable docker crond
+systemctl restart docker
+systemctl start crond
+
+echo "== journald capped at 200 MB"
+mkdir -p /etc/systemd/journald.conf.d
+printf '[Journal]\nSystemMaxUse=200M\n' > /etc/systemd/journald.conf.d/90-setuhaul.conf
+systemctl restart systemd-journald
+
+echo "== automatic security updates (daily, security only; reboots are manual)"
+sed -i -e 's/^upgrade_type *=.*/upgrade_type = security/' -e 's/^apply_updates *=.*/apply_updates = yes/' /etc/dnf/automatic.conf
+systemctl enable --now dnf-automatic.timer
 
 echo "== docker compose $COMPOSE_V and buildx $BUILDX_V (aarch64)"
 P=/usr/local/lib/docker/cli-plugins; mkdir -p "$P"; T="$(mktemp -d)"
@@ -54,8 +71,9 @@ echo "$BRANCH" > "$H/BRANCH"
 S
 chmod 644 "$H/settings.env"
 
-echo "== nightly backup (02:30 IST = 21:00 UTC)"
+echo "== cron: nightly backup (02:30 IST = 21:00 UTC) and the 5-minute watchdog"
 install -m 644 "$H/src/deploy/server/setuhaul-backup.cron" /etc/cron.d/setuhaul-backup
+install -m 644 "$H/src/deploy/server/setuhaul-watchdog.cron" /etc/cron.d/setuhaul-watchdog
 
 echo "== first deploy"
 if bash "$H/src/deploy/server/load-env.sh"; then

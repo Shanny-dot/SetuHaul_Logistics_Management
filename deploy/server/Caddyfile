@@ -7,9 +7,27 @@
 	https_port {$HTTPS_PORT:443}
 	skip_install_trust
 	admin off
+	servers {
+		timeouts {
+			read_body 10s
+			read_header 10s
+			write 30s
+			idle 2m
+		}
+	}
 }
 
 {$DOMAIN} {
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "no-referrer"
+		-Server
+	}
+	request_body {
+		max_size 256KB
+	}
 	@public path /webhook/twilio /webhook/twilio/status /healthz
 	handle @public {
 		reverse_proxy {$UPSTREAM:app:8000}

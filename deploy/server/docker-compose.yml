@@ -17,6 +17,7 @@ services:
       - ${SETUHAUL_HOME:-/opt/setuhaul}/caddy/config:/config
     depends_on: [app]
     mem_limit: 128m
+    security_opt: ["no-new-privileges:true"]
 
   app:
     image: setuhaul-app:${APP_TAG:-local}
@@ -30,6 +31,11 @@ services:
     ports: ["127.0.0.1:${APP_LOCAL_PORT:-8000}:8000"]      # console, /dev, /readyz: reachable ONLY from the box (SSM session)
     depends_on: [redis]
     mem_limit: 512m
+    # The app needs no Linux capabilities and writes only to /data (and /tmp).
+    read_only: true
+    tmpfs: ["/tmp:size=64m"]
+    cap_drop: ["ALL"]
+    security_opt: ["no-new-privileges:true"]
 
   redis:
     image: redis:7.4-alpine             # multi-arch (arm64)
@@ -38,3 +44,4 @@ services:
     volumes:
       - ${SETUHAUL_HOME:-/opt/setuhaul}/redis:/data
     mem_limit: 96m
+    security_opt: ["no-new-privileges:true"]
