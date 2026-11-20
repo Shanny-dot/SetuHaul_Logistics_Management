@@ -1,7 +1,9 @@
 #!/bin/bash
 # Store secrets in SSM Parameter Store as SecureString under /setuhaul/ (free tier: standard parameters,
-# AWS-managed key aws/ssm). Values are typed with hidden input (read -s), passed to the AWS CLI on stdin,
-# never as command-line arguments, never echoed, never written to a file.
+# AWS-managed key aws/ssm). Values are typed with hidden input (read -s), never echoed and never passed as
+# command-line arguments (which other processes could see). Each value goes to the AWS CLI through a private
+# temporary file (mode 600, in your per-user temp folder) that is deleted right after the call, and on exit.
+# (The AWS CLI on macOS cannot read --cli-input-json from /dev/stdin.)
 #
 #   TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN      required
 #   ANTHROPIC_API_KEY, LANGSMITH_API_KEY       optional (press Enter to skip / keep the current value)
@@ -19,9 +21,14 @@ cost "SecureString parameters $PARAM_PATH/{TWILIO_ACCOUNT_SID,TWILIO_AUTH_TOKEN,
 if [ "$DRY_RUN" = 1 ]; then say "  [dry-run] would prompt for each value with hidden input and store it"; exit 0; fi
 confirm
 
+SECRET_TMP=""
+trap 'rm -f "$SECRET_TMP"' EXIT INT TERM
 put_secure() {   # name, value on stdin
-  python3 -c 'import json,sys; print(json.dumps({"Name": sys.argv[1], "Type": "SecureString", "Overwrite": True, "Tier": "Standard", "Value": sys.stdin.read()}))' "$1" \
-    | aws ssm put-parameter --cli-input-json file:///dev/stdin >/dev/null
+  umask 077
+  SECRET_TMP="$(mktemp "${TMPDIR:-/tmp}/setuhaul-secret.XXXXXX")"
+  python3 -c 'import json,sys; print(json.dumps({"Name": sys.argv[1], "Type": "SecureString", "Overwrite": True, "Tier": "Standard", "Value": sys.stdin.read()}))' "$1" > "$SECRET_TMP"
+  aws ssm put-parameter --cli-input-json "file://$SECRET_TMP" >/dev/null
+  rm -f "$SECRET_TMP"; SECRET_TMP=""
 }
 exists() { aws ssm get-parameter --name "$1" --query Parameter.Name --output text >/dev/null 2>&1; }
 
