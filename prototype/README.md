@@ -48,6 +48,7 @@ Every run works on a fresh copy of `data/setuhaul_freight_operations.db`; the su
 | `setuhaul/tracing.py` | LangSmith tracing with phone numbers masked and guardrail tags |
 | `tests/test_production_layer.py` | 24 tests for the production layer (no network, no keys needed) |
 | `tests/test_integrity.py` | The 12 integrity tests |
+| `tests/test_sqlite_guards.py` | MVP 1 on SQLite: booking-guard triggers are restored at start-up and checked by `/readyz`, preflight and the restore drill |
 | `run_*.py` | Runners for the scenario, the integrity proof and the scheduler comparison |
 | `scripts/audit.py` | The data audit: one proof query per finding |
 | `out/` | The results quoted in the Word documents |
