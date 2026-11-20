@@ -93,6 +93,7 @@ def _init_db():
             demo_world.apply_due(con, CLOCK.now())
         con.close()
     con = db.connect(path)
+    db.ensure_extensions(con)              # a persistent or restored DB gets any missing guard back
     chan_db.ensure(con)
     con.close()
     return path
@@ -123,7 +124,7 @@ app = FastAPI(title="SetuHaul driver-exception service", lifespan=lifespan)
 
 
 def _con():
-    return db.connect(DB_PATH)             # one connection per request; SQLite WAL / Postgres pool in production
+    return db.connect(DB_PATH)             # one connection per request; SQLite WAL in MVP 1 (a pool once MVP 2 moves to Postgres or MongoDB)
 
 
 def _as_of(override=None, epoch=None):
@@ -492,8 +493,9 @@ def readyz():
     try:
         c = _con()
         c.execute("SELECT 1 FROM wa_delivery LIMIT 1").fetchall()
+        problems = db.guard_problems(c)    # SQLite (MVP 1): the booking guarantee lives in triggers
         c.close()
-        checks["db"] = (True, "ok")
+        checks["db"] = (False, "; ".join(problems)) if problems else (True, "ok, booking guards present")
     except Exception as e:
         checks["db"] = (False, type(e).__name__)
     try:
