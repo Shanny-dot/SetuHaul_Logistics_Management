@@ -1,0 +1,9 @@
+# Build context is the repo root; send only what the image needs (BuildKit reads this file next to the Dockerfile).
+*
+!prototype
+!deploy/server/entrypoint.sh
+prototype/.venv
+prototype/out
+prototype/tests
+**/__pycache__
+**/*.pyc

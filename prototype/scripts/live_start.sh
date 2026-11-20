@@ -32,7 +32,10 @@ case "$SC" in
 esac
 
 [ -f "$ENV_FILE" ] || { echo "No $ENV_FILE found (run from anywhere; the script looks next to the prototype folder)."; exit 1; }
-set -a; . "$ENV_FILE"; set +a                           # values are never echoed
+set -a
+# shellcheck disable=SC1090
+. "$ENV_FILE"
+set +a                           # values are never echoed
 PHONE="${2:-${DEMO_PHONE:-}}"
 [ -n "$PHONE" ] || { echo "Add DEMO_PHONE=+91XXXXXXXXXX (your WhatsApp number) to .env, or pass it as the 2nd argument."; exit 1; }
 MASKED="${PHONE:0:5}******${PHONE: -2}"
@@ -67,7 +70,7 @@ echo "== 4/5 starting the app"
 SETUHAUL_DB="$DB" .venv/bin/uvicorn app:app --port "$PORT" --log-level warning &
 APP=$!
 trap 'echo; echo "stopping the app"; kill $APP 2>/dev/null; exit 0' INT TERM
-for i in $(seq 1 40); do
+for _ in $(seq 1 40); do
   curl -s -m 2 "http://localhost:$PORT/readyz" 2>/dev/null | grep -q '"ok":true' && break
   kill -0 $APP 2>/dev/null || { echo "the app stopped while starting (see the error above)"; exit 1; }
   sleep 0.5

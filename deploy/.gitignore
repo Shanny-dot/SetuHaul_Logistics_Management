@@ -1,0 +1,11 @@
+# Generated or personal files: never commit
+.env
+*.env
+!.env.template
+settings.env
+compose.env
+*.db
+*.db.gz
+*.db-wal
+*.db-shm
+tests/.smoke-*/
