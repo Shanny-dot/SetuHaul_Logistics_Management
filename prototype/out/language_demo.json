@@ -2,6 +2,249 @@
  "generated_from": "scripts/language_demo.py on the 4 August 2026 snapshot",
  "conversations": [
   {
+   "id": "en-delay",
+   "lang": "en",
+   "language": "English",
+   "native": "English",
+   "title": "Late by an hour, then books",
+   "mirrors": "C03",
+   "driver": "DRV013",
+   "name": "Kailash Gurjar",
+   "turns": [
+    {
+     "t": "09:19",
+     "text": "I am late by one hour.",
+     "reply": "I've noted your arrival as about 11:00 AM (planned 10:00 AM + 60 min). If that's wrong, just send the time.\nSlots your truck can make at Jaipur DC (nothing is booked until you choose):\n1) Dock D2 - start 1:00 PM, unloading done by about 2:00 PM\n2) Dock D1 - start 1:45 PM, unloading done by about 2:45 PM\n3) Dock D1 - start 2:00 PM, unloading done by about 3:00 PM\nReply 1, 2 or 3 to book.",
+     "state": "OPTIONS_SHOWN",
+     "lang": "en",
+     "tools": [
+      "read_message:REPORT_DELAY",
+      "resolve_shipment:SHP1013",
+      "record_eta:11:00 MEDIUM",
+      "scheduling_tool:replan+earmarks",
+      "check_slot_feasibility:3 options"
+     ],
+     "text_en": "I am late by one hour.",
+     "reply_en": "I've noted your arrival as about 11:00 AM (planned 10:00 AM + 60 min). If that's wrong, just send the time.\nSlots your truck can make at Jaipur DC (nothing is booked until you choose):\n1) Dock D2 - start 1:00 PM, unloading done by about 2:00 PM\n2) Dock D1 - start 1:45 PM, unloading done by about 2:45 PM\n3) Dock D1 - start 2:00 PM, unloading done by about 3:00 PM\nReply 1, 2 or 3 to book.",
+     "same_outcome": true
+    },
+    {
+     "t": "09:21",
+     "text": "1",
+     "reply": "Booked: Dock D2 at Jaipur DC, start 1:00 PM. Please be at the gate by 12:45 PM. Booking ref APT-N0001.",
+     "state": "BOOKED",
+     "lang": "en",
+     "tools": [
+      "read_message:CHOOSE",
+      "book:CONFIRMED APT-N0001"
+     ],
+     "text_en": "1",
+     "reply_en": "Booked: Dock D2 at Jaipur DC, start 1:00 PM. Please be at the gate by 12:45 PM. Booking ref APT-N0001.",
+     "same_outcome": true
+    }
+   ]
+  },
+  {
+   "id": "en-later",
+   "lang": "en",
+   "language": "English",
+   "native": "English",
+   "title": "Asks for a slot after 12, books",
+   "mirrors": "C07",
+   "driver": "DRV006",
+   "name": "Manoj Sharma",
+   "turns": [
+    {
+     "t": "09:34",
+     "text": "Traffic after Shahpura. Reaching around 11:20. Any slot after 12?",
+     "reply": "Slots your truck can make at Jaipur DC (nothing is booked until you choose):\n1) Dock D2 - start 12:00 PM, unloading done by about 12:45 PM\n2) Dock D4 - start 12:40 PM, unloading done by about 1:25 PM\n3) Dock D2 - start 1:00 PM, unloading done by about 1:45 PM\nReply 1, 2 or 3 to book.",
+     "state": "OPTIONS_SHOWN",
+     "lang": "en",
+     "tools": [
+      "read_message:REPORT_DELAY",
+      "resolve_shipment:SHP1006 (the trip you are driving now)",
+      "record_eta:11:20 MEDIUM",
+      "scheduling_tool:replan+earmarks",
+      "check_current_booking:CERTAIN_MISS",
+      "check_slot_feasibility:3 options"
+     ],
+     "text_en": "Traffic after Shahpura. Reaching around 11:20. Any slot after 12?",
+     "reply_en": "Slots your truck can make at Jaipur DC (nothing is booked until you choose):\n1) Dock D2 - start 12:00 PM, unloading done by about 12:45 PM\n2) Dock D4 - start 12:40 PM, unloading done by about 1:25 PM\n3) Dock D2 - start 1:00 PM, unloading done by about 1:45 PM\nReply 1, 2 or 3 to book.",
+     "same_outcome": true
+    },
+    {
+     "t": "09:35",
+     "text": "1",
+     "reply": "Booked: Dock D2 at Jaipur DC, start 12:00 PM. Please be at the gate by 11:45 AM. Booking ref APT-N0001.",
+     "state": "BOOKED",
+     "lang": "en",
+     "tools": [
+      "read_message:CHOOSE",
+      "book:CONFIRMED APT-N0001 (released APT1018)"
+     ],
+     "text_en": "1",
+     "reply_en": "Booked: Dock D2 at Jaipur DC, start 12:00 PM. Please be at the gate by 11:45 AM. Booking ref APT-N0001.",
+     "same_outcome": true
+    }
+   ]
+  },
+  {
+   "id": "hl-vague",
+   "lang": "hi-Latn",
+   "language": "Hinglish",
+   "native": "Hinglish",
+   "title": "Vague delay: the bot asks for a time first",
+   "mirrors": "C09",
+   "driver": "DRV010",
+   "name": "Deepak Saini",
+   "turns": [
+    {
+     "t": "09:42",
+     "text": "thoda late hoon bhai, traffic hai",
+     "reply": "Batane ke liye shukriya. Jaipur DC kitne baje tak pahunchoge? Jaise 11:30 likhiye, taaki sahi slot mil sake.",
+     "state": "NEED_ETA",
+     "lang": "hi-Latn",
+     "tools": [
+      "read_message:REPORT_DELAY",
+      "resolve_shipment:SHP1010",
+      "ask:ETA"
+     ],
+     "text_en": "I am a bit late, lots of traffic",
+     "reply_en": "Thanks for telling us. What time do you expect to reach Jaipur DC? A clock time like 11:30 lets me find a slot you can make.",
+     "same_outcome": true
+    },
+    {
+     "t": "09:43",
+     "text": "11:30 tak pahunch jaunga",
+     "reply": "Shukriya. Lagbhag 11:30 AM pahunchne par bhi aapki booking (Dock D5, 11:45 AM se) chalegi. Kuch badalne ki zarurat nahi.",
+     "state": "BOOKED",
+     "lang": "hi-Latn",
+     "tools": [
+      "read_message:REPORT_DELAY",
+      "record_eta:11:30 HIGH",
+      "scheduling_tool:replan+earmarks",
+      "check_current_booking:STILL_FEASIBLE"
+     ],
+     "text_en": "I will reach by 11:30",
+     "reply_en": "Thanks. With arrival at about 11:30 AM, your current booking (Dock D5, start 11:45 AM) still works. No change needed.",
+     "same_outcome": true
+    }
+   ]
+  },
+  {
+   "id": "hl-safety",
+   "lang": "hi-Latn",
+   "language": "Hinglish",
+   "native": "Hinglish",
+   "title": "Accident: scheduling stops, shift manager paged",
+   "mirrors": "C12",
+   "driver": "DRV011",
+   "name": "Ramesh Choudhary",
+   "turns": [
+    {
+     "t": "10:05",
+     "text": "bhai accident ho gaya, helper ko chot lagi hai, truck side mein laga diya",
+     "reply": "Sabse pehle sabki suraksha dekhiye. Koi ghayal ho to abhi 112 par call kijiye. Shift manager Anita Joshi ko bata diya hai, woh 5 minute mein call karenge. Dock slot ki chinta mat kijiye.",
+     "state": "ESCALATED",
+     "lang": "hi-Latn",
+     "tools": [
+      "read_message:SAFETY",
+      "escalate:SAFETY ESC-0001 -> Anita Joshi via PHONE_CALL+WHATSAPP"
+     ],
+     "text_en": "accident happened, helper is hurt, truck parked on the side",
+     "reply_en": "Please make sure everyone is safe first. If anyone is hurt, call 112 now. I've alerted our shift manager Anita Joshi, who will call you within 5 minutes. Don't worry about the dock slot.",
+     "same_outcome": true
+    }
+   ]
+  },
+  {
+   "id": "hi-delay",
+   "lang": "hi",
+   "language": "Hindi",
+   "native": "हिन्दी",
+   "title": "Late by an hour, then books",
+   "mirrors": "C03",
+   "driver": "DRV013",
+   "name": "Kailash Gurjar",
+   "turns": [
+    {
+     "t": "09:19",
+     "text": "मैं एक घंटा लेट हूँ।",
+     "reply": "आपके पहुँचने का समय लगभग 11:00 AM माना है (प्लान 10:00 AM + 60 मिनट)। गलत हो तो समय भेज दीजिए।\nJaipur DC में ये स्लॉट आपके ट्रक के लिए हैं (आपके चुनने पर ही बुक होगा):\n1) डॉक D2 - 1:00 PM से शुरू, लगभग 2:00 PM तक खाली\n2) डॉक D1 - 1:45 PM से शुरू, लगभग 2:45 PM तक खाली\n3) डॉक D1 - 2:00 PM से शुरू, लगभग 3:00 PM तक खाली\nबुक करने के लिए 1, 2 या 3 भेजिए।",
+     "state": "OPTIONS_SHOWN",
+     "lang": "hi",
+     "tools": [
+      "read_message:REPORT_DELAY",
+      "resolve_shipment:SHP1013",
+      "record_eta:11:00 MEDIUM",
+      "scheduling_tool:replan+earmarks",
+      "check_slot_feasibility:3 options"
+     ],
+     "text_en": "I am late by one hour.",
+     "reply_en": "I've noted your arrival as about 11:00 AM (planned 10:00 AM + 60 min). If that's wrong, just send the time.\nSlots your truck can make at Jaipur DC (nothing is booked until you choose):\n1) Dock D2 - start 1:00 PM, unloading done by about 2:00 PM\n2) Dock D1 - start 1:45 PM, unloading done by about 2:45 PM\n3) Dock D1 - start 2:00 PM, unloading done by about 3:00 PM\nReply 1, 2 or 3 to book.",
+     "same_outcome": true
+    },
+    {
+     "t": "09:21",
+     "text": "1",
+     "reply": "बुक हो गया: Jaipur DC, डॉक D2, 1:00 PM से। गेट पर 12:45 PM तक पहुँचिए। रेफ़ APT-N0001।",
+     "state": "BOOKED",
+     "lang": "hi",
+     "tools": [
+      "read_message:CHOOSE",
+      "book:CONFIRMED APT-N0001"
+     ],
+     "text_en": "1",
+     "reply_en": "Booked: Dock D2 at Jaipur DC, start 1:00 PM. Please be at the gate by 12:45 PM. Booking ref APT-N0001.",
+     "same_outcome": true
+    }
+   ]
+  },
+  {
+   "id": "hi-later",
+   "lang": "hi",
+   "language": "Hindi",
+   "native": "हिन्दी",
+   "title": "Asks for a slot after 12, books",
+   "mirrors": "C07",
+   "driver": "DRV006",
+   "name": "Manoj Sharma",
+   "turns": [
+    {
+     "t": "09:34",
+     "text": "शाहपुरा के बाद ट्रैफिक है। लगभग 11:20 तक पहुँचूँगा। 12 बजे के बाद कोई स्लॉट है?",
+     "reply": "Jaipur DC में ये स्लॉट आपके ट्रक के लिए हैं (आपके चुनने पर ही बुक होगा):\n1) डॉक D2 - 12:00 PM से शुरू, लगभग 12:45 PM तक खाली\n2) डॉक D4 - 12:40 PM से शुरू, लगभग 1:25 PM तक खाली\n3) डॉक D2 - 1:00 PM से शुरू, लगभग 1:45 PM तक खाली\nबुक करने के लिए 1, 2 या 3 भेजिए।",
+     "state": "OPTIONS_SHOWN",
+     "lang": "hi",
+     "tools": [
+      "read_message:REPORT_DELAY",
+      "resolve_shipment:SHP1006 (the trip you are driving now)",
+      "record_eta:11:20 MEDIUM",
+      "scheduling_tool:replan+earmarks",
+      "check_current_booking:CERTAIN_MISS",
+      "check_slot_feasibility:3 options"
+     ],
+     "text_en": "Traffic after Shahpura. Reaching around 11:20. Any slot after 12?",
+     "reply_en": "Slots your truck can make at Jaipur DC (nothing is booked until you choose):\n1) Dock D2 - start 12:00 PM, unloading done by about 12:45 PM\n2) Dock D4 - start 12:40 PM, unloading done by about 1:25 PM\n3) Dock D2 - start 1:00 PM, unloading done by about 1:45 PM\nReply 1, 2 or 3 to book.",
+     "same_outcome": true
+    },
+    {
+     "t": "09:35",
+     "text": "पहला",
+     "reply": "बुक हो गया: Jaipur DC, डॉक D2, 12:00 PM से। गेट पर 11:45 AM तक पहुँचिए। रेफ़ APT-N0001।",
+     "state": "BOOKED",
+     "lang": "hi",
+     "tools": [
+      "read_message:CHOOSE",
+      "book:CONFIRMED APT-N0001 (released APT1018)"
+     ],
+     "text_en": "1",
+     "reply_en": "Booked: Dock D2 at Jaipur DC, start 12:00 PM. Please be at the gate by 11:45 AM. Booking ref APT-N0001.",
+     "same_outcome": true
+    }
+   ]
+  },
+  {
    "id": "gu-delay",
    "lang": "gu",
    "language": "Gujarati",

@@ -1,4 +1,5 @@
-"""Language demo: the same driver conversations in Gujarati, Marathi, Punjabi and Marwari.
+"""Language demo: driver conversations in all seven languages (English, Hinglish, Hindi, Gujarati,
+Marathi, Punjabi and Marwari).
 
 Each conversation runs twice through the real engine on a fresh copy of the 4 August world
 (rewound to 08:20): once in the driver's language and once with the English wording, so the
@@ -24,6 +25,26 @@ D = lambda hm: ts(f"2026-08-04T{hm}:00+05:30")
 
 # (id, language, title, mirrors case, driver, [(time, text in language, same text in English)])
 CONVERSATIONS = [
+    ("en-delay", "en", "Late by an hour, then books", "C03", "DRV013", [
+        ("09:19", "I am late by one hour.", "I am late by one hour."),
+        ("09:21", "1", "1")]),
+    ("en-later", "en", "Asks for a slot after 12, books", "C07", "DRV006", [
+        ("09:34", "Traffic after Shahpura. Reaching around 11:20. Any slot after 12?",
+         "Traffic after Shahpura. Reaching around 11:20. Any slot after 12?"),
+        ("09:35", "1", "1")]),
+    ("hl-vague", "hi-Latn", "Vague delay: the bot asks for a time first", "C09", "DRV010", [
+        ("09:42", "thoda late hoon bhai, traffic hai", "I am a bit late, lots of traffic"),
+        ("09:43", "11:30 tak pahunch jaunga", "I will reach by 11:30")]),
+    ("hl-safety", "hi-Latn", "Accident: scheduling stops, shift manager paged", "C12", "DRV011", [
+        ("10:05", "bhai accident ho gaya, helper ko chot lagi hai, truck side mein laga diya",
+         "accident happened, helper is hurt, truck parked on the side")]),
+    ("hi-delay", "hi", "Late by an hour, then books", "C03", "DRV013", [
+        ("09:19", "मैं एक घंटा लेट हूँ।", "I am late by one hour."),
+        ("09:21", "1", "1")]),
+    ("hi-later", "hi", "Asks for a slot after 12, books", "C07", "DRV006", [
+        ("09:34", "शाहपुरा के बाद ट्रैफिक है। लगभग 11:20 तक पहुँचूँगा। 12 बजे के बाद कोई स्लॉट है?",
+         "Traffic after Shahpura. Reaching around 11:20. Any slot after 12?"),
+        ("09:35", "पहला", "1")]),
     ("gu-delay", "gu", "Late by an hour, then books", "C03", "DRV013", [
         ("09:19", "હું એક કલાક મોડો છું.", "I am late by one hour."),
         ("09:21", "1", "1")]),

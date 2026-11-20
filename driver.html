@@ -137,24 +137,24 @@
 
 <section class="lgx" id="languages">
  <div class="eyebrow">● Seven languages</div>
- <h2 class="sec-t" style="margin-top:6px">Drivers can now write in Gujarati, Marathi, Punjabi and Marwari</h2>
- <p class="sec-p">Same engine, same checks, same booking. These conversations were run through the real workflow on the 4 August data (<span class="mono">scripts/language_demo.py</span>); the right column is the same conversation sent in English, so you can see the meaning and that the outcome is identical. Reply texts in the new languages are drafts for review by a native speaker.</p>
+ <h2 class="sec-t" style="margin-top:6px">Drivers can write in any of seven languages</h2>
+ <p class="sec-p">English, Hinglish and Hindi were there from day one; Gujarati, Marathi, Punjabi and Marwari are new. Same engine, same checks, same booking in every one. These conversations were run through the real workflow on the 4 August data (<span class="mono">scripts/language_demo.py</span>); the right column is the same conversation sent in English, so you can see the meaning and that the outcome is identical. Reply texts in the new languages are drafts for review by a native speaker.</p>
  <div class="lgtabs" id="lgtabs"></div>
  <div class="lgconvs" id="lgconvs"></div>
  <div class="lggrid">
   <div class="lgcol"><h4><span id="lgname">—</span><small id="lgdriver"></small></h4><div class="lgchat" id="lgnative"></div></div>
-  <div class="lgcol"><h4><span>Same conversation in English</span><small id="lgcase"></small></h4><div class="lgchat" id="lgeng"></div></div>
+  <div class="lgcol"><h4><span id="lgright">Same conversation in English</span><small id="lgcase"></small></h4><div class="lgchat" id="lgeng"></div></div>
  </div>
  <div class="card lgchg">
   <h3>Where the change was made</h3>
   <table class="t">
    <tr><th>File</th><th>What changed</th></tr>
    <tr><td>setuhaul/languages.py</td><td>New: the language list, scripts (Gujarati, Gurmukhi, Devanagari), native digits, marker words that tell Marathi and Marwari from Hindi, and the reading vocabulary per language (o'clock words, durations, late words, "after", ordinals, yes/no, safety words).</td></tr>
-   <tr><td>setuhaul/nlu.py</td><td>Detects the four languages; reads times, durations, "after 12", choices, slot references and safety words in each. No model call.</td></tr>
+   <tr><td>setuhaul/nlu.py</td><td>Detects the four new languages alongside English, Hinglish and Hindi; reads times, durations, "after 12", choices, slot references and safety words in each. No model call.</td></tr>
    <tr><td>setuhaul/replies_regional.py</td><td>New: 30 reply texts in each language (drafts for native review). Anything not yet translated falls back to Hindi.</td></tr>
    <tr><td>setuhaul/replies.py</td><td>Merges the new texts; the output guard now reads ડૉક / ਡੌਕ / डॉक and the "booked" words of every language, so no reply can claim a booking or a dock the database did not produce.</td></tr>
    <tr><td>setuhaul/workflow.py</td><td>The small phrases built in code (ETA basis, approval reasons, "or" between choices) come in each language.</td></tr>
-   <tr><td>templates/twilio_templates.yaml · templates.py</td><td>Proactive WhatsApp templates in the four languages; each language needs its own WhatsApp approval.</td></tr>
+   <tr><td>templates/twilio_templates.yaml · templates.py</td><td>Proactive WhatsApp templates in the four new languages; each language needs its own WhatsApp approval.</td></tr>
    <tr><td>setuhaul/llm.py</td><td>The fallback reader's prompt lists the seven languages.</td></tr>
    <tr><td>tests/test_languages.py</td><td>16 new tests: detection, reading, no false safety alarm (e.g. આગળ "ahead"), placeholders, guard, and every demo conversation end to end. All 113 tests pass; the 4 August scenario output is unchanged.</td></tr>
    <tr><td>Database (proposed)</td><td>driver_preferences.language stores each driver's language once known, so proactive messages go out in it.</td></tr>
@@ -337,15 +337,16 @@ addEventListener('hashchange',route);route();
 (function(){
  if(!window.LANGDEMO)return;
  const C=LANGDEMO.conversations, langs=[...new Set(C.map(c=>c.lang))];
- const scr=l=>l==='gu'?'gujr':l==='pa'?'guru':'dev';
+ const scr=l=>l==='gu'?'gujr':l==='pa'?'guru':(l==='en'||l==='hi-Latn')?'':'dev';
  const esc=t=>(t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');
  let cur=langs[0];
  function bubble(text,me,cls,tools){return `<div class="msg ${me?'me':'bot'} ${cls}">${esc(text)}${tools?`<div class="lgtools">${esc(tools.join(' · '))}</div>`:''}<span class="tm">${me?'✓✓':''}</span></div>`}
  function show(id){const c=C.find(x=>x.id===id);
   document.querySelectorAll('#lgconvs button').forEach(b=>b.classList.toggle('on',b.dataset.id===id));
-  document.getElementById('lgname').textContent=c.native+' · '+c.language;
+  document.getElementById('lgname').textContent=c.native===c.language?c.language:c.native+' · '+c.language;
   document.getElementById('lgdriver').textContent=c.name+' · '+c.driver;
   document.getElementById('lgcase').textContent='mirrors '+c.mirrors;
+  document.getElementById('lgright').textContent=c.lang==='en'?'Original English (base language)':'Same conversation in English';
   const n=[],e=[];c.turns.forEach(t=>{n.push(bubble(t.text,true,scr(c.lang)));e.push(bubble(t.text_en,true,''));
     if(t.reply){n.push(bubble(t.reply,false,scr(c.lang),t.tools));e.push(bubble(t.reply_en,false,''))}});
   document.getElementById('lgnative').innerHTML=n.join('');document.getElementById('lgeng').innerHTML=e.join('')}
@@ -353,7 +354,7 @@ addEventListener('hashchange',route);route();
   const cs=C.filter(c=>c.lang===l);
   document.getElementById('lgconvs').innerHTML=cs.map(c=>`<button data-id="${c.id}">${esc(c.title)}</button>`).join('');
   document.querySelectorAll('#lgconvs button').forEach(b=>b.onclick=()=>show(b.dataset.id));show(cs[0].id)}
- document.getElementById('lgtabs').innerHTML=langs.map(l=>{const c=C.find(x=>x.lang===l);return `<button data-l="${l}">${c.native}<small>${c.language}</small></button>`}).join('');
+ document.getElementById('lgtabs').innerHTML=langs.map(l=>{const c=C.find(x=>x.lang===l);return `<button data-l="${l}">${c.native}<small>${c.native===c.language?(l==='en'?'base':'Latin script'):c.language}</small></button>`}).join('');
  document.querySelectorAll('#lgtabs button').forEach(b=>b.onclick=()=>lang(b.dataset.l));
  lang(cur);
 })();

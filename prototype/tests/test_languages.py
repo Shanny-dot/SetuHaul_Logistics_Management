@@ -145,13 +145,16 @@ class FullTurns(unittest.TestCase):
                     self.assertEqual(n["state"], e["state"])
 
     def test_replies_are_in_the_drivers_script_and_pass_the_guard(self):
-        block = {"gu": "gujr", "pa": "guru", "mr": "deva", "mwr": "deva"}
+        block = {"gu": "gujr", "pa": "guru", "mr": "deva", "mwr": "deva", "hi": "deva"}
         for cid, lang, native, _ in self.convs:
             for n in native:
                 if n["reply"]:
                     with self.subTest(conv=cid):
                         share, _ = L.script_share(n["reply"])
-                        self.assertGreater(share.get(block[lang], 0), 0.3)   # dock codes, times and names stay Latin
+                        if lang in block:
+                            self.assertGreater(share.get(block[lang], 0), 0.3)   # dock codes, times and names stay Latin
+                        else:                                                    # English and Hinglish: Latin only
+                            self.assertEqual(sum(share.get(b, 0) for b in ("deva", "gujr", "guru")), 0)
                         self.assertFalse(any("output_guard:BLOCKED" in t for t in n["tools"] or []))
 
 
