@@ -1,0 +1,2 @@
+# SetuHaul nightly backup: 21:00 UTC = 02:30 IST. Installed to /etc/cron.d/setuhaul-backup by bootstrap.sh.
+0 21 * * * root /opt/setuhaul/src/deploy/server/backup.sh >> /var/log/setuhaul-backup.log 2>&1

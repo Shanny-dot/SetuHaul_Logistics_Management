@@ -1,0 +1,38 @@
+# Public surface: ONLY Twilio's two webhooks and /healthz. Everything else (coordinator console, /dev/*,
+# /auth/dev-login, /readyz) answers 404 from outside and is used from the box itself via 127.0.0.1:8000.
+# Caddy sets X-Forwarded-Proto/Host/For and keeps the original Host, so the app sees the public https URL
+# that Twilio signed (and TWILIO_WEBHOOK_BASE_URL is set to the same URL by load-env.sh).
+{
+	http_port {$HTTP_PORT:80}
+	https_port {$HTTPS_PORT:443}
+	skip_install_trust
+	admin off
+	servers {
+		timeouts {
+			read_body 10s
+			read_header 10s
+			write 30s
+			idle 2m
+		}
+	}
+}
+
+{$DOMAIN} {
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "no-referrer"
+		-Server
+	}
+	request_body {
+		max_size 256KB
+	}
+	@public path /webhook/twilio /webhook/twilio/status /healthz
+	handle @public {
+		reverse_proxy {$UPSTREAM:app:8000}
+	}
+	handle {
+		respond "Not found" 404
+	}
+}
