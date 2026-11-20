@@ -157,4 +157,4 @@ speaker's review before go-live, and each language's WhatsApp templates need sep
 
 * The scenario run and integrity proof make no live WhatsApp or LLM call. Where the design calls the LLM fallback and no key is set, the workflow asks the driver a clarifying question instead.
 * The coordinator console is an API (`app.py`) plus the static portal pages; there is no separate console screen yet.
-* SQLite only. The Postgres DDL and the plan to re-run the proof on Postgres are in deliverables 3 and 5.
+* SQLite only, by decision for MVP 1. MVP 2 moves to Postgres or MongoDB; the Postgres DDL and the plan to re-run the proof on it are in deliverables 3 and 5.
