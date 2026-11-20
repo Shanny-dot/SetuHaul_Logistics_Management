@@ -6,7 +6,7 @@
 
 ## Architecture
 
-- **Region:** ap-south-1 (Mumbai) only. One availability zone.
+- **Region:** the approved plan is ap-south-1 (Mumbai). AWS's new Free-plan sign-up pins accounts with an Indian address to **ap-southeast-2 (Sydney)**, and Mumbai needs the Paid plan plus "advanced features". On 20 Nov 2026 the owner chose **Sydney on the Free plan**. The scripts take `SETUHAUL_REGION` (default Sydney); everything else is identical. One availability zone either way.
 - **Server:** one EC2 **t4g.micro** (arm64, 1 GiB RAM + 2 GiB swap), Amazon Linux 2023.
   - Disk: 10 GiB encrypted gp3.
   - Security: IMDSv2 only, CPU credits *standard*, no SSH key, no port 22. Administration through SSM Session Manager.
@@ -31,7 +31,13 @@
   - backups: a warning if a backup is missed.
 - **Coordinator console and `/dev/*`:** reachable only from the machine itself (127.0.0.1), through a Session Manager terminal.
 
-## Cost (list prices, ap-south-1, on-demand, checked 20 Nov 2026)
+## Cost (list prices, on-demand, checked 20 Nov 2026)
+
+**Sydney (chosen):** about US$12.4–12.7 a month. That's **above the US$10 target**: EC2 t4g.micro ~$7.74–8.03 (sources differ), Elastic IP $3.65, gp3 ~$0.96, S3 ≤ $0.10.
+
+On the Free plan this is paid entirely by credits (about $75 over the 6-month plan) and **cannot be charged to a card**. The $10-a-month target is met only in Mumbai, which needs the Paid plan.
+
+**Mumbai (original plan):**
 
 | Item | Unit price | Per month |
 |---|---|---|

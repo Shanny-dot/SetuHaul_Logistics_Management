@@ -6,6 +6,7 @@
 # Usage: deploy/aws/create_alarm_and_budget.sh [--dry-run]     (asks for the alert email; it is not stored in the repo)
 . "$(dirname "$0")/common.sh"
 check_aws
+BUDGET_USD="${BUDGET_USD:-10}"
 IID="$(instance_id)"
 ACCT="$(account_id)"
 [ "$HAVE_CREDS" = 1 ] && [ -z "$IID" ] && die "No instance named '$INSTANCE_NAME'. Run launch_instance.sh first."
@@ -13,7 +14,8 @@ ACCT="$(account_id)"
 step "Plan"
 cost "CloudWatch alarm '$ALARM_NAME' (recover on system status check failure) for ${IID:-<instance>}" \
      "US\$0.00/month (CloudWatch free tier includes 10 alarms; status-check metrics are free)"
-cost "AWS Budget '$BUDGET_NAME' US\$10/month, email at \$8 and \$10 (actual) and \$10 (forecast)" \
+[ "$REGION" = ap-southeast-2 ] && [ "$BUDGET_USD" = 10 ] && say "  NOTE: in Sydney the list price (~\$12.4) is above \$10, so the \$8 and \$10 emails will arrive every month (credits still pay). Run with BUDGET_USD=15 for quieter alerts."
+cost "AWS Budget '$BUDGET_NAME' US\$$BUDGET_USD/month, email at 80% and 100% (actual) and 100% (forecast)" \
      "US\$0.00/month (budgets without actions are free)"
 EMAIL="${BUDGET_EMAIL:-}"
 if [ -z "$EMAIL" ] && [ "$DRY_RUN" = 0 ]; then read -r -p "  Email for budget alerts: " EMAIL; fi
@@ -28,7 +30,7 @@ act aws cloudwatch put-metric-alarm --alarm-name "$ALARM_NAME" \
   --alarm-actions "arn:aws:automate:$REGION:ec2:recover"
 
 BUDGET=$(cat <<JSON
-{"BudgetName":"$BUDGET_NAME","BudgetLimit":{"Amount":"10","Unit":"USD"},"TimeUnit":"MONTHLY","BudgetType":"COST",
+{"BudgetName":"$BUDGET_NAME","BudgetLimit":{"Amount":"$BUDGET_USD","Unit":"USD"},"TimeUnit":"MONTHLY","BudgetType":"COST",
  "CostTypes":{"IncludeCredit":false,"IncludeRefund":false,"IncludeTax":true}}
 JSON
 )
@@ -43,4 +45,4 @@ if [ -n "$(ro budgets describe-budget --region us-east-1 --account-id "$ACCT" --
 else
   act aws budgets create-budget --region us-east-1 --account-id "$ACCT" --budget "$BUDGET" --notifications-with-subscribers "$NOTES"
 fi
-say "  Done. AWS emails $EMAIL when spend passes \$8 or \$10, or the forecast passes \$10."
+say "  Done. AWS emails $EMAIL when spend passes 80% or 100% of \$$BUDGET_USD, or the forecast passes \$$BUDGET_USD."

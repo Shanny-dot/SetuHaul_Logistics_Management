@@ -5,8 +5,21 @@
 # and is safe to run again (it reuses what already exists).
 set -euo pipefail
 
-REGION="ap-south-1"                       # Mumbai only (approved plan)
+# Region: the approved plan is Mumbai (ap-south-1), but AWS's new Free-plan sign-up pins accounts with an
+# Indian address to Sydney (ap-southeast-2) and blocks other Regions. Default here: Sydney.
+# Upgrade to the Paid plan + activate advanced features, then run with SETUHAUL_REGION=ap-south-1 for Mumbai.
+REGION="${SETUHAUL_REGION:-ap-southeast-2}"
+case "$REGION" in ap-south-1|ap-southeast-2) ;; *) echo "SETUHAUL_REGION must be ap-south-1 or ap-southeast-2" >&2; exit 2 ;; esac
 export AWS_REGION="$REGION" AWS_DEFAULT_REGION="$REGION"
+# List prices used in the cost lines (on-demand Linux; third-party aggregators checked 2026-11-20, verify in the AWS calculator).
+if [ "$REGION" = ap-south-1 ]; then
+  P_EC2="about US\$4.09/month (\$0.0056/hour x 730 h)"; P_EBS="about US\$0.91/month (gp3 \$0.0912/GB-month)"
+  P_TOTAL="about US\$8.65/month (+ S3 ~\$0.10)"
+else
+  P_EC2="about US\$7.74-8.03/month (\$0.0106-0.011/hour x 730 h; sources differ)"; P_EBS="about US\$0.96/month (gp3 ~\$0.096/GB-month)"
+  P_TOTAL="about US\$12.35-12.65/month (+ S3 ~\$0.10): ABOVE the US\$10 plan, paid by Free plan credits"
+fi
+P_EIP="about US\$3.65/month (\$0.005/hour, charged even when the instance is stopped)"
 export AWS_PAGER=""
 PROJECT="setuhaul"
 ROLE_NAME="setuhaul-ec2-role"             # role and instance profile share this name

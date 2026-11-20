@@ -12,11 +12,11 @@ BRANCH="${BRANCH:-whatsapp-api}"
 case "$REPO_URL" in https://*) ;; *) die "REPO_URL must be an https:// git URL (public repo, no token)";; esac
 
 step "Plan"
-cost "EC2 t4g.micro (on-demand, Linux, ap-south-1)" "about US\$4.09/month (\$0.0056/hour x 730 h)"
-cost "Elastic IP (one public IPv4 address)"        "about US\$3.65/month (\$0.005/hour, charged even when the instance is stopped)"
-cost "EBS gp3 10 GiB, encrypted (root volume)"     "about US\$0.91/month (\$0.0912/GB-month; check the EBS pricing page)"
+cost "EC2 t4g.micro (on-demand, Linux, $REGION)"  "$P_EC2"
+cost "Elastic IP (one public IPv4 address)"        "$P_EIP"
+cost "EBS gp3 10 GiB, encrypted (root volume)"     "$P_EBS"
 cost "security group '$SG_NAME' (80, 443 in)"      "US\$0.00"
-say  "  TOTAL for this script: about US\$8.65/month (+ S3 backups ~\$0.10 = ~\$8.75; plan figure ~\$8.85 with EBS rounded to \$1)"
+say  "  TOTAL for this script: $P_TOTAL"
 
 # ---------------------------------------------------------------- network
 VPC="$(ro ec2 describe-vpcs --filters Name=isDefault,Values=true --query 'Vpcs[0].VpcId' --output text | grep -v None || true)"

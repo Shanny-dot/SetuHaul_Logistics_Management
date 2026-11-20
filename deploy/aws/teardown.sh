@@ -10,9 +10,9 @@ VOL="$( [ -n "$IID" ] && ro ec2 describe-volumes --filters "Name=attachment.inst
 [ -z "$VOL" ] && VOL="$(ro ec2 describe-volumes --filters "Name=tag:Name,Values=$INSTANCE_NAME-root" --query 'Volumes[0].VolumeId' --output text | grep -v None || true)"
 
 step "Found (billable items marked \$)"
-say "  \$ instance          ${IID:-none}            ~US\$4.09/month while running"
-say "  \$ Elastic IP        ${ALLOC:-none}          ~US\$3.65/month until RELEASED (even if stopped)"
-say "  \$ volume            ${VOL:-none}            ~US\$0.91/month until DELETED (kept after termination)"
+say "  \$ instance          ${IID:-none}     $P_EC2 while running"
+say "  \$ Elastic IP        ${ALLOC:-none}   $P_EIP until RELEASED"
+say "  \$ volume            ${VOL:-none}     $P_EBS until DELETED (kept after termination)"
 say "  \$ S3 bucket         s3://$BUCKET            ~US\$0.01-0.10/month"
 say "    alarm, budget, security group, IAM role, SSM parameters   free"
 if [ "$DRY_RUN" = 0 ]; then
@@ -35,7 +35,7 @@ act aws cloudwatch delete-alarms --alarm-names "$ALARM_NAME"
 
 if [ -n "$VOL" ] && yesno "Delete the data volume $VOL? (the demo database is on it; a backup is in S3)"; then
   act aws ec2 delete-volume --volume-id "$VOL" && real && say "  deleted volume $VOL"
-elif [ -n "$VOL" ]; then say "  kept volume $VOL (~US\$0.91/month). Delete later: aws ec2 delete-volume --volume-id $VOL"; fi
+elif [ -n "$VOL" ]; then say "  kept volume $VOL ($P_EBS). Delete later: aws ec2 delete-volume --volume-id $VOL"; fi
 
 if yesno "Empty and delete the backup bucket s3://$BUCKET?"; then
   act aws s3 rm "s3://$BUCKET" --recursive
@@ -56,5 +56,5 @@ if yesno "Delete the free leftovers too (budget, security group, IAM role, SSM p
   done
 fi
 step "Check nothing billable is left"
-say "  EC2 console (ap-south-1): Instances, Elastic IPs, Volumes all empty for 'setuhaul'"
+say "  EC2 console ($REGION): Instances, Elastic IPs, Volumes all empty for 'setuhaul'"
 say "  Billing > Bills: the next bill should show no EC2/EBS/VPC (public IPv4) charges"

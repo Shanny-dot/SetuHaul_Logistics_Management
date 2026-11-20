@@ -1,19 +1,26 @@
 # Deploy SetuHaul to AWS for under US$10 a month
 
-This runbook puts the SetuHaul WhatsApp demo on **one small server in Mumbai** (ap-south-1) with HTTPS, so Twilio can reach it without ngrok and without your laptop staying on. It is written for a first-time AWS user. Each step says what it costs.
+This runbook puts the SetuHaul WhatsApp demo on **one small server** in **Sydney** (ap-southeast-2) by default, or in **Mumbai** (ap-south-1) with HTTPS, so Twilio can reach it without ngrok and without your laptop staying on. It is written for a first-time AWS user. Each step says what it costs.
 
 > This is a **demo / pilot-demo configuration**: one machine, SQLite, a single availability zone. It is not the production design (see `docs/deployment.md`).
 
+> **Region.** The approved plan is Mumbai. AWS's new **Free-plan** sign-up, however, pins accounts with an Indian address to **Sydney** and blocks other regions. Mumbai needs the **Paid plan + "Activate advanced features"** (AWS Settings).
+> - The scripts default to Sydney.
+> - After upgrading, put `export SETUHAUL_REGION=ap-south-1` before the commands to use Mumbai.
+> - Everything else is identical.
+
 ## What you get, and what it costs
 
-| Item | Monthly cost (ap-south-1, on-demand, checked 2026-11-20) |
-|---|---|
-| EC2 **t4g.micro** (2 vCPU arm64, 1 GiB RAM), CPU credits *standard* | about $4.09 ($0.0056/h) |
-| **Elastic IP** (one public IPv4 address) | about $3.65 ($0.005/h, **billed even when the server is stopped**) |
-| **EBS gp3 10 GiB**, encrypted | about $0.91 ($0.0912/GB-month; re-check the EBS pricing page) |
-| **S3** backups (30 days kept) | about $0.01-0.10 |
-| IAM role, security group, SSM parameters, CloudWatch alarm, AWS Budget | $0 |
-| **Total** | **about $8.75-8.85** |
+| Item | Mumbai ap-south-1 (plan; Paid plan needed) | Sydney ap-southeast-2 (Free plan default) |
+|---|---|---|
+| EC2 **t4g.micro** (2 vCPU arm64, 1 GiB RAM), CPU credits *standard* | ~$4.09 ($0.0056/h) | ~$7.74-8.03 ($0.0106-0.011/h; sources differ) |
+| **Elastic IP** (public IPv4), **billed even when stopped** | ~$3.65 | ~$3.65 |
+| **EBS gp3 10 GiB**, encrypted | ~$0.91 | ~$0.96 |
+| **S3** backups (30 days) | ~$0.01-0.10 | ~$0.01-0.10 |
+| IAM, security group, SSM, CloudWatch alarm, Budget | $0 | $0 |
+| **Total** | **~$8.75-8.85** | **~$12.4-12.7: above the $10 plan** |
+
+Prices are on-demand list prices checked 2026-11-20 (third-party sources for EC2; verify in the AWS Pricing Calculator). **On the Free plan, nothing is charged to you:** credits pay, and the account pauses at 6 months or when the credits run out. Sydney for 6 months is about $75, within the $100+ credits.
 
 Nothing else is created: no load balancer, NAT gateway, RDS, ElastiCache, Fargate, Secrets Manager or CloudFront. With new-account Free Tier credits ($100, plus up to $100 more), this costs nothing until the credits run out.
 
@@ -36,7 +43,7 @@ Each step takes a few minutes. Every script first prints **what it will create a
 ### 1. Make the AWS account safe (once, about 10 minutes)
 1. Create the account at **aws.amazon.com/free**. Choose the **Free plan**, which cannot charge you; you can upgrade later and keep your credits.
 2. **Turn on MFA for the root user:** top-right menu → *Security credentials* → *Assign MFA device*.
-3. In the top bar, switch the region to **Asia Pacific (Mumbai) ap-south-1**. Every step below is in Mumbai.
+3. Check your project's region at **settings.aws.com → Project → Additional info**. With a Free-plan account from India it is **Sydney (ap-southeast-2)**. Keep the console on that region for every step below.
 4. Don't create access keys. You'll use **CloudShell**, the terminal inside the AWS console, which is already logged in.
 
 ### 2. Put the deploy files on GitHub (on your laptop)
@@ -47,11 +54,13 @@ git push -u fork whatsapp-api
 (Or use VS Code → Source Control → … → Push to… → `fork`.)
 
 ### 3. Open CloudShell and get the scripts
-In the AWS console, click the **CloudShell** icon (`>_`) in the top bar, with the region still Mumbai. Then:
+In the AWS console (in your project's region), click the **CloudShell** icon (`>_`) in the top bar. Or use this Mac's AWS CLI after `aws login --region ap-southeast-2`. Then:
 ```
 git clone -b whatsapp-api https://github.com/Shanny-dot/SetuHaul_Logistics_Management.git
 cd SetuHaul_Logistics_Management
 ```
+
+Mumbai only (Paid plan with advanced features): run `export SETUHAUL_REGION=ap-south-1` first.
 
 ### 4. Create the server's permission role ($0)
 ```
@@ -75,7 +84,7 @@ Paste each value when asked. **Nothing appears on screen**, and nothing is saved
 - `DEMO_PHONE`: your WhatsApp number, e.g. `+91XXXXXXXXXX`, for the one-phone demo.
 - `DEMO_PHONES`: optional, for several handsets, e.g. `DRV013=+91…,CON003=+91…`.
 
-### 7. Launch the server (~$8.65/month)
+### 7. Launch the server (~$12.4/month in Sydney, ~$8.65 in Mumbai)
 ```
 deploy/aws/launch_instance.sh
 ```
@@ -118,6 +127,7 @@ deploy/aws/create_alarm_and_budget.sh
 ```
 - A **CloudWatch alarm** recovers the server automatically if AWS hardware fails. You keep the same IP and the same disk.
 - An **AWS Budget** of $10 emails you when real usage passes **$8** or **$10**, or when the forecast passes $10. Credits are excluded, so you see what the server really costs even while credits pay for it.
+- In Sydney the list price (~$12.4) is above $10, so those emails will arrive every month. Use `BUDGET_USD=15 deploy/aws/create_alarm_and_budget.sh` for alerts that mean "something unexpected".
 
 ---
 
