@@ -137,17 +137,21 @@ are rules only (no model call); replies come from the reviewed catalogue in the 
 | File | Change |
 |---|---|
 | `setuhaul/languages.py` | Language list, scripts, native digits, Marathi/Marwari marker words, reading vocabulary per language |
-| `setuhaul/nlu.py` | Detects the languages; reads times, durations, "after 12", choices, slot references and safety words in each |
+| `setuhaul/nlu.py` | Detects the languages; reads times, durations, "after 12", "by 11:30", choices, slot references, early arrival, yard, trailer/reefer, urgency, "leave by", "which slots", "keep my slot" and safety words (whole words) in each |
 | `setuhaul/replies_regional.py` | 30 reply texts per new language (drafts for native review); the rest fall back to Hindi |
 | `setuhaul/replies.py` | Merges them; the output guard reads every language's dock word and "booked" words |
 | `setuhaul/workflow.py` | Phrases built in code (ETA basis, approval reasons, "or") per language |
 | `templates/twilio_templates.yaml`, `setuhaul/templates.py` | Proactive templates per language (each needs its own WhatsApp approval) |
 | `tests/test_languages.py` | 16 tests: detection, reading, false-alarm checks, placeholders, guard, full turns |
 | `scripts/language_demo.py` | Runs 8 demo conversations in the new languages and in English; writes `out/language_demo.json` and the portal's `lang_data.js` |
+| `scripts/language_replay.py` | Replays the whole 4 Aug morning with every driver message translated (Hinglish, Hindi, Gujarati, Marathi, Punjabi, Marwari) |
+| `tests/test_language_replay.py` | 12 tests: native-script intents, "by" vs "about", whole-word safety, and every replayed turn ends in the same state as English |
 
 ```
 python3 -I scripts/language_demo.py out/
 python3 -I -m unittest discover -s tests -p "test_languages.py" -v
+python3 -I scripts/language_replay.py gu /tmp/gu      # one language's full morning
+python3 -I -m unittest discover -s tests -p "test_language_replay.py" -v
 ```
 
 Limits: romanised Gujarati, Marathi, Punjabi or Marwari is read as Hinglish and answered in Hinglish. Marwari
