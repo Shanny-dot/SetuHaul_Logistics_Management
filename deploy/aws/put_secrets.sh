@@ -11,7 +11,8 @@
 #                                              reset-demo.sh C03|C06|C07|C12|C14
 #   DEMO_PHONES                                optional, personal data: several handsets, e.g. DRV013=+91...,CON003=+91...
 #   SETUHAUL_DEV_SECRET                        generated randomly if missing (signs demo coordinator tokens)
-# Usage: deploy/aws/put_secrets.sh [--dry-run]
+# Usage: deploy/aws/put_secrets.sh [--dry-run]            all values (Enter keeps a value already set)
+#        deploy/aws/put_secrets.sh TWILIO_AUTH_TOKEN      only the named value(s); an answer is required
 . "$(dirname "$0")/common.sh"
 check_aws
 
@@ -38,7 +39,7 @@ ask() {   # name, required(1/0)
   exists "$full" && note=" [already set: Enter keeps it]"
   while true; do
     read -r -s -p "  $name$note: " value; echo
-    if [ -n "$value" ]; then printf '%s' "$value" | put_secure "$full"; say "    stored $full"; break; fi
+    if [ -n "$value" ]; then printf '%s' "$value" | put_secure "$full"; say "    stored $full (${#value} characters received)"; break; fi
     if [ -n "$note" ]; then say "    kept"; break; fi
     if [ "$required" = 0 ]; then say "    skipped"; break; fi
     say "    required: please paste it (input is hidden)"
@@ -46,6 +47,21 @@ ask() {   # name, required(1/0)
   value=""
 }
 
+ONLY=()
+for arg in "$@"; do case "$arg" in --*) ;; *) ONLY+=("$arg") ;; esac; done
+if [ "${#ONLY[@]}" -gt 0 ]; then
+  for name in "${ONLY[@]}"; do
+    case "$name" in TWILIO_ACCOUNT_SID|TWILIO_AUTH_TOKEN|ANTHROPIC_API_KEY|LANGSMITH_API_KEY|DEMO_PHONE|DEMO_PHONES) ;;
+      *) die "unknown name $name" ;; esac
+    while true; do
+      read -r -s -p "  $name (paste, then Enter; nothing is shown): " value; echo
+      [ -n "$value" ] && break
+      say "    nothing received: paste again (Cmd+V), then Enter"
+    done
+    printf '%s' "$value" | put_secure "$PARAM_PATH/$name"; say "    stored $PARAM_PATH/$name (${#value} characters received)"; value=""
+  done
+  exit 0
+fi
 ask TWILIO_ACCOUNT_SID 1
 ask TWILIO_AUTH_TOKEN 1
 ask ANTHROPIC_API_KEY 0
