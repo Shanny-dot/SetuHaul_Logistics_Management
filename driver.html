@@ -429,7 +429,32 @@ addEventListener('hashchange',route);route();
 </script>
 <script>
 {
- const PYO = window.PYODIDE_BASE || 'https://cdn.jsdelivr.net/pyodide/v0.27.7/full/';
+ const CDN = 'https://cdn.jsdelivr.net/pyodide/v0.27.7/full/';
+ // The claude.ai viewer lets a page load scripts from the CDN but not fetch() from it, so the portal serves its own
+ // copy of the Pyodide 0.27.7 runtime in pyodide/. Elsewhere (GitHub Pages, a laptop) the CDN is used.
+ let PYO = window.PYODIDE_BASE || null;
+ async function base() {
+  if (PYO) return PYO;
+  try {
+   const r = await fetch('pyodide/pyodide-lock.json', {method: 'HEAD'});
+   if (r.ok) { PYO = new URL('pyodide/', location.href).href; await shim(); return PYO; }
+  } catch (e) {}
+  return PYO = CDN;
+ }
+ // The viewer serves no .zip or .whl, so those two runtime files sit beside it as base64 JSON (built by
+ // prototype/scripts/build_pyodide_runtime.py). When Pyodide fetches them, answer from memory, byte for byte.
+ async function shim() {
+  const names = ['python_stdlib.zip', 'sqlite3-1.0.0-cp312-cp312-pyodide_2024_0_wasm32.whl'], blobs = {};
+  for (const n of names) {
+   const j = await (await fetch('pyodide/' + n + '.json')).json();
+   blobs[PYO + n] = Uint8Array.from(atob(j.b64), c => c.charCodeAt(0));
+  }
+  const real = window.fetch.bind(window);
+  window.fetch = (input, init) => {
+   const u = new URL(input instanceof Request ? input.url : String(input), location.href).href;
+   return blobs[u] ? Promise.resolve(new Response(blobs[u], {headers: {'Content-Type': 'application/octet-stream'}})) : real(input, init);
+  };
+ }
  const $t = s => document.getElementById(s);
  const esc = x => (x || '').replace(/&/g, '&amp;').replace(/</g, '&lt;');
  const scr = s => /[઀-૿]/.test(s) ? 'gujr' : /[਀-੿]/.test(s) ? 'guru' : /[ऀ-ॿ]/.test(s) ? 'dev' : '';
@@ -444,17 +469,24 @@ addEventListener('hashchange',route);route();
  const status = (m, err) => { const s = $t('trystatus'); s.textContent = m; s.className = 'trystatus' + (err ? ' err' : ''); };
  function loadScript(src) { return new Promise((ok, no) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = () => no(new Error('could not load ' + src)); document.head.appendChild(s); }); }
 
+ const seen = [];
+ for (const k of ['error', 'warn']) { const f = console[k].bind(console); console[k] = (...a) => { seen.push(a.map(String).join(' ').slice(0, 300)); return f(...a); }; }
+ addEventListener('error', e => seen.push('error: ' + (e.message || (e.target && e.target.src) || 'resource failed')), true);
+ addEventListener('securitypolicyviolation', e => seen.push('blocked by page policy: ' + e.violatedDirective + ' ' + (e.blockedURI || '')));
+ const step = (p, what, ms) => Promise.race([p, new Promise((_, no) => setTimeout(() => no(new Error(what + ' did not finish in ' + ms / 1000 + ' s')), ms))]);
  async function boot() {
   if (booting) return booting;
   booting = (async () => {
    $t('trystart').disabled = true; $t('trybadge').textContent = 'starting…';
    status('Loading Python (Pyodide)…');
-   await loadScript(PYO + 'pyodide.js');
-   const py = await loadPyodide({indexURL: PYO});
+   await step(base(), 'Preparing the Python runtime', 30000);
+   await step(loadScript(PYO + 'pyodide.js'), 'Loading pyodide.js', 30000);
+   status('Starting Python (WebAssembly)…');
+   const py = await step(loadPyodide({indexURL: PYO}), 'Starting Python', 45000);
    status('Loading SQLite…');
-   await py.loadPackage('sqlite3');
+   await step(py.loadPackage('sqlite3'), 'Loading SQLite', 30000);
    status('Loading the SetuHaul engine and the 4 August data…');
-   const B = await (await fetch('playground_bundle.json')).json();
+   const B = await step(fetch('playground_bundle.json').then(r => r.json()), 'Loading the engine bundle', 30000);
    const APP = '/home/pyodide/app';
    for (const [path, src] of Object.entries(B.files)) {
     const full = APP + '/' + path; py.FS.mkdirTree(full.slice(0, full.lastIndexOf('/'))); py.FS.writeFile(full, src);
@@ -466,7 +498,7 @@ addEventListener('hashchange',route);route();
    start(JSON.parse(pg.reset()));
    status('Ready: real engine, rules only, bundle ' + B.version + '.');
   })().catch(e => { booting = null; $t('trystart').disabled = false; $t('trybadge').textContent = 'not started';
-                     status('The engine could not start here (' + e.message + '). Try reloading the page.', true); });
+                     status('The engine could not start here: ' + e.message + (seen.length ? ' | ' + seen.slice(-3).join(' | ') : ''), true); });
   return booting;
  }
 

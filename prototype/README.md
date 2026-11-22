@@ -142,6 +142,13 @@ it stood at 08:20 (the morning's later events are not replayed), and the clock o
 | `web/playground.py` | The glue the page calls: `reset()`, `drivers()`, `send(driver_id, text, "HH:MM")`; opens SQLite without WAL (the browser has no shared memory) |
 | `scripts/build_playground.py` | Writes `playground_bundle.json` (glue + the setuhaul modules it imports + the database). Re-run after engine changes |
 | `tests/test_playground.py` | Runs the glue on the standard library alone (as Pyodide does) and fails if the committed bundle is stale |
+| `scripts/build_pyodide_runtime.py` | Makes the portal's own `pyodide/` folder (Pyodide 0.27.7 runtime + sqlite3), see below |
+
+**Inside the claude.ai viewer** a page may load scripts from the Pyodide CDN but may not `fetch()` from it, so
+Pyodide cannot download its WebAssembly runtime there. The published portal therefore serves its own copy in
+`pyodide/` (about 15 MB, unmodified Pyodide 0.27.7 files; the `.zip` and `.whl` the viewer will not serve are stored
+as base64 JSON and decoded in memory). `driver.html` uses that copy when it exists and the CDN otherwise, so the
+repository does not carry the binaries; GitHub Pages or a laptop server loads Pyodide from the CDN.
 
 ```
 python3 -I scripts/build_playground.py
