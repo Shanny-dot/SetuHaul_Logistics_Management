@@ -129,6 +129,25 @@ TWILIO_AUTH_TOKEN=sim-token .venv/bin/python -I scripts/sim_server.py          #
 | `tests/test_twilio_channel.py` | 40 channel tests, including console-vs-Twilio parity on C03 and C06 |
 
 
+## Try your own message (portal)
+
+The Driver Messages page (`driver.html`, section "Try your own message") lets anyone type a message as any 4 August
+driver and see SetuHaul's answer. It runs the real engine in the browser with Pyodide: the same `setuhaul` modules and
+the same database, bundled into `playground_bundle.json` (about 0.6 MB; Pyodide itself loads from its CDN, about 12 MB,
+only when the box is started). Nothing typed leaves the viewer's machine. Rules only, no model call. The yard starts as
+it stood at 08:20 (the morning's later events are not replayed), and the clock only moves forward.
+
+| File | Purpose |
+|---|---|
+| `web/playground.py` | The glue the page calls: `reset()`, `drivers()`, `send(driver_id, text, "HH:MM")`; opens SQLite without WAL (the browser has no shared memory) |
+| `scripts/build_playground.py` | Writes `playground_bundle.json` (glue + the setuhaul modules it imports + the database). Re-run after engine changes |
+| `tests/test_playground.py` | Runs the glue on the standard library alone (as Pyodide does) and fails if the committed bundle is stale |
+
+```
+python3 -I scripts/build_playground.py
+python3 -I -m unittest discover -s tests -p "test_playground.py" -v
+```
+
 ## Driver languages
 
 Drivers can write in English, Hinglish, Hindi, Gujarati, Marathi, Punjabi and Marwari. Detection and reading
