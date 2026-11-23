@@ -217,9 +217,9 @@ class Session:
         if x.intent == "REPORT_DELAY":
             away = [t for t in live if not here(t)]
             if len(away) == 1 and len(live) > 1:
-                suggest = "\n" + {"en": f"(Your other truck is already at our gate, so I think you mean {away[0]['order_reference']}.)",
-                                  "hi-Latn": f"(Aapka doosra truck gate par hai, isliye shayad aap {away[0]['order_reference']} ki baat kar rahe hain.)",
-                                  "hi": f"(आपका दूसरा ट्रक गेट पर है, इसलिए शायद आप {away[0]['order_reference']} की बात कर रहे हैं।)"}[self.lang]
+                suggest = "\n" + R.phrase("other_truck", self.lang, "(Your other truck is already at our gate, so I think you mean {ref}.)",
+                                           "(Aapka doosra truck gate par hai, isliye shayad aap {ref} ki baat kar rahe hain.)",
+                                           "(आपका दूसरा ट्रक गेट पर है, इसलिए शायद आप {ref} की बात कर रहे हैं।)").format(ref=away[0]['order_reference'])
         lines, self.buttons = [], []
         for i, t in enumerate(live, 1):
             when = ampm(ts(t["original_eta_ts"]))
@@ -279,8 +279,8 @@ class Session:
         basis = None
         if not eta and delay:
             anchor = ts(cur["slot_start_ts"]) if cur else ts(ship["original_eta_ts"])
-            L = {"en": ("your {t} slot", "planned {t}", "now", "min"), "hi-Latn": ("aapka {t} slot", "plan {t}", "abhi", "min"),
-                 "hi": ("आपका {t} स्लॉट", "प्लान {t}", "अभी", "मिनट")}[self.lang]
+            L = R.phrase("basis", self.lang, ("your {t} slot", "planned {t}", "now", "min"), ("aapka {t} slot", "plan {t}", "abhi", "min"),
+                         ("आपका {t} स्लॉट", "प्लान {t}", "अभी", "मिनट"))
             label = (L[0] if cur else L[1]).format(t=ampm(anchor))
             if add(anchor, delay) < as_of:
                 anchor, label = as_of, L[2]
@@ -303,7 +303,7 @@ class Session:
             self.facts["pending"], self.facts["asked_limit"] = p, True
             self.conv = dict(self.conv, clarifications=self.conv["clarifications"] + 1)
             self.tools.append("ask:LATEST_GATE_OUT (driver mentioned another pickup)")
-            eta_text = {"en": f"arriving about {self.tm(eta)}", "hi-Latn": f"lagbhag {self.tm(eta)} tak", "hi": f"लगभग {self.tm(eta)} तक"}[self.lang]
+            eta_text = R.phrase("eta_text", self.lang, "arriving about {t}", "lagbhag {t} tak", "लगभग {t} तक").format(t=self.tm(eta))
             return self.finish(self.say("ask_limit", eta_text=eta_text), "NEED_ETA")
         if x.intent in ("REPORT_DELAY", "ANSWER") and not x.limits and self.facts.get("asked_limit") and x.eta and not x.delay_min \
                 and p.get("next_commitment") and "LATEST_GATE_OUT" not in limits:
@@ -363,7 +363,7 @@ class Session:
             self.buttons.append(f"{o['dock_code']} {ampm(s)}")
         nums = "1" if len(opts) == 1 else ", ".join(str(i) for i in range(1, len(opts))) + f" or {len(opts)}"
         if self.lang != "en":
-            nums = nums.replace(" or ", " ya " if self.lang == "hi-Latn" else " या ")
+            nums = nums.replace(" or ", R.pick(R.OR_WORD, self.lang))
         self.offers = [dict(o, offered_at=iso(self.as_of)) for o in opts]
         self.extra["options"] = opts
         kw = dict(preface=preface, facility=facility_short(self.con, ship["destination_facility_id"]), lines="\n".join(lines), nums=nums)
@@ -385,9 +385,9 @@ class Session:
             if res["ok"]:
                 self.tools.append(f"hold_for_approval:{res['hold_id']}")
                 self.facts["hold_id"] = res["hold_id"]
-                W_ = {"en": ("start after 9 PM", "our records show this truck on another trip"),
-                      "hi-Latn": ("9 PM ke baad shuru", "record mein yeh truck doosre trip par dikh raha hai"),
-                      "hi": ("रात 9 बजे के बाद शुरू", "रिकॉर्ड में यह ट्रक दूसरी ट्रिप पर दिख रहा है")}[self.lang]
+                W_ = R.phrase("approval_why", self.lang, ("start after 9 PM", "our records show this truck on another trip"),
+                              ("9 PM ke baad shuru", "record mein yeh truck doosre trip par dikh raha hai"),
+                              ("रात 9 बजे के बाद शुरू", "रिकॉर्ड में यह ट्रक दूसरी ट्रिप पर दिख रहा है"))
                 why = ", ".join((W_[0] if r.startswith("START_AFTER") else W_[1] if r.startswith("DATA_CONFLICT") else r) for r in o["needs_approval"])
                 return self.finish(self.say("approval_requested", dock=self.dk(o["dock_code"]), start=self.tm(ts(o["start"])), why=why,
                                             deadline=self.tm(ts(res["deadline"]))), "PENDING_APPROVAL")

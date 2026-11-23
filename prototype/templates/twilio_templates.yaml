@@ -22,6 +22,11 @@ templates:
       en: "Hi {{1}}, this is SetuHaul about trip {{2}} to {{3}}. Your dock slot starts at {{4}}. Are you on track? Reply here with your arrival time."
       hi-Latn: "Namaste {{1}}, SetuHaul se trip {{2}} ({{3}}) ke baare mein. Aapka dock slot {{4}} se hai. Kya aap time par hain? Pahunchne ka time yahan likhiye."
       hi: "नमस्ते {{1}}, SetuHaul से ट्रिप {{2}} ({{3}}) के बारे में। आपका डॉक स्लॉट {{4}} से है। क्या आप समय पर हैं? पहुँचने का समय यहाँ लिखिए।"
+      # Gujarati, Marathi, Punjabi, Marwari: drafts for native review; each language is approved by WhatsApp separately.
+      gu: "નમસ્તે {{1}}, SetuHaul તરફથી ટ્રિપ {{2}} ({{3}}) વિશે. તમારો ડૉક સ્લોટ {{4}}થી છે. તમે સમયસર છો? પહોંચવાનો સમય અહીં લખો."
+      mr: "नमस्कार {{1}}, SetuHaul कडून ट्रिप {{2}} ({{3}}) बद्दल. तुमचा डॉक स्लॉट {{4}} पासून आहे. तुम्ही वेळेवर आहात का? पोहोचण्याची वेळ इथे लिहा."
+      pa: "ਸਤ ਸ੍ਰੀ ਅਕਾਲ {{1}}, SetuHaul ਵੱਲੋਂ ਟ੍ਰਿਪ {{2}} ({{3}}) ਬਾਰੇ। ਤੁਹਾਡਾ ਡੌਕ ਸਲਾਟ {{4}} ਤੋਂ ਹੈ। ਕੀ ਤੁਸੀਂ ਸਮੇਂ ਸਿਰ ਹੋ? ਪਹੁੰਚਣ ਦਾ ਸਮਾਂ ਇੱਥੇ ਲਿਖੋ।"
+      mwr: "राम राम सा {{1}}, SetuHaul कानी सूं ट्रिप {{2}} ({{3}}) बाबत। थांको डॉक स्लॉट {{4}} सूं है। कांई थे टैम माथै हो? पूगण रो टैम अठै लिखो।"
     sandbox_equivalent: "Appointment Reminders: 'Your appointment is coming up on {{1}} at {{2}}' (verify the exact text in your Console)"
     sandbox_vars: {"1": slot_day, "2": slot}
 
@@ -34,6 +39,10 @@ templates:
       en: "SetuHaul has an update on your dock booking for trip {{1}}. Reply to this message to see it."
       hi-Latn: "SetuHaul ke paas trip {{1}} ki dock booking ka update hai. Dekhne ke liye is message ka jawab dijiye."
       hi: "SetuHaul के पास ट्रिप {{1}} की डॉक बुकिंग का अपडेट है। देखने के लिए इस संदेश का जवाब दीजिए।"
+      gu: "SetuHaul પાસે ટ્રિપ {{1}}ના ડૉક બુકિંગનું અપડેટ છે. જોવા માટે આ મેસેજનો જવાબ આપો."
+      mr: "SetuHaul कडे ट्रिप {{1}} च्या डॉक बुकिंगचे अपडेट आहे. पाहण्यासाठी या मेसेजला उत्तर द्या."
+      pa: "SetuHaul ਕੋਲ ਟ੍ਰਿਪ {{1}} ਦੀ ਡੌਕ ਬੁਕਿੰਗ ਦਾ ਅਪਡੇਟ ਹੈ। ਦੇਖਣ ਲਈ ਇਸ ਮੈਸੇਜ ਦਾ ਜਵਾਬ ਦਿਓ।"
+      mwr: "SetuHaul कनै ट्रिप {{1}} री डॉक बुकिंग रो अपडेट है। देखण सारू इण मैसेज रो जवाब दो।"
     sandbox_equivalent: "Order Notifications sample (verify text)"
     sandbox_vars: {"1": order}
 

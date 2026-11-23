@@ -31,13 +31,13 @@ Every run works on a fresh copy of `data/setuhaul_freight_operations.db`; the su
 | `setuhaul/config.py` | Every business number in one place (each one is in the Decision Register) |
 | `setuhaul/clock.py` | Explicit as-of time; no hidden "now" |
 | `setuhaul/db.py` | Connection, `BEGIN IMMEDIATE` write transaction, schema additions and triggers |
-| `setuhaul/nlu.py` | Language detection and rules-first reading of driver messages (English, Hinglish, Hindi) |
+| `setuhaul/nlu.py` | Language detection and rules-first reading of driver messages (English, Hinglish, Hindi, Gujarati, Marathi, Punjabi, Marwari) |
 | `setuhaul/eta.py` | The ETA we plan on: source order, confidence, late edge, plausibility checks |
 | `setuhaul/timeline.py` | Busy intervals per dock and the 15-point feasibility check |
 | `setuhaul/capacity.py` | Commit, hold, approve, sweep, cancel and swap, each in one transaction |
 | `setuhaul/planner.py` | Facility scheduling tool: plan, earmarks, health monitor, what-ifs, swap proposals |
 | `setuhaul/escalation.py` | Routing to the right person by a working channel |
-| `setuhaul/replies.py` | Reply catalogue in three languages and the output guard |
+| `setuhaul/replies.py` | Reply catalogue (English, Hinglish, Hindi; regional texts merged from replies_regional.py) and the output guard |
 | `setuhaul/workflow.py` | The conversation state machine: one message in, one reply out |
 | `setuhaul/world.py` | Rewind and replay of the snapshot for the scenario run |
 | `app.py` | Production entry point (FastAPI): WhatsApp webhook, coordinator console API, sign-in |
@@ -48,6 +48,7 @@ Every run works on a fresh copy of `data/setuhaul_freight_operations.db`; the su
 | `setuhaul/tracing.py` | LangSmith tracing with phone numbers masked and guardrail tags |
 | `tests/test_production_layer.py` | 24 tests for the production layer (no network, no keys needed) |
 | `tests/test_integrity.py` | The 12 integrity tests |
+| `tests/test_sqlite_guards.py` | MVP 1 on SQLite: booking-guard triggers are restored at start-up and checked by `/readyz`, preflight and the restore drill |
 | `run_*.py` | Runners for the scenario, the integrity proof and the scheduler comparison |
 | `scripts/audit.py` | The data audit: one proof query per finding |
 | `out/` | The results quoted in the Word documents |
@@ -128,8 +129,63 @@ TWILIO_AUTH_TOKEN=sim-token .venv/bin/python -I scripts/sim_server.py          #
 | `tests/test_twilio_channel.py` | 40 channel tests, including console-vs-Twilio parity on C03 and C06 |
 
 
+## Try your own message (portal)
+
+The Driver Messages page (`driver.html`, section "Try your own message") lets anyone type a message as any 4 August
+driver and see SetuHaul's answer. It runs the real engine in the browser with Pyodide: the same `setuhaul` modules and
+the same database, bundled into `playground_bundle.json` (about 0.6 MB; Pyodide itself loads from its CDN, about 12 MB,
+only when the box is started). Nothing typed leaves the viewer's machine. Rules only, no model call. The yard starts as
+it stood at 08:20 (the morning's later events are not replayed), and the clock only moves forward.
+
+| File | Purpose |
+|---|---|
+| `web/playground.py` | The glue the page calls: `reset()`, `drivers()`, `send(driver_id, text, "HH:MM")`; opens SQLite without WAL (the browser has no shared memory) |
+| `scripts/build_playground.py` | Writes `playground_bundle.json` (glue + the setuhaul modules it imports + the database). Re-run after engine changes |
+| `tests/test_playground.py` | Runs the glue on the standard library alone (as Pyodide does) and fails if the committed bundle is stale |
+| `scripts/build_pyodide_runtime.py` | Makes the portal's own `pyodide/` folder (Pyodide 0.27.7 runtime + sqlite3), see below |
+
+**Inside the claude.ai viewer** a page may load scripts from the Pyodide CDN but may not `fetch()` from it, so
+Pyodide cannot download its WebAssembly runtime there. The published portal therefore serves its own copy in
+`pyodide/` (about 15 MB, unmodified Pyodide 0.27.7 files; the `.zip` and `.whl` the viewer will not serve are stored
+as base64 JSON and decoded in memory). `driver.html` uses that copy when it exists and the CDN otherwise, so the
+repository does not carry the binaries; GitHub Pages or a laptop server loads Pyodide from the CDN.
+
+```
+python3 -I scripts/build_playground.py
+python3 -I -m unittest discover -s tests -p "test_playground.py" -v
+```
+
+## Driver languages
+
+Drivers can write in English, Hinglish, Hindi, Gujarati, Marathi, Punjabi and Marwari. Detection and reading
+are rules only (no model call); replies come from the reviewed catalogue in the driver's language.
+
+| File | Change |
+|---|---|
+| `setuhaul/languages.py` | Language list, scripts, native digits, Marathi/Marwari marker words, reading vocabulary per language |
+| `setuhaul/nlu.py` | Detects the languages; reads times, durations, "after 12", "by 11:30", choices, slot references, early arrival, yard, trailer/reefer, urgency, "leave by", "which slots", "keep my slot" and safety words (whole words) in each |
+| `setuhaul/replies_regional.py` | 30 reply texts per new language (drafts for native review); the rest fall back to Hindi |
+| `setuhaul/replies.py` | Merges them; the output guard reads every language's dock word and "booked" words |
+| `setuhaul/workflow.py` | Phrases built in code (ETA basis, approval reasons, "or") per language |
+| `templates/twilio_templates.yaml`, `setuhaul/templates.py` | Proactive templates per language (each needs its own WhatsApp approval) |
+| `tests/test_languages.py` | 16 tests: detection, reading, false-alarm checks, placeholders, guard, full turns |
+| `scripts/language_demo.py` | Runs 8 demo conversations in the new languages and in English; writes `out/language_demo.json` and the portal's `lang_data.js` |
+| `scripts/language_replay.py` | Replays the whole 4 Aug morning with every driver message translated (Hinglish, Hindi, Gujarati, Marathi, Punjabi, Marwari) |
+| `tests/test_language_replay.py` | 12 tests: native-script intents, "by" vs "about", whole-word safety, and every replayed turn ends in the same state as English |
+
+```
+python3 -I scripts/language_demo.py out/
+python3 -I -m unittest discover -s tests -p "test_languages.py" -v
+python3 -I scripts/language_replay.py gu /tmp/gu      # one language's full morning
+python3 -I -m unittest discover -s tests -p "test_language_replay.py" -v
+```
+
+Limits: romanised Gujarati, Marathi, Punjabi or Marwari is read as Hinglish and answered in Hinglish. Marwari
+varies from district to district; the drafts follow Marwari as written around Jaipur and Jodhpur. All new reply texts need a native
+speaker's review before go-live, and each language's WhatsApp templates need separate approval.
+
 ## What the prototype does not do
 
 * The scenario run and integrity proof make no live WhatsApp or LLM call. Where the design calls the LLM fallback and no key is set, the workflow asks the driver a clarifying question instead.
 * The coordinator console is an API (`app.py`) plus the static portal pages; there is no separate console screen yet.
-* SQLite only. The Postgres DDL and the plan to re-run the proof on Postgres are in deliverables 3 and 5.
+* SQLite only, by decision for MVP 1. MVP 2 moves to Postgres or MongoDB; the Postgres DDL and the plan to re-run the proof on it are in deliverables 3 and 5.

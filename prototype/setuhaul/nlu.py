@@ -13,22 +13,31 @@ asks the driver a clarifying question instead. A wrong guess is never booked.
 import re
 from dataclasses import dataclass, field
 from . import config as C
+from . import languages as L
 from .clock import at, add
 
-DEV_DIGITS = str.maketrans("०१२३४५६७८९", "0123456789")
+DEV_DIGITS = L.DIGITS               # Devanagari, Gujarati and Gurmukhi digits -> 0-9
 HINGLISH = set("""hai hain hoon hu nahi nahin bhai bhaiya kitna kitne der deri pahunch pahuncha pahunchunga pahunch jaunga
 pahunchenge gaadi gadi jaldi kal abhi ghanta ghante mein ke baad wala wali shaam sham subah raat milega milegi chahiye
 karo theek thik haan accha acha aaj kya kab tak lagbhag thoda puncture gaya gayi raha rahi hoga jaunga jayega lagi
-lag ko se pe par wale doosra dusra pehla teesra""".split())
+lag ko se pe par wale doosra dusra pehla teesra main ho mera meri mujhe apna kaun rakhunga nikalna uthana khali""".split())
 
 
 def detect_lang(text, previous="en"):
     letters = [c for c in text if c.isalpha()]
     if not letters:
         return previous
-    dev = sum("ऀ" <= c <= "ॿ" for c in letters) / len(letters)
-    if dev > 0.3:
-        return "hi"
+    share, _ = L.script_share(text)
+    if share.get("gujr", 0) > 0.3:
+        return "gu"
+    if share.get("guru", 0) > 0.3:
+        return "pa"
+    if share.get("deva", 0) > 0.3:
+        toks = set(re.split(r"[\s,.!?।]+", text))
+        mr, rj = len(toks & L.MARKERS["mr"]), len(toks & L.MARKERS["mwr"])
+        if mr or rj:
+            return "mr" if mr > rj else "mwr"
+        return previous if previous in ("mr", "mwr") else "hi"
     words = re.findall(r"[a-z]+", text.lower())
     hits = sum(w in HINGLISH for w in words)
     if len(words) <= 2 and hits == 0:
@@ -78,8 +87,9 @@ TIME_PATTERNS = [
     r"(?P<h>\d{1,2})[:.](?P<m>\d{2})\s*(?P<ap>am|pm|a\.m\.|p\.m\.)?",
     r"(?P<h>\d{1,2})\s*(?P<ap>am|pm|a\.m\.|p\.m\.)",
     r"(?:after|before|by|at|till|until|around|eta|reach(?:ing)?|arrive|for)\s+(?P<h>\d{1,2})(?![\d.:])(?!\s*(?:min|minute|hour|hr|ghant|ton|t\b|kg))",
-    r"(?P<h>\d{1,2})\s*(?:baje|bje|बजे)",
+    r"(?P<h>\d{1,2})\s*(?:" + L.TIME_WORDS + ")",
     r"(?P<h>\d{1,2})\s*(?:ke baad|ke bad|के बाद)",
+    r"(?P<h>\d{1,2})\s*(?:" + L.AFTER_WORDS + ")",       # "12 नंतर", "12 પછી", "12 ਤੋਂ ਬਾਅਦ", "12 पछै"
 ]
 DUR_WORDS = [
     (r"one and a half hours?|1\.5 hours?|dedh ghant[ae]|डेढ़ घंट[ाे]", 90),
@@ -87,7 +97,19 @@ DUR_WORDS = [
     (r"two hours?|2 hours?|do ghante|दो घंटे", 120),
     (r"dhai ghante|ढाई घंटे", 150),
     (r"(?:one|an|1) hour|ek ghanta|एक घंटा", 60),
-]
+] + L.DUR_WORDS                       # Gujarati, Marathi, Punjabi, Marwari durations
+
+
+_LETTER = "a-z\u0900-\u0DFF"               # Latin and the Indic blocks (Devanagari to Sinhala)
+
+
+def _safety_hit(t):
+    """A safety word must start a word; the short ones in L.SAFETY_WHOLE_WORDS must also end it."""
+    for w in C.SAFETY_WORDS + L.SAFETY_WORDS:
+        tail = f"(?![{_LETTER}])" if w in L.SAFETY_WHOLE_WORDS else ""
+        if re.search(f"(?<![{_LETTER}])" + re.escape(w) + tail, t):
+            return True
+    return False
 
 
 def extract(text, as_of):
@@ -95,8 +117,8 @@ def extract(text, as_of):
     t = raw.lower()
     f = Facts()
 
-    f.safety = any(w in t for w in C.SAFETY_WORDS)
-    f.asks_human = bool(re.search(r"talk to (a )?(person|human|someone|manager)|call me|insaan se|manager se baat", t))
+    f.safety = _safety_hit(t)
+    f.asks_human = bool(re.search(L.HUMAN, t))
     m = re.search(r"\bord-\d{6}-\d{3}\b|\bshp\d{4}\b", t)
     if m:
         f.order_ref = m.group(0).upper()
@@ -105,25 +127,31 @@ def extract(text, as_of):
     m = re.fullmatch(r"(?:option\s*)?#?([1-9])", s)
     ordinals = {"first": 1, "pehla": 1, "pehli": 1, "1st": 1, "second": 2, "doosra": 2, "dusra": 2, "2nd": 2,
                 "third": 3, "teesra": 3, "tisra": 3, "3rd": 3}
+    toks = [w for w in re.split(r"[\s,.!?।)(]+", t) if w]
     if m:
         f.choice = int(m.group(1))
     else:
         for w, n in ordinals.items():
             if re.search(rf"\b{w}\b", t) and len(t.split()) <= 6:
                 f.choice = n
+        for w in toks:
+            if w in L.ORDINALS and len(toks) <= 6:
+                f.choice = L.ORDINALS[w]
+                break
     f.decline = bool(re.search(r"\b(no thanks|no thank you|not now|nahi chahiye|rehne do|no need|keep my (current )?slot|i will keep|i'll keep)\b", t)) \
-        or s in ("no", "nahi", "nahin", "नहीं")
-    f.yes = s in ("yes", "ok", "okay", "haan", "han", "ha", "theek", "thik", "sure", "confirm", "हाँ")
+        or bool(re.search(L.DECLINE, t)) \
+        or s in ("no", "nahi", "nahin", "नहीं") or s in L.NO
+    f.yes = s in ("yes", "ok", "okay", "haan", "han", "ha", "theek", "thik", "sure", "confirm", "हाँ") or s in L.YES
 
-    if re.search(r"\bevening\b|\bshaam\b|\bsham\b|शाम", t):
+    if re.search(L.EVENING, t):
         f.hint = "EVENING"
-    elif re.search(r"\bmorning\b|\bsubah\b|सुबह", t):
+    elif re.search(L.MORNING, t):
         f.hint = "MORNING"
-    if re.search(r"\bheavy\b|\btrailer\b", t):
+    if re.search(r"\bheavy\b|\btrailer\b|" + L.HEAVY, t):
         f.hint = "HEAVY"
-    if re.search(r"\breefer\b|\bcold\b|\bfrozen\b|\bdairy\b|\bchilled\b", t):
+    if re.search(r"\breefer\b|\bcold\b|\bfrozen\b|\bdairy\b|\bchilled\b|" + L.REEFER, t):
         f.hint = f.hint or "REEFER"
-    f.urgency_claim = bool(re.search(r"\burgent\b|\bcritical\b|\bemergency\b|\basap\b|first possible|\bjaldi\b", t))
+    f.urgency_claim = bool(re.search(r"\burgent\b|\bcritical\b|\bemergency\b|\basap\b|first possible|\bjaldi\b|" + L.URGENT, t))
 
     for pat, code in [(r"traffic|jam|\bjaam\b", "TRAFFIC"), (r"tyre|tire|puncture|breakdown|broke down|repair", "BREAKDOWN"),
                       (r"rain|barish|baarish|fog|flood", "WEATHER"), (r"released me late|loading|origin", "LOADING_DELAY"),
@@ -139,11 +167,11 @@ def extract(text, as_of):
             f.delay_min, f.evidence["delay"] = mins, mm.group(0)
             break
     if f.delay_min is None:
-        mm = re.search(r"(\d+(?:\.\d+)?)\s*(hours?|hrs?|hr|ghante|ghanta|घंटे|घंटा)", t)
+        mm = re.search(r"(\d+(?:\.\d+)?)\s*(" + L.HOUR_UNITS + ")", t)
         if mm:
             f.delay_min, f.evidence["delay"] = int(float(mm.group(1)) * 60), mm.group(0)
         else:
-            mm = re.search(r"(\d+)\s*(minutes?|mins?|min|मिनट)", t)
+            mm = re.search(r"(\d+)\s*(" + L.MIN_UNITS + ")", t)
             if mm:
                 f.delay_min, f.evidence["delay"] = int(mm.group(1)), mm.group(0)
 
@@ -165,13 +193,15 @@ def extract(text, as_of):
         if win and win.start() <= st <= win.end():
             f.eta_window = (f.eta_window[0], dt) if f.eta_window else (dt, None)
             continue
-        if re.search(r"waiting for|my\s*$|\bmy \w* ?$|instead of", before) or re.search(r"^\s*(?:pm|am)?\s*slot", after):
+        if re.search(r"waiting for|my\s*$|\bmy \w* ?$|instead of", before) or re.search(r"^\s*(?:pm|am)?\s*slot", after) \
+                or re.search(L.SLOT_REF, after):
             continue                                        # a reference to the existing slot, not new information
-        if re.search(r"after\s*$", before) or re.search(r"^\s*(ke baad|ke bad|के बाद)", after) \
-                or re.search(r"ke baad|ke bad|के बाद", txt):
+        if re.search(r"after\s*$", before) or re.search(r"^\s*(" + L.AFTER_WORDS + ")", after) \
+                or re.search(r"ke baad|ke bad|के बाद", txt) or re.search(L.AFTER_WORDS, txt):
             f.earliest_start = dt
             f.evidence["earliest_start"] = txt
-        elif re.search(r"(leave|nikal|exit|gate.?out|depart)[^.]{0,25}$", before) or re.search(r"^\s*tak nikal", after):
+        elif re.search(r"(leave|nikal|exit|gate.?out|depart)[^.]{0,25}$", before) or re.search(r"^\s*tak nikal", after) \
+                or re.search(r"^\s*(?:" + L.TIME_WORDS + r")?\s*(?:" + L.BY_WORDS + r")\s*(?:" + L.LEAVE_AFTER + ")", after):
             f.limits["LATEST_GATE_OUT"] = dt
             f.evidence["LATEST_GATE_OUT"] = txt
         elif re.search(r"(finish|unload(ed|ing)? by|khatam)[^.]{0,15}$", before):
@@ -183,12 +213,13 @@ def extract(text, as_of):
         elif f.eta is None:
             f.eta = dt
             f.evidence["eta"] = txt
-            approx = re.search(r"(around|about|approx|approximately|lagbhag|~|tak)\s*$", before) or "around" in t
+            approx = re.search(r"(" + L.APPROX_WORDS + r")\s*$", before) or "around" in t \
+                or re.search(r"^\s*(?:" + L.TIME_WORDS + r")?\s*(" + L.APPROX_AFTER + ")", after)
             f.eta_confidence = "MEDIUM" if approx else "HIGH"
     if f.eta_window and f.eta_window[1]:
         f.eta, f.eta_confidence = f.eta_window[0] + (f.eta_window[1] - f.eta_window[0]) / 2, "LOW"
 
-    f.next_commitment = bool(re.search(r"another pickup|next pickup|other pickup|another load|next load|doosra load|agla (pickup|load)|dusri pickup", t))
+    f.next_commitment = bool(re.search(r"another pickup|next pickup|other pickup|another load|next load|doosra load|agla (pickup|load)|dusri pickup|" + L.NEXT_LOAD, t))
 
     # ---- intent ----
     if f.safety:
@@ -197,16 +228,17 @@ def extract(text, as_of):
         f.intent = "CHOOSE"
     elif f.decline:
         f.intent = "DECLINE"
-    elif re.search(r"already at (the )?gate|at the gate now|reached early|pahunch gaya.*(pehle|jaldi)|dock now", t):
+    elif re.search(r"already at (the )?gate|at the gate now|reached early|pahunch gaya.*(pehle|jaldi)|dock now|" + L.EARLY, t):
         f.intent = "EARLY_ARRIVAL"
-    elif re.search(r"in the yard|in yard|yard mein|reached late", t):
+    elif re.search(r"in the yard|in yard|yard mein|reached late|" + L.YARD, t):
         f.intent = "AT_YARD_STATUS"
-    elif re.search(r"still active|status|has a new dock|been assigned|kab milega|confirmed\?", t) and not f.eta:
+    elif re.search(r"still active|status|has a new dock|been assigned|kab milega|confirmed\?|" + L.STATUS, t) and not f.eta:
         f.intent = "CHECK_STATUS"
-    elif re.search(r"what slots|which slots|slots? (are )?possible|kaun ?sa slot|show (me )?options|what about after", t) \
-            and not re.search(r"\blate\b|delay|traffic|puncture|लेट", t):
+    elif (re.search(r"what slots|which slots|slots? (are )?possible|kaun ?sa slot|show (me )?options|what about after|" + L.ASK_OPTIONS, t)
+          or (re.search(L.AND_AFTER, t) and f.earliest_start and len(toks) <= 6)) \
+            and not re.search(r"\blate\b|delay|traffic|puncture|लेट|" + L.LATE_WORDS, t):
         f.intent = "ASK_OPTIONS"
-    elif re.search(r"\blate\b|delay|\bder\b|traffic|jam|puncture|tyre|breakdown|stuck|लेट|देर|diversion|reaching|\beta\b|will miss|be missed|pahunch", t) \
+    elif re.search(r"\blate\b|delay|\bder\b|traffic|jam|puncture|tyre|breakdown|stuck|लेट|देर|diversion|reaching|\beta\b|will miss|be missed|pahunch|" + L.LATE_WORDS + "|" + L.ARRIVE_WORDS, t) \
             or f.eta or f.delay_min:
         f.intent = "REPORT_DELAY"
     elif f.hint or f.order_ref or f.choice:

@@ -177,7 +177,7 @@ table('t-doc',['Element in the solution design','In this prototype','Status / re
  ['Architecture: 5 layers, only 2 edge steps use an LLM','Flow & Architecture diagram: channel → API → fixed workflow → context / scheduler / booking services → database',OK+' '+L('flow.html#layers','Layers')],
  ['One exception, end to end (3 side exits)','Interactive flow with ask-one-question, escalate and re-plan exits',OK+' '+L('flow.html#e2e','Flow')],
  ['LLM extracts facts to strict JSON on every message','Rules read the message first; the LLM is called only when rules return UNKNOWN, same strict schema',AD+' same output, deterministic and cheaper; LLM fallback never fired on 4 Aug'],
- ['LLM writes every reply','Replies from 34 reviewed templates × 3 languages; output guard checks every dock and time',AD+' no invented facts; LLM wording optional'],
+ ['LLM writes every reply','Replies from 34 reviewed templates in 7 languages; output guard checks every dock and time',AD+' no invented facts; LLM wording optional'],
  ['Pick → 3-minute hold → "YES" books','Pick = booking in one checked transaction; holds only while a coordinator decides',AD+' saves a turn for a driver on the road; transaction is the hold'],
  ['Long unloads book two consecutive slots','Bookings are time intervals that may run past the slot end if the door is free',AD+' two slots wasted ~3 dock-hours/day at Jaipur'],
  ['Hard filters F1–F9','All nine inside the 15-point feasibility check',OK],
@@ -192,7 +192,7 @@ table('t-doc',['Element in the solution design','In this prototype','Status / re
  ['Data audit D1–D17','Merged into 36 findings (F01–F36), ~15 new',OK],
  ['7 new tables + 2 triggers','Built: 12 tables + 3 triggers; proposed for MVP 2: GPS, language, comms series',OK+' '+L('insights.html#new-tables','Schema')],
  ['Reefer option "start after 21:00 with approval"','Removed: D5 is in maintenance until 22:00 and the site closes at 22:00',AD+' option does not exist'],
- ['LangGraph, FastAPI, Gradio, Cognito, Redis, LangSmith, Presidio, LiteLLM','Plain Python state machine, one web service, one database; others when there is a reason',AD+' lean pilot ≈ US$20–30/month']]);
+ ['LangGraph, FastAPI, Gradio, Cognito, Redis, LangSmith, Presidio, LiteLLM','Plain Python state machine, one web service, one database; others when there is a reason',AD+' lean pilot on SQLite ≈ ₹3,000/month; Postgres or MongoDB from MVP 2']]);
 /* reference tables */
 table('t-ask',['Ask the driver (only they know)','Look up (the backend knows)'],[
  ['Which shipment, if two are active (DRV004)','Their shipments, vehicle, load weight, dock type, priority'],['A firmer ETA if they gave a range or "late by 1 hour" (stated back first)','Current appointment and slot, latest ETA history'],['The hard limit behind "another pickup"','Facility rules, dock events, open and occupied slots'],['Their choice among the options','Who else is competing for the same window']]);

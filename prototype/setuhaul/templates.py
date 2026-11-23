@@ -5,6 +5,8 @@ approved template comes from the environment (TWILIO_TPL_<NAME>_SID). No SID -> 
 """
 import os
 
+from .languages import pick
+
 HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PATH = os.path.join(HERE, "templates", "twilio_templates.yaml")
 _cache = {}
@@ -35,7 +37,8 @@ def variables(name, values, sandbox=False):
 def preview(name, values, lang="en"):
     """The text the template will show (for the trace, the simulator and the guard)."""
     t = load().get(name) or {}
-    body = (t.get("body") or {}).get(lang) or (t.get("body") or {}).get("en") or name
+    bodies = t.get("body") or {}
+    body = (pick(bodies, lang) if bodies else None) or name          # gu/mr/pa/mwr -> hi -> en if not approved yet
     for i, v in enumerate(t.get("vars", []), 1):
         body = body.replace("{{%d}}" % i, str(values.get(v, "")))
     return body

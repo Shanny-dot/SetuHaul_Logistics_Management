@@ -2,7 +2,7 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Driver Messages · SetuHaul - Logistic Management</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+Devanagari:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+Devanagari:wght@400;600&family=Noto+Sans+Gujarati:wght@400;600&family=Noto+Sans+Gurmukhi:wght@400;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
 <style>
 .app{display:grid;grid-template-columns:300px 410px 1fr;gap:22px;align-items:start}
@@ -89,11 +89,70 @@
 .toggle input{accent-color:var(--teal)}
 @media (max-width:1200px){.app{grid-template-columns:260px 410px}.side{grid-column:1/-1}}
 @media (max-width:760px){.app{grid-template-columns:1fr}.cases{position:static;max-height:none;flex-direction:row;overflow-x:auto}.case{min-width:240px}.cg{display:none}.phone-wrap{position:static;display:flex;flex-direction:column;align-items:center}.phone{width:100%;max-width:390px;height:720px}}
+
+/* languages */
+.lgx{margin-top:56px}
+.lgtabs{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 16px}
+.lgtabs button{border:1px solid var(--line2);background:var(--panel);border-radius:999px;padding:8px 14px;font-weight:600;font-size:13.5px;color:var(--text)}
+.lgtabs button small{display:block;font-weight:400;font-size:11.5px;color:var(--muted)}
+.lgtabs button.on{background:var(--teal);color:#fff;border-color:var(--teal)}.lgtabs button.on small{color:#dff}
+.lgconvs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.lgconvs button{border:1px solid var(--line);background:var(--bg2);border-radius:12px;padding:7px 12px;font-size:12.5px;color:var(--text)}
+.lgconvs button.on{border-color:var(--saffron);background:#FFF6E6}
+.lggrid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.lgcol{border:1px solid var(--line);border-radius:18px;overflow:hidden;background:#EFE7DC}
+.lgcol h4{margin:0;padding:10px 14px;background:#0B5C4F;color:#fff;font-size:13.5px;display:flex;justify-content:space-between}
+.lgcol h4 small{opacity:.8;font-weight:400}
+.lgchat{padding:12px;display:flex;flex-direction:column;gap:6px;min-height:200px;background-image:radial-gradient(rgba(11,92,79,.07) 1px,transparent 1.4px);background-size:16px 16px}
+.lgchat .msg{max-width:92%;animation:pop .35s both}
+.msg.gujr{font-family:'Noto Sans Gujarati',var(--sans)}.msg.guru{font-family:'Noto Sans Gurmukhi',var(--sans)}
+.lgtools{font-family:var(--mono);font-size:10.5px;color:#4f6b52;margin-top:6px;white-space:normal}
+.lgchg{margin-top:16px}
+.lgchg td:first-child{font-family:var(--mono);font-size:12.5px;white-space:nowrap}
+@media (max-width:900px){.lggrid{grid-template-columns:1fr}}
+
+/* try your own message (real engine in the browser) */
+.tryx{margin-top:56px}
+.trygrid{display:grid;grid-template-columns:280px minmax(0,1fr) 340px;gap:16px;align-items:start}
+.tryctl label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin:12px 0 5px}
+.tryctl label:first-child{margin-top:0}
+.tryctl select,.tryctl input[type=time]{width:100%;font:inherit;font-size:16px;padding:9px 10px;border:1px solid var(--line2);border-radius:10px;background:var(--bg2);color:var(--text)}
+.trytrips{margin-top:8px;font-size:12.5px;color:var(--muted);display:grid;gap:4px}
+.trytrips div{display:flex;justify-content:space-between;gap:8px;border-bottom:1px dashed var(--line);padding-bottom:4px}
+.trytrips b{color:var(--text);font-weight:600}
+.trysamples{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.trysamples button{border:1px solid var(--line);background:var(--bg2);border-radius:999px;padding:6px 10px;font-size:12.5px;color:var(--text);min-height:34px;text-align:left}
+.trysamples button:hover{border-color:var(--saffron)}
+.trysamples .s-dev{font-family:'Noto Sans Devanagari',var(--sans)}.trysamples .s-gujr{font-family:'Noto Sans Gujarati',var(--sans)}.trysamples .s-guru{font-family:'Noto Sans Gurmukhi',var(--sans)}
+.trychat{border:1px solid var(--line);border-radius:18px;overflow:hidden;background:#EFE7DC;display:flex;flex-direction:column;min-height:520px}
+.trychat h4{margin:0;padding:10px 14px;background:#0B5C4F;color:#fff;font-size:13.5px;display:flex;justify-content:space-between;gap:8px}
+.trychat h4 small{opacity:.85;font-weight:400}
+#trylog{flex:1;padding:12px;display:flex;flex-direction:column;gap:6px;overflow-y:auto;max-height:560px;background-image:radial-gradient(rgba(11,92,79,.07) 1px,transparent 1.4px);background-size:16px 16px}
+#trylog .msg{max-width:88%}
+.trybtns{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.trybtns button{border:1px solid #9fc9b8;background:#f4fbf7;color:#0B5C4F;border-radius:10px;padding:7px 10px;font-weight:600;font-size:12.5px;min-height:36px}
+.trybtns button:hover{background:#e3f4ec}
+.trycomp{display:flex;gap:8px;padding:10px;background:#f0f0f0;border-top:1px solid var(--line)}
+.trycomp textarea{flex:1;resize:none;font:inherit;font-size:16px;line-height:1.35;padding:10px 12px;border-radius:20px;border:1px solid var(--line2);background:#fff;color:#1b2430;min-height:44px;max-height:120px}
+.trycomp button{width:46px;height:46px;border-radius:50%;border:0;background:#0B8A78;color:#fff;font-size:18px;flex:none}
+.trycomp button:disabled{background:#9aa6b2}
+.trystatus{font-size:12.5px;color:var(--muted);margin:8px 0 0;min-height:18px}
+.trystatus.err{color:var(--coral)}
+.tryempty{margin:auto;text-align:center;color:#5b6b63;font-size:13.5px;max-width:300px;padding:20px}
+.tryside h3{margin:0 0 8px;font-size:14px}
+.trykv{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;font-size:13px;margin:0 0 10px}
+.trykv dt{color:var(--muted)}.trykv dd{margin:0;font-weight:600}
+.trytools{list-style:none;margin:0;padding:0;font-family:var(--mono);font-size:11.5px;display:grid;gap:4px}
+.trytools li{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:5px 8px;overflow-wrap:anywhere}
+.trynote{font-size:12px;color:var(--muted);margin-top:12px;line-height:1.45}
+.tryx :focus-visible{outline:2px solid var(--saffron);outline-offset:2px}
+@media (max-width:1100px){.trygrid{grid-template-columns:260px minmax(0,1fr)}.tryside{grid-column:1/-1}}
+@media (max-width:700px){.trygrid{grid-template-columns:1fr}.trychat{min-height:420px}}
 </style></head><body>
 <main class="wrap">
 <div class="page-head"><div><div class="eyebrow">● Driver Messages · WhatsApp channel</div><h1>Every driver conversation from 4 August</h1>
 <p>Choose a driver. Tap <b>send</b> to post their real message, tap a slot to book it, or press <b>Auto-play</b>. The right panel shows what SetuHaul checked before each reply.</p></div>
-<div style="display:flex;gap:10px;align-items:center"><label class="toggle"><input type="checkbox" id="gloss" checked> English gloss for Hindi / Hinglish</label></div></div>
+<div style="display:flex;gap:10px;align-items:center"><a class="btn" href="#languages">ગુ · म · ਪੰ · मा — 7 languages ↓</a><a class="btn" href="#try">✎ Try your own message ↓</a><label class="toggle"><input type="checkbox" id="gloss" checked> English gloss for non-English messages</label></div></div>
 
 <div class="app">
   <aside class="cases" id="cases"></aside>
@@ -113,6 +172,63 @@
     <div class="card"><h3>Behind each reply <span class="chip">audit trail</span></h3><div class="turns" id="turns"><div class="empty">Send the driver's message to see the tools the workflow calls.</div></div></div>
   </section>
 </div>
+
+<section class="lgx" id="languages">
+ <div class="eyebrow">● Seven languages</div>
+ <h2 class="sec-t" style="margin-top:6px">Drivers can write in any of seven languages</h2>
+ <p class="sec-p">English, Hinglish and Hindi were there from day one; Gujarati, Marathi, Punjabi and Marwari are new. Same engine, same checks, same booking in every one. These conversations were run through the real workflow on the 4 August data (<span class="mono">scripts/language_demo.py</span>); the right column is the same conversation sent in English, so you can see the meaning and that the outcome is identical. Reply texts in the new languages are drafts for review by a native speaker.</p>
+ <div class="lgtabs" id="lgtabs"></div>
+ <div class="lgconvs" id="lgconvs"></div>
+ <div class="lggrid">
+  <div class="lgcol"><h4><span id="lgname">—</span><small id="lgdriver"></small></h4><div class="lgchat" id="lgnative"></div></div>
+  <div class="lgcol"><h4><span id="lgright">Same conversation in English</span><small id="lgcase"></small></h4><div class="lgchat" id="lgeng"></div></div>
+ </div>
+ <div class="card lgchg">
+  <h3>Where the change was made</h3>
+  <table class="t">
+   <tr><th>File</th><th>What changed</th></tr>
+   <tr><td>setuhaul/languages.py</td><td>New: the language list, scripts (Gujarati, Gurmukhi, Devanagari), native digits, marker words that tell Marathi and Marwari from Hindi, and the reading vocabulary per language (o'clock words, durations, late words, "after", ordinals, yes/no, safety words).</td></tr>
+   <tr><td>setuhaul/nlu.py</td><td>Detects the four new languages alongside English, Hinglish and Hindi; reads times, durations, "after 12", choices, slot references and safety words in each. No model call.</td></tr>
+   <tr><td>setuhaul/replies_regional.py</td><td>New: 30 reply texts in each language (drafts for native review). Anything not yet translated falls back to Hindi.</td></tr>
+   <tr><td>setuhaul/replies.py</td><td>Merges the new texts; the output guard now reads ડૉક / ਡੌਕ / डॉक and the "booked" words of every language, so no reply can claim a booking or a dock the database did not produce.</td></tr>
+   <tr><td>setuhaul/workflow.py</td><td>The small phrases built in code (ETA basis, approval reasons, "or" between choices) come in each language.</td></tr>
+   <tr><td>templates/twilio_templates.yaml · templates.py</td><td>Proactive WhatsApp templates in the four new languages; each language needs its own WhatsApp approval.</td></tr>
+   <tr><td>setuhaul/llm.py</td><td>The fallback reader's prompt lists the seven languages.</td></tr>
+   <tr><td>tests/test_languages.py</td><td>16 new tests: detection, reading, no false safety alarm (e.g. આગળ "ahead"), placeholders, guard, and every demo conversation end to end. All 113 tests pass; the 4 August scenario output is unchanged.</td></tr>
+   <tr><td>Database (proposed)</td><td>driver_preferences.language stores each driver's language once known, so proactive messages go out in it.</td></tr>
+  </table>
+ </div>
+</section>
+
+<section class="tryx" id="try">
+ <div class="eyebrow">● Try your own message</div>
+ <h2 class="sec-t" style="margin-top:6px">Write as any driver and see what SetuHaul answers</h2>
+ <p class="sec-p">This box runs the real SetuHaul engine, the same Python code and the same 4 August database as the prototype, inside your browser (Pyodide). Nothing you type leaves your computer. Pick a driver and a time, write in any of the seven languages, and tap a slot to book it.</p>
+ <div class="trygrid">
+  <div class="card tryctl">
+   <label for="trydrv">Driver</label>
+   <select id="trydrv" disabled><option>Start the engine first</option></select>
+   <div class="trytrips" id="trytrips"></div>
+   <label for="trytime">Time on 4 August</label>
+   <input type="time" id="trytime" value="09:19" min="08:20" max="22:00" step="60" disabled>
+   <label>Sample messages</label>
+   <div class="trysamples" id="trysamples"></div>
+  </div>
+  <div class="trychat">
+   <h4><span id="tryname">SetuHaul Dispatch · Jaipur DC</span><small id="trybadge">engine not started</small></h4>
+   <div id="trylog"><div class="tryempty" id="tryempty"><p>The engine is about 12 MB and loads only when you start it (a few seconds, once per visit).</p><button class="btn pri" id="trystart">Start the engine</button></div></div>
+   <form class="trycomp" id="tryform"><textarea id="trytext" rows="1" placeholder="Type a message as the driver" aria-label="Message" disabled></textarea><button id="trysend" aria-label="Send" disabled>➤</button></form>
+  </div>
+  <div class="card tryside">
+   <h3>Behind the last reply</h3>
+   <dl class="trykv"><dt>State</dt><dd id="trystate">—</dd><dt>Language read</dt><dd id="trylang">—</dd><dt>Trip</dt><dd id="tryship">—</dd></dl>
+   <h3>What the engine checked</h3>
+   <ul class="trytools" id="trytools"><li>Send a message to see each check.</li></ul>
+   <p class="trynote">Rules only, as in the morning replay: no AI model is called, so a message the rules cannot read gets a clarifying question. The yard starts as it stood at 08:20; the morning's later events (the D3 breakdown, other trucks arriving) are not replayed here. Time only moves forward. <button class="btn ghost" id="tryreset" style="margin-top:8px" disabled>↺ Reset all drivers</button></p>
+   <p class="trystatus" id="trystatus" role="status"></p>
+  </div>
+ </div>
+</section>
 </main>
 <script src="data.js"></script><script src="app.js"></script>
 <script>
@@ -284,4 +400,162 @@ $('#next').onclick=()=>{const i=ORDER.indexOf(C);location.hash=ORDER[(i+1)%ORDER
 $('#auto').onclick=()=>{if(branch||idx>=steps.length)loadCase(C);autoplay=!autoplay;$('#auto').textContent=autoplay?'❚❚ Pause':'▶ Auto-play';if(autoplay)prepComposer()};
 function route(){const h=location.hash.slice(1).toUpperCase();loadCase(META[h]?h:'C03')}
 addEventListener('hashchange',route);route();
-</script></body></html>
+</script><script src="lang_data.js"></script>
+<script>
+(function(){
+ if(!window.LANGDEMO)return;
+ const C=LANGDEMO.conversations, langs=[...new Set(C.map(c=>c.lang))];
+ const scr=l=>l==='gu'?'gujr':l==='pa'?'guru':(l==='en'||l==='hi-Latn')?'':'dev';
+ const esc=t=>(t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');
+ let cur=langs[0];
+ function bubble(text,me,cls,tools){return `<div class="msg ${me?'me':'bot'} ${cls}">${esc(text)}${tools?`<div class="lgtools">${esc(tools.join(' · '))}</div>`:''}<span class="tm">${me?'✓✓':''}</span></div>`}
+ function show(id){const c=C.find(x=>x.id===id);
+  document.querySelectorAll('#lgconvs button').forEach(b=>b.classList.toggle('on',b.dataset.id===id));
+  document.getElementById('lgname').textContent=c.native===c.language?c.language:c.native+' · '+c.language;
+  document.getElementById('lgdriver').textContent=c.name+' · '+c.driver;
+  document.getElementById('lgcase').textContent='mirrors '+c.mirrors;
+  document.getElementById('lgright').textContent=c.lang==='en'?'Original English (base language)':'Same conversation in English';
+  const n=[],e=[];c.turns.forEach(t=>{n.push(bubble(t.text,true,scr(c.lang)));e.push(bubble(t.text_en,true,''));
+    if(t.reply){n.push(bubble(t.reply,false,scr(c.lang),t.tools));e.push(bubble(t.reply_en,false,''))}});
+  document.getElementById('lgnative').innerHTML=n.join('');document.getElementById('lgeng').innerHTML=e.join('')}
+ function lang(l){cur=l;document.querySelectorAll('#lgtabs button').forEach(b=>b.classList.toggle('on',b.dataset.l===l));
+  const cs=C.filter(c=>c.lang===l);
+  document.getElementById('lgconvs').innerHTML=cs.map(c=>`<button data-id="${c.id}">${esc(c.title)}</button>`).join('');
+  document.querySelectorAll('#lgconvs button').forEach(b=>b.onclick=()=>show(b.dataset.id));show(cs[0].id)}
+ document.getElementById('lgtabs').innerHTML=langs.map(l=>{const c=C.find(x=>x.lang===l);return `<button data-l="${l}">${c.native}<small>${c.native===c.language?(l==='en'?'base':'Latin script'):c.language}</small></button>`}).join('');
+ document.querySelectorAll('#lgtabs button').forEach(b=>b.onclick=()=>lang(b.dataset.l));
+ lang(cur);
+})();
+</script>
+<script>
+{
+ const CDN = 'https://cdn.jsdelivr.net/pyodide/v0.27.7/full/';
+ // The claude.ai viewer lets a page load scripts from the CDN but not fetch() from it, so the portal serves its own
+ // copy of the Pyodide 0.27.7 runtime in pyodide/. Elsewhere (GitHub Pages, a laptop) the CDN is used.
+ let PYO = window.PYODIDE_BASE || null;
+ async function base() {
+  if (PYO) return PYO;
+  try {
+   const r = await fetch('pyodide/pyodide-lock.json', {method: 'HEAD'});
+   if (r.ok) { PYO = new URL('pyodide/', location.href).href; await shim(); return PYO; }
+  } catch (e) {}
+  return PYO = CDN;
+ }
+ // The viewer serves no .zip or .whl, so those two runtime files sit beside it as base64 JSON (built by
+ // prototype/scripts/build_pyodide_runtime.py). When Pyodide fetches them, answer from memory, byte for byte.
+ async function shim() {
+  const names = ['python_stdlib.zip', 'sqlite3-1.0.0-cp312-cp312-pyodide_2024_0_wasm32.whl'], blobs = {};
+  for (const n of names) {
+   const j = await (await fetch('pyodide/' + n + '.json')).json();
+   blobs[PYO + n] = Uint8Array.from(atob(j.b64), c => c.charCodeAt(0));
+  }
+  const real = window.fetch.bind(window);
+  window.fetch = (input, init) => {
+   const u = new URL(input instanceof Request ? input.url : String(input), location.href).href;
+   return blobs[u] ? Promise.resolve(new Response(blobs[u], {headers: {'Content-Type': 'application/octet-stream'}})) : real(input, init);
+  };
+ }
+ const $t = s => document.getElementById(s);
+ const esc = x => (x || '').replace(/&/g, '&amp;').replace(/</g, '&lt;');
+ const scr = s => /[઀-૿]/.test(s) ? 'gujr' : /[਀-੿]/.test(s) ? 'guru' : /[ऀ-ॿ]/.test(s) ? 'dev' : '';
+ const LANG = {en: 'English', 'hi-Latn': 'Hinglish', hi: 'Hindi', gu: 'Gujarati', mr: 'Marathi', pa: 'Punjabi', mwr: 'Marwari'};
+ const SAMPLES = [
+  ['English', 'I am late by one hour.'], ['English', 'Traffic after Shahpura. Reaching around 11:20. Any slot after 12?'],
+  ['Hinglish', 'thoda late hoon bhai, traffic hai'], ['Hindi', 'मैं 45 मिनट लेट हो जाऊँगा।'],
+  ['Gujarati', 'હું એક કલાક મોડો છું.'], ['Marathi', 'मला एक तास उशीर झाला आहे.'], ['Punjabi', 'ਮੈਂ ਇੱਕ ਘੰਟਾ ਲੇਟ ਹਾਂ।'],
+  ['Marwari', 'म्हैं एक घंटो मोड़ो हूं।'], ['Status', 'Is my slot still active?'], ['Safety', 'bhai accident ho gaya, helper ko chot lagi hai']];
+ let pg = null, booting = null, drivers = [], logs = {}, last = {};
+
+ const status = (m, err) => { const s = $t('trystatus'); s.textContent = m; s.className = 'trystatus' + (err ? ' err' : ''); };
+ function loadScript(src) { return new Promise((ok, no) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = () => no(new Error('could not load ' + src)); document.head.appendChild(s); }); }
+
+ const seen = [];
+ for (const k of ['error', 'warn']) { const f = console[k].bind(console); console[k] = (...a) => { seen.push(a.map(String).join(' ').slice(0, 300)); return f(...a); }; }
+ addEventListener('error', e => seen.push('error: ' + (e.message || (e.target && e.target.src) || 'resource failed')), true);
+ addEventListener('securitypolicyviolation', e => seen.push('blocked by page policy: ' + e.violatedDirective + ' ' + (e.blockedURI || '')));
+ const step = (p, what, ms) => Promise.race([p, new Promise((_, no) => setTimeout(() => no(new Error(what + ' did not finish in ' + ms / 1000 + ' s')), ms))]);
+ async function boot() {
+  if (booting) return booting;
+  booting = (async () => {
+   $t('trystart').disabled = true; $t('trybadge').textContent = 'starting…';
+   status('Loading Python (Pyodide)…');
+   await step(base(), 'Preparing the Python runtime', 30000);
+   await step(loadScript(PYO + 'pyodide.js'), 'Loading pyodide.js', 30000);
+   status('Starting Python (WebAssembly)…');
+   const py = await step(loadPyodide({indexURL: PYO}), 'Starting Python', 45000);
+   status('Loading SQLite…');
+   await step(py.loadPackage('sqlite3'), 'Loading SQLite', 30000);
+   status('Loading the SetuHaul engine and the 4 August data…');
+   const B = await step(fetch('playground_bundle.json').then(r => r.json()), 'Loading the engine bundle', 30000);
+   const APP = '/home/pyodide/app';
+   for (const [path, src] of Object.entries(B.files)) {
+    const full = APP + '/' + path; py.FS.mkdirTree(full.slice(0, full.lastIndexOf('/'))); py.FS.writeFile(full, src);
+   }
+   py.FS.mkdirTree(APP + '/data');
+   py.FS.writeFile(APP + '/data/setuhaul_freight_operations.db', Uint8Array.from(atob(B.db), c => c.charCodeAt(0)));
+   py.runPython(`import sys; sys.path.insert(0, '${APP}')`);
+   pg = py.pyimport('playground');
+   start(JSON.parse(pg.reset()));
+   status('Ready: real engine, rules only, bundle ' + B.version + '.');
+  })().catch(e => { booting = null; $t('trystart').disabled = false; $t('trybadge').textContent = 'not started';
+                     status('The engine could not start here: ' + e.message + (seen.length ? ' | ' + seen.slice(-3).join(' | ') : ''), true); });
+  return booting;
+ }
+
+ function start(r) {
+  drivers = r.drivers; logs = {}; last = {};
+  $t('trydrv').innerHTML = drivers.map(d => `<option value="${d.driver_id}">${esc(d.name)} · ${d.driver_id}</option>`).join('');
+  $t('trydrv').value = drivers.some(d => d.driver_id === 'DRV013') ? 'DRV013' : drivers[0].driver_id;
+  for (const id of ['trydrv', 'trytime', 'trytext', 'trysend', 'tryreset']) $t(id).disabled = false;
+  $t('trytime').value = '09:19'; $t('trytime').min = r.start;
+  $t('trybadge').textContent = 'engine running · ' + (r.guards === 'ok' ? 'booking guards ok' : 'check guards');
+  showDriver(); $t('trytext').focus();
+ }
+
+ function trips(list) {
+  $t('trytrips').innerHTML = list.map(t => `<div><span><b>${t.shipment_id}</b> due ${t.eta} · ${t.dock_type.toLowerCase()}</span><span>${t.booking ? 'booked ' + t.booking.dock + ' ' + t.booking.start : t.status.toLowerCase().replace('_', ' ')}</span></div>`).join('');
+ }
+
+ function showDriver() {
+  const d = drivers.find(x => x.driver_id === $t('trydrv').value);
+  $t('tryname').textContent = 'SetuHaul Dispatch · ' + d.name;
+  trips((last[d.driver_id] && last[d.driver_id].trips) || d.trips);
+  const L = logs[d.driver_id] || [];
+  $t('trylog').innerHTML = L.length ? L.join('') : `<div class="tryempty">No messages yet from ${esc(d.name)}. Type one below or tap a sample.</div>`;
+  $t('trylog').scrollTop = 1e6;
+  side(last[d.driver_id]);
+ }
+
+ function side(r) {
+  $t('trystate').textContent = r ? r.state : '—';
+  $t('trylang').textContent = r ? (LANG[r.lang] || r.lang) : '—';
+  $t('tryship').textContent = r && r.shipment_id ? r.shipment_id : '—';
+  $t('trytools').innerHTML = r && r.tools.length ? r.tools.map(x => `<li>${esc(x)}</li>`).join('') : '<li>Send a message to see each check.</li>';
+ }
+
+ async function send(text) {
+  text = (text || '').trim(); if (!text) return;
+  if (!pg) { await boot(); if (!pg) return; }
+  const id = $t('trydrv').value, hhmm = $t('trytime').value || '09:00';
+  let r;
+  try { r = JSON.parse(pg.send(id, text, hhmm)); }
+  catch (e) { status('The engine raised an error: ' + String(e.message || e).split('\n').slice(-2).join(' '), true); return; }
+  const L = logs[id] = logs[id] || [];
+  L.push(`<div class="msg me ${scr(text)}">${esc(text)}<span class="tm">${r.time} ✓✓</span></div>`);
+  const btns = r.buttons.length ? `<div class="trybtns">${r.buttons.map((b, i) => `<button type="button" data-pick="${i + 1}">${i + 1} · ${esc(b)}</button>`).join('')}</div>` : '';
+  L.push(`<div class="msg bot ${scr(r.reply)}">${esc(r.reply)}${btns}<span class="tm">${r.time}</span></div>`);
+  last[id] = r; $t('trytime').value = r.time; $t('trytime').min = r.time;
+  $t('trytext').value = ''; showDriver();
+ }
+
+ $t('trysamples').innerHTML = SAMPLES.map(([l, s]) => `<button type="button" class="s-${scr(s)}" title="${l}">${esc(s)}</button>`).join('');
+ $t('trysamples').onclick = e => { const b = e.target.closest('button'); if (b) { $t('trytext').value = b.textContent; if (pg) $t('trytext').focus(); else boot(); } };
+ $t('trystart').onclick = boot;
+ $t('trydrv').onchange = showDriver;
+ $t('tryform').onsubmit = e => { e.preventDefault(); send($t('trytext').value); };
+ $t('trytext').onkeydown = e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send($t('trytext').value); } };
+ $t('trylog').onclick = e => { const b = e.target.closest('[data-pick]'); if (b) send(b.dataset.pick); };
+ $t('tryreset').onclick = () => { if (pg) { start(JSON.parse(pg.reset())); status('Reset: every driver back to 08:20.'); } };
+}
+</script>
+</body></html>
