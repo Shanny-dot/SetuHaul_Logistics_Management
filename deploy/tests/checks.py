@@ -77,7 +77,7 @@ params2 = dict(params, MessageSid="SM" + uuid.uuid4().hex)
 code, _ = call(url, urllib.parse.urlencode(params2).encode(), dict(form, **{"X-Twilio-Signature": "bad"}))
 check("wrong signature -> 403", code == 403, str(code))
 for path, want in (("/", "SetuHaul"), ("/how.html", "SetuHaul"), ("/styles.css", None), ("/app.js", None),
-                   ("/videos/walkthrough_poster.jpg", None)):
+                   ("/videos/walkthrough_poster.jpg", None), ("/playground_bundle.json", '"files"')):
     code, body = call(a.public + path)
     check(f"website {path} -> 200", code == 200 and (want is None or want in body), str(code))
 for path in ("/deploy/README.md", "/prototype/app.py", "/data/setuhaul_database_guide.md", "/.git/config", "/.env",
