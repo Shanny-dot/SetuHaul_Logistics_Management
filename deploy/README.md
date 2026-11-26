@@ -144,6 +144,18 @@ curl -s -X POST localhost:8000/console/holds/HLD-0001/decide -H "Authorization: 
 curl -s localhost:8000/console/outbox -H "Authorization: Bearer $TOKEN"
 ```
 
+### Driver with a dying phone, or a driver who lost their phone
+- **"Low battery, might be 10 min late"** (any message with low-battery words): the driver is never asked to pick a slot. They're told their slot is held until the grace time and to give the truck number at the gate. A coordinator gets a `DRIVER_UNREACHABLE` hand-off (HIGH when the slot no longer fits or there is none) with the options and the carrier dispatcher's phone. For 3 hours, failed messages fall back to a call to the **carrier's dispatcher**, and no check-in nudges go out. The driver's next normal message clears this.
+- **Message from an unknown number:** the sender is told their booking is safe (ask the dispatcher, or truck number and licence at the gate) and sees no booking data. The coordinator gets an `UNKNOWN_NUMBER` note with the number.
+- **Linking a new number:** only after the carrier confirms it is really the driver. Never on the strength of the message alone.
+  ```
+  curl -s -X POST localhost:8000/console/drivers/DRV013/link-number -H "Authorization: Bearer $TOKEN" \
+    -H 'content-type: application/json' -d '{"phone":"+91XXXXXXXXXX","hours":24,"reason":"lost phone, confirmed with carrier by phone"}'
+  ```
+  - The link expires by itself. Remove it early with `POST /console/drivers/DRV013/unlink-number`.
+  - Make it permanent with `POST /console/drivers/DRV013/phone` (`{"phone","reason"}`).
+  - All three actions are audited.
+
 ### Update to the latest code
 1. On your laptop, commit and push to the fork.
 2. On the server:

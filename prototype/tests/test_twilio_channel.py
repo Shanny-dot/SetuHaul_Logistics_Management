@@ -338,6 +338,18 @@ class Http(unittest.TestCase):
         con.close()
         self.assertEqual(tuple(r), ("SENT", "SM" + "7" * 32))
 
+    def test_link_number_endpoint_needs_reason_and_audits(self):
+        tok = self.client.post("/auth/dev-login", json={"user_id": "neha.bansal@setuhaul.example"}).json()["token"]
+        h = {"Authorization": f"Bearer {tok}"}
+        self.assertEqual(self.client.post("/console/drivers/DRV013/link-number", json={"phone": "+919811100077"}).status_code, 401)
+        self.assertEqual(self.client.post("/console/drivers/DRV013/link-number", json={"phone": "+919811100077"}, headers=h).status_code, 400)
+        r = self.client.post("/console/drivers/DRV013/link-number", json={"phone": "+919811100077", "hours": 12,
+                                                                         "reason": "lost phone, carrier confirmed"}, headers=h)
+        self.assertEqual(r.status_code, 200, r.text)
+        self.assertEqual(self.client.post("/console/drivers/DRV013/unlink-number", headers=h).json()["revoked"], 1)
+        self.assertEqual(self.client.post("/console/drivers/NOPE/link-number", json={"phone": "+919811100078", "reason": "x"},
+                                          headers=h).status_code, 404)
+
     def test_coordinator_clears_freeze_with_audit(self):
         con = db.connect(os.environ["SETUHAUL_DB"])
         con.execute("INSERT INTO safety_freezes VALUES ('ESC-H001','DRV003','SHP1018','2026-08-04T09:40:00+05:30',NULL,NULL)")
@@ -927,6 +939,101 @@ class SafetyFreezeRule(unittest.TestCase):
         self.assertEqual(json.loads(a["detail_json"])["shipments"], ["SHP1018"])
         self.assertEqual(SF.clear(w.con, "ESC-T001", "CON003 Anita Joshi", at("09:47")), 0)
         self.assertEqual(K.commit(w.con, "SHP1013", "SLOT-JAI-019", at("09:47"))["code"], "CONFIRMED")
+
+
+# ====================================================================== unreachable driver / lost phone
+@need_twilio
+class UnreachableAndLostPhone(unittest.TestCase):
+    LOW_BATTERY = "am running neck to neck in time. Low battery in mobile.. might reach by 10mins late.."
+    NEW = "+919811122233"
+
+    def test_low_battery_holds_slot_and_never_asks_to_choose(self):
+        from setuhaul import unreachable as U
+        w = World(self)
+        tr = w.post(C03, self.LOW_BATTERY, hm="09:19")                       # SHP1013 has no booking yet at 09:19
+        self.assertEqual(tr["status"], "UNREACHABLE_HOLD")
+        last = w.last_reply(C03)
+        self.assertIn("A coordinator will choose the best slot", last["body"])
+        self.assertEqual(last["options"], [])                                  # no list to answer
+        self.assertEqual(OF.live(w.con, "DRV013"), [])                          # and none left live
+        e = w.con.execute("SELECT urgency, handoff_json FROM escalations WHERE reason_code='DRIVER_UNREACHABLE'").fetchone()
+        self.assertEqual(e["urgency"], "HIGH")                                  # no booking: a person decides
+        h = json.loads(e["handoff_json"])
+        self.assertTrue(h["options_found"] and h["carrier_dispatcher_phone"])
+        self.assertTrue(U.is_unreachable(w.con, C03, w.real()))
+        self.assertEqual(w.post(C03, "1", hm="09:21")["binding"]["why"], "NO_LIVE_OFFER")   # a late "1" books nothing
+        self.assertEqual(len(w.bookings("SHP1013")), 0)
+        self.assertIsNone(K.current_appointment(w.con, "SHP1013"))            # nothing was booked behind the driver's back
+
+    def test_low_battery_with_a_booking_holds_it_until_the_grace_time(self):
+        P9 = "+919000010009"                                                    # DRV009: SHP1009 booked on D4 at 11:00
+        w = World(self)
+        tr = w.post(P9, "Low battery, might reach 10 mins late", hm="09:19")
+        self.assertEqual(tr["status"], "UNREACHABLE_HOLD")
+        body = w.last_reply(P9)["body"]
+        self.assertIn("Dock D4, start 11:00 AM", body)
+        self.assertIn("We hold it until 11:30 AM", body)                        # slot start + the facility's 30-min grace
+        e = w.con.execute("SELECT urgency, handoff_json FROM escalations WHERE reason_code='DRIVER_UNREACHABLE'").fetchone()
+        self.assertEqual(e["urgency"], "MEDIUM" if tr["state"] == "BOOKED" else "HIGH")
+        self.assertEqual(json.loads(e["handoff_json"])["current_booking"]["dock"], "D4")
+        self.assertIsNotNone(K.current_appointment(w.con, "SHP1009"))
+
+    def test_failed_delivery_calls_the_carrier_while_unreachable(self):
+        from twilio.base.exceptions import TwilioRestException
+        w = World(self)
+        w.post(C03, self.LOW_BATTERY, hm="09:19")
+        w.fake.fail = [TwilioRestException(400, "u", "phone off", code=63016)] * 2
+        w.drain()
+        carrier = w.con.execute("""SELECT c.contact_phone FROM shipments s JOIN carriers c USING(carrier_id)
+                                   WHERE s.driver_id='DRV013' ORDER BY s.updated_at DESC LIMIT 1""").fetchone()[0]
+        calls = w.con.execute("SELECT recipient FROM outbox WHERE kind='PHONE_FALLBACK_CARRIER'").fetchall()
+        self.assertTrue(calls and all(r[0] == carrier for r in calls))
+
+    def test_any_later_message_clears_the_mark_and_nudges_stop_meanwhile(self):
+        from setuhaul import unreachable as U
+        w = World(self)
+        w.post(C03, self.LOW_BATTERY, hm="09:19")
+        self.assertEqual(w.svc.proactive_checkin(w.con, "SHP1013", w.clock.now())["status"], "UNREACHABLE")
+        w.post(C03, "phone charged, reaching 10:30", hm="09:40")
+        self.assertFalse(U.is_unreachable(w.con, C03, w.real()))
+
+    def test_unknown_number_reassures_and_notes_a_coordinator_once(self):
+        w = World(self)
+        w.post(self.NEW, "this is Kailash, lost my phone, my 10 am slot?", hm="09:19")
+        w.post(self.NEW, "hello?")
+        refusals = w.deliveries(self.NEW)
+        self.assertEqual(len(refusals), 1)
+        self.assertIn("booking is not affected", refusals[0]["payload"]["body"])
+        self.assertNotRegex(refusals[0]["payload"]["body"], r"Dock|D\d|AM|PM|SHP|ORD|APT")
+        notes = w.con.execute("SELECT urgency, handoff_json FROM escalations WHERE reason_code='UNKNOWN_NUMBER'").fetchall()
+        self.assertEqual(len(notes), 1)
+        self.assertEqual((notes[0]["urgency"], json.loads(notes[0]["handoff_json"])["from_number"]), ("LOW", self.NEW))
+
+    def test_linked_number_acts_as_the_driver_until_it_expires(self):
+        from setuhaul import links as LK
+        w = World(self)
+        LK.link(w.con, "DRV013", self.NEW, "CON001 Neha Bansal", "lost phone, confirmed with carrier", w.real(), w.clock.now())
+        tr = w.post(self.NEW, "I am late by one hour.", hm="09:19")
+        self.assertEqual((tr.get("linked_number"), tr["state"]), (True, "OPTIONS_SHOWN"))
+        self.assertTrue(w.last_reply(self.NEW)["options"])                    # replies go to the new number
+        w.svc.notify_driver(w.con, "DRV013", "Your booking update", {}, w.clock.now())
+        self.assertEqual(w.deliveries()[-1]["to_e164"], self.NEW)              # notices too, while the link lasts
+        self.assertTrue(w.con.execute("SELECT 1 FROM audit_log WHERE action='DRIVER_NUMBER_LINKED'").fetchone())
+        w.real.advance(hours=25)
+        self.assertEqual(w.post(self.NEW, "hello")["status"], "UNKNOWN_SENDER")   # expired by itself
+
+    def test_link_refuses_someone_elses_number_and_revoke_or_permanent_work(self):
+        from setuhaul import links as LK
+        w = World(self)
+        with self.assertRaises(LK.LinkError):
+            LK.link(w.con, "DRV013", C06, "CON001", "x", w.real(), w.clock.now())          # DRV004's number
+        LK.link(w.con, "DRV013", self.NEW, "CON001", "lost phone", w.real(), w.clock.now())
+        self.assertEqual(LK.revoke(w.con, "DRV013", "CON001", w.real(), w.clock.now()), 1)
+        self.assertEqual(w.post(self.NEW, "hello", hm="09:19")["status"], "UNKNOWN_SENDER")
+        LK.set_permanent(w.con, "DRV013", "+919811122244", "CON001", "new SIM, carrier confirmed", w.real(), w.clock.now())
+        self.assertEqual(w.post("+919811122244", "I am late by one hour.")["state"], "OPTIONS_SHOWN")
+        self.assertEqual(w.post(C03, "hello")["status"], "UNKNOWN_SENDER")       # the old number no longer is the driver
+        self.assertTrue(w.con.execute("SELECT 1 FROM audit_log WHERE action='DRIVER_NUMBER_CHANGED'").fetchone())
 
 
 # ====================================================================== parity

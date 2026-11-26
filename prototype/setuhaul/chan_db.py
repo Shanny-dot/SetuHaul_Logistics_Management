@@ -84,12 +84,14 @@ END;
 """
 
 
-MIGRATIONS = [("wa_delivery", "send_ref", "TEXT"), ("wa_delivery", "send_started_real", "TEXT"),
+MIGRATIONS = [("wa_contacts", "unreachable_until", "TEXT"), ("wa_delivery", "send_ref", "TEXT"), ("wa_delivery", "send_started_real", "TEXT"),
               ("wa_delivery", "sent_body", "TEXT"), ("wa_delivery", "reconcile_attempts", "INTEGER NOT NULL DEFAULT 0")]
 
 
 def ensure(con):
+    from .links import SCHEMA as LINKS_SCHEMA
     con.executescript(SCHEMA)
+    con.executescript(LINKS_SCHEMA)
     for table, col, decl in MIGRATIONS:                  # databases made by the first version of this layer
         if col not in {r[1] for r in con.execute(f"PRAGMA table_info({table})")}:
             con.execute(f"ALTER TABLE {table} ADD COLUMN {col} {decl}")

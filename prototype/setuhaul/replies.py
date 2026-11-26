@@ -164,9 +164,21 @@ T.update({
   "hi-Latn": "Message phir se chalu hain. Batayiye trip mein kya ho raha hai.",
   "hi": "संदेश फिर से चालू हैं। बताइए ट्रिप में क्या हो रहा है।"},
  "unknown_sender": {
-  "en": "This number is not registered with SetuHaul. Please contact your dispatcher. / Yeh number SetuHaul mein registered nahi hai. Kripya apne dispatcher se sampark kijiye.",
-  "hi-Latn": "This number is not registered with SetuHaul. Please contact your dispatcher. / Yeh number SetuHaul mein registered nahi hai. Kripya apne dispatcher se sampark kijiye.",
-  "hi": "This number is not registered with SetuHaul. Please contact your dispatcher. / Yeh number SetuHaul mein registered nahi hai. Kripya apne dispatcher se sampark kijiye."},
+  "en": "This number is not registered with SetuHaul. If you are a driver who changed or lost your phone, your booking is not affected: ask your dispatcher to update your number, or give your truck number and driving licence at the gate. / Yeh number SetuHaul mein registered nahi hai. Phone badla ya kho gaya ho to aapki booking safe hai: dispatcher se number update karwaiye, ya gate par truck number aur licence dikhaiye.",
+  "hi-Latn": "This number is not registered with SetuHaul. If you are a driver who changed or lost your phone, your booking is not affected: ask your dispatcher to update your number, or give your truck number and driving licence at the gate. / Yeh number SetuHaul mein registered nahi hai. Phone badla ya kho gaya ho to aapki booking safe hai: dispatcher se number update karwaiye, ya gate par truck number aur licence dikhaiye.",
+  "hi": "This number is not registered with SetuHaul. If you are a driver who changed or lost your phone, your booking is not affected: ask your dispatcher to update your number, or give your truck number and driving licence at the gate. / Yeh number SetuHaul mein registered nahi hai. Phone badla ya kho gaya ho to aapki booking safe hai: dispatcher se number update karwaiye, ya gate par truck number aur licence dikhaiye."},
+ "unreachable_hold": {
+  "en": "Thanks for telling us your battery is low. Your booking stays: Dock {dock}, start {start}. We hold it until {until}. If your phone switches off, just give your truck number at the gate. A coordinator has been told.",
+  "hi-Latn": "Battery low batane ke liye shukriya. Aapki booking bani rahegi: Dock {dock}, {start} se. Hum ise {until} tak rakhenge. Phone band ho jaye to gate par sirf truck number bataiye. Coordinator ko bata diya hai.",
+  "hi": "बैटरी कम होने की जानकारी के लिए धन्यवाद। आपकी बुकिंग बनी रहेगी: डॉक {dock}, {start} से। हम इसे {until} तक रखेंगे। फ़ोन बंद हो जाए तो गेट पर बस ट्रक नंबर बताइए। कोऑर्डिनेटर को बता दिया है।"},
+ "unreachable_move": {
+  "en": "If you cannot make it by then, the coordinator will move you to the best free slot and message you; you do not need to reply.",
+  "hi-Latn": "Tab tak na pahunch payen to coordinator aapko sabse achhe khaali slot par kar denge aur message bhejenge; jawab dene ki zarurat nahi.",
+  "hi": "तब तक न पहुँच पाएँ तो कोऑर्डिनेटर आपको सबसे अच्छे खाली स्लॉट पर कर देंगे और संदेश भेजेंगे; जवाब देने की ज़रूरत नहीं।"},
+ "unreachable_nobooking": {
+  "en": "Thanks for telling us your battery is low. A coordinator will choose the best slot for your truck and message you; you do not need to reply. At the gate, give your truck number.",
+  "hi-Latn": "Battery low batane ke liye shukriya. Coordinator aapke truck ke liye sabse achha slot chunenge aur message bhejenge; jawab dene ki zarurat nahi. Gate par truck number bataiye.",
+  "hi": "बैटरी कम होने की जानकारी के लिए धन्यवाद। कोऑर्डिनेटर आपके ट्रक के लिए सबसे अच्छा स्लॉट चुनेंगे और संदेश भेजेंगे; जवाब देने की ज़रूरत नहीं। गेट पर ट्रक नंबर बताइए।"},
  "safety_hold": {
   "en": "A person is handling your safety case ({ref}). I've added your message to it. If anyone is hurt, call 112. Scheduling is paused for you until they clear it.",
   "hi-Latn": "Aapka safety case ({ref}) ek insaan dekh rahe hain. Aapka message usme jod diya hai. Koi ghayal ho to 112 par call kijiye. Unke clear karne tak scheduling ruki hai.",

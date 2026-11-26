@@ -202,9 +202,16 @@ def apply_status(con, st, real_now):
 
 
 def _phone_fallback(con, d, real_now, why):
-    """F27/F28: a message that did not land is not a hand-off. Queue a phone call (stub) to the same person."""
+    """F27/F28: a message that did not land is not a hand-off. Queue a phone call (stub) to the same person,
+    or, when the driver said their phone may switch off (unreachable.py), to their carrier's dispatcher."""
+    to, kind = d["to_e164"], "PHONE_FALLBACK"
+    if d["role"] == "DRIVER":
+        from . import unreachable as U
+        c = one(con, "SELECT driver_id FROM wa_contacts WHERE e164=?", d["to_e164"])
+        if c and c["driver_id"] and U.is_unreachable(con, d["to_e164"], real_now):
+            to, kind = U.carrier_phone(con, c["driver_id"]) or to, "PHONE_FALLBACK_CARRIER"
     con.execute("INSERT INTO outbox VALUES (?,?,?,?,?,?,?)",
-                (K._next_id(con, "outbox", "msg_id", "OUT-"), "PHONE_CALL", d["to_e164"], "PHONE_FALLBACK",
+                (K._next_id(con, "outbox", "msg_id", "OUT-"), "PHONE_CALL", to, kind,
                  f"Call needed: WhatsApp {d['msg_id']} to this {d['role'].lower()} did not land ({why}).", "STUB", iso(real_now)))
 
 

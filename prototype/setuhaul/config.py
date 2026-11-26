@@ -84,3 +84,12 @@ MESSAGE_BODY_RETENTION_DAYS = 90        # then bodies are purged and only facts 
 UNKNOWN_SENDER_REFUSAL_EVERY_H = 24     # one polite refusal per unknown number per day
 LOCK_WAIT_S = 25                        # how long a second message waits for the driver's previous turn
 SAFETY_DUTY_HEAD_ROLE = "OPS_DUTY_HEAD" # last step of the missed-SLA chain (phone from DUTY_HEAD_PHONE)
+
+# --- Unreachable driver and lost phone (channel layer; Decision Register) -------------
+# Words that mean "my phone may die / I will be unreachable". Matched case-insensitively as substrings.
+UNREACHABLE_WORDS = ["low battery", "battery low", "battery is low", "battery dying", "battery about to die", "phone dying",
+                     "phone will switch off", "phone may switch off", "phone switching off", "mobile switch off",
+                     "phone will die", "no charge", "no charging", "battery khatam", "battery low hai", "charge nahi",
+                     "phone band ho", "mobile band ho", "बैटरी", "फ़ोन बंद", "फोन बंद", "चार्ज नहीं"]
+UNREACHABLE_HOLD_H = 3          # after such a message, delivery failures go to the carrier's dispatcher for this long
+TEMP_NUMBER_LINK_H = 24         # default life of a coordinator-linked temporary number (lost phone)

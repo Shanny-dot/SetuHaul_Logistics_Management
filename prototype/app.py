@@ -22,6 +22,8 @@ Coordinator side (additions)
     POST /console/handoffs/{id}/ack     take an escalation (stops the missed-SLA chain)
     POST /console/safety/{id}/clear     clear a SAFETY freeze
     POST /console/proactive/{shipment}  health-monitor check-in (template only)
+    POST /console/drivers/{id}/link-number   lost phone: link a new number for N hours (carrier-confirmed, audited)
+    POST /console/drivers/{id}/unlink-number / POST /console/drivers/{id}/phone (permanent change)
     GET  /console/alarms, /console/outbox
 Demo and ops
     POST /dev/driver-message        send a driver message without Meta (SETUHAUL_DEV=1 only)
@@ -60,6 +62,7 @@ from fastapi.responses import JSONResponse, PlainTextResponse, Response
 
 from setuhaul import db, capacity, planner, world, chan_db, demo_world, outbox as OB, safety as SF, config as CFG
 from setuhaul import auth as A
+from setuhaul import links as LK
 from setuhaul.channels import ChannelRequest, get_channel
 from setuhaul.channels.twilio_wa import TwilioChannel
 from setuhaul.clock import IST, ts, iso, ampm, add, Clock
@@ -531,6 +534,60 @@ def clear_safety(esc_id: str, authorization: str = Header(default="")):
         if not n:
             raise HTTPException(404, "no open freeze for this escalation")
         return {"cleared": esc_id, "shipments": n, "by": c["name"]}
+    finally:
+        con.close()
+
+
+def _driver_at_my_facility(con, c, driver_id):
+    """A coordinator may change numbers only for drivers with a shipment to their own facility."""
+    if not con.execute("SELECT 1 FROM shipments WHERE driver_id=? AND destination_facility_id=?", (driver_id, c["facility_id"])).fetchone():
+        raise HTTPException(404, "no such driver at your facility")
+
+
+def _who(c):
+    return f"{c['contact_id']} {c['name']}" if c.get("contact_id") else c["name"]
+
+
+@app.post("/console/drivers/{driver_id}/link-number")
+def link_number(driver_id: str, body: dict, authorization: str = Header(default="")):
+    """Lost phone: link the driver's new number for a limited time, after confirming with their carrier.
+    Body: {"phone": "+91...", "hours": 24, "reason": "lost phone, confirmed with carrier by phone"}"""
+    c = _coordinator(authorization)
+    if not (body.get("reason") or "").strip():
+        raise HTTPException(400, "reason is required (how was the driver confirmed?)")
+    con = _con()
+    try:
+        _driver_at_my_facility(con, c, driver_id)
+        return LK.link(con, driver_id, body.get("phone", ""), _who(c), body["reason"], CLOCK.real_now(), CLOCK.now(), body.get("hours"))
+    except LK.LinkError as e:
+        raise HTTPException(400, str(e))
+    finally:
+        con.close()
+
+
+@app.post("/console/drivers/{driver_id}/unlink-number")
+def unlink_number(driver_id: str, authorization: str = Header(default="")):
+    c = _coordinator(authorization)
+    con = _con()
+    try:
+        _driver_at_my_facility(con, c, driver_id)
+        return {"revoked": LK.revoke(con, driver_id, _who(c), CLOCK.real_now(), CLOCK.now())}
+    finally:
+        con.close()
+
+
+@app.post("/console/drivers/{driver_id}/phone")
+def change_number(driver_id: str, body: dict, authorization: str = Header(default="")):
+    """Make a new number the driver's registered number (after the carrier confirms). Body: {"phone", "reason"}"""
+    c = _coordinator(authorization)
+    if not (body.get("reason") or "").strip():
+        raise HTTPException(400, "reason is required")
+    con = _con()
+    try:
+        _driver_at_my_facility(con, c, driver_id)
+        return LK.set_permanent(con, driver_id, body.get("phone", ""), _who(c), body["reason"], CLOCK.real_now(), CLOCK.now())
+    except LK.LinkError as e:
+        raise HTTPException(400, str(e))
     finally:
         con.close()
 

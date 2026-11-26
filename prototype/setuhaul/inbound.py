@@ -21,6 +21,8 @@ from . import auth as A
 from . import config as C
 from . import nlu
 from . import offers as OF
+from . import links as LK
+from . import unreachable as U
 from . import replies as R
 from . import safety as S
 from . import escalation as E
@@ -107,6 +109,10 @@ class ChannelService:
 
     def _process(self, con, msg, as_of, real, trace):
         drv = A.driver_for_phone(con, msg.from_e164)
+        if not drv:                                   # lost phone: a coordinator-linked temporary number (links.py)
+            drv = LK.active_driver_for(con, msg.from_e164, real)
+            if drv:
+                trace["linked_number"] = True
         staff = None if drv else self._staff_for(con, msg.from_e164)
         if not drv and not staff:
             return self._unknown(con, msg, as_of, real, trace)
@@ -189,6 +195,13 @@ class ChannelService:
             con.execute("""INSERT INTO wa_contacts(e164, role, last_inbound_real) VALUES (?, 'UNKNOWN', ?)
                            ON CONFLICT(e164) DO UPDATE SET last_inbound_real=excluded.last_inbound_real""",
                         (normalise_phone(msg.from_e164), iso(real)))
+        with write_txn(con):                          # a coordinator sees it: maybe a driver who lost their phone
+            esc = E.escalate(con, "UNKNOWN_NUMBER", "LOW", None, None, as_of, {
+                "from_number": normalise_phone(msg.from_e164), "message": (msg.text or f"[{msg.type}]")[:300],
+                "told": "not registered; booking not affected; ask the dispatcher, or truck number and licence at the gate",
+                "action": ("If this is a registered driver who lost their phone, confirm with their carrier by phone, then "
+                           "link the number in the console (temporary) or change it permanently. Never trust the message alone.")})
+        trace["escalation"] = esc["escalation_id"]
         self._queue(con, as_of, real, trace, [(self._text(msg.from_e164, "en", R.t("unknown_sender", "en")), "UNKNOWN_SENDER_REFUSAL",
                                                {}, {})], role="UNKNOWN")
 
@@ -247,6 +260,10 @@ class ChannelService:
             out.append(self._resend_live(con, msg, did, lang, b, as_of, real))
             return self._queue(con, as_of, real, trace, out)
 
+        # ---- "low battery / phone may switch off": remembered for UNREACHABLE_HOLD_H; any other message clears it
+        unreachable = U.says_unreachable(msg.text)
+        U.set_mark(con, contact["e164"], real, unreachable)
+
         # ---- the engine (unchanged)
         cap = {}
         history = self.store.history(msg.from_e164)
@@ -264,6 +281,17 @@ class ChannelService:
         if any(t.startswith("escalate:SAFETY") for t in res.get("tools") or []):
             loc = contact["last_lat"] is not None and {"lat": contact["last_lat"], "lng": contact["last_lng"], "at": contact["last_location_at"]}
             trace["frozen"] = S.freeze(con, did, esc["escalation_id"], as_of, loc or None)
+
+        # ---- unreachable driver: never ask them to choose; hold the slot and hand it to a coordinator (unreachable.py)
+        if unreachable and res.get("reply") and res.get("state") not in ("ESCALATED", "CLOSED"):
+            text, ev, uesc = U.handle(con, drv, dict(res, _text=msg.text), as_of)
+            with write_txn(con):
+                OF.close_all(con, did, as_of)             # a "1" typed later must not book an option never shown
+            trace["status"] = "UNREACHABLE_HOLD"
+            trace["escalation"] = uesc["escalation_id"]
+            out.append((self._text(msg.from_e164, lang, text), "DRIVER_REPLY", ev, {}))
+            self.store.append_history(msg.from_e164, "ai", text, ts=iso(as_of), state=res.get("state"), lang=lang, tools=res.get("tools"))
+            return self._queue(con, as_of, real, trace, out)
 
         # ---- offers follow the conversation
         used = (msg.message_id, b.get("choice") or (int(b["text"]) if b.get("offer_id") and b["text"].strip().isdigit() else None))
@@ -350,7 +378,8 @@ class ChannelService:
         real = self.clock.real_now()
         d = one(con, "SELECT phone FROM drivers WHERE driver_id=?", driver_id)
         lang = self._lang(con, driver_id)
-        m = OutboundMessage(to_e164=normalise_phone(d["phone"]), kind="text", body=text, lang=lang,
+        to = LK.active_number_for(con, driver_id, real) or d["phone"]          # a linked new number wins while it lasts
+        m = OutboundMessage(to_e164=normalise_phone(to), kind="text", body=text, lang=lang,
                             template_ref="driver_booking_update", template_vars={"order": order or "-"})
         trace = {"trace_id": uuid.uuid4().hex, "outbox_ids": [], "kind": kind, "clock_mode": self.clock.mode, "as_of": iso(as_of)}
         self._queue(con, as_of, real, trace, [(m, kind, evidence, {})])
@@ -371,6 +400,9 @@ class ChannelService:
             return {"status": "NO_SHIPMENT"}
         if S.frozen_shipment(con, shipment_id):
             return {"status": "FROZEN"}
+        to = LK.active_number_for(con, s["did"], real) or s["phone"]
+        if U.is_unreachable(con, normalise_phone(to), real):
+            return {"status": "UNREACHABLE"}                    # the coordinator already has the case; no nudge to a dead phone
         from .capacity import current_appointment
         from .workflow import facility_short
         cur = current_appointment(con, shipment_id)
@@ -379,7 +411,7 @@ class ChannelService:
                   "facility": facility_short(con, s["destination_facility_id"]), "slot": slot, "slot_day": "today"}
         from . import templates as TPL
         lang = self._lang(con, s["did"])
-        m = OutboundMessage(to_e164=normalise_phone(s["phone"]), kind="template", template_ref="driver_checkin", template_vars=values,
+        m = OutboundMessage(to_e164=normalise_phone(to), kind="template", template_ref="driver_checkin", template_vars=values,
                             body=TPL.preview("driver_checkin", values, lang), lang=lang, proactive=True)
         trace = {"trace_id": uuid.uuid4().hex, "outbox_ids": [], "kind": "proactive", "clock_mode": self.clock.mode, "as_of": iso(as_of)}
         self._queue(con, as_of, real, trace, [(m, "PROACTIVE_CHECKIN", {"times": {slot}, "docks": set(), "confirmed": False}, {})])
