@@ -36,6 +36,14 @@
 		reverse_proxy {$UPSTREAM:app:8000}
 	}
 	# Website: top-level pages and assets only (a "*" in the middle of a path does not cross "/").
+	# Voice-note replies: unguessable names only, no listing; Twilio checks the Content-Type against the file.
+	@media path_regexp media ^/media/[0-9a-f]{32}\.(ogg|mp3)$
+	handle @media {
+		root * {$MEDIA_ROOT:/srv}
+		header /media/*.ogg Content-Type audio/ogg
+		header /media/*.mp3 Content-Type audio/mpeg
+		file_server
+	}
 	@site path / /*.html /*.js /*.css /*.json /videos/*
 	handle @site {
 		root * {$SITE_ROOT:/srv/site}

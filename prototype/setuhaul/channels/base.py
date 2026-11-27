@@ -38,6 +38,7 @@ class InboundMessage:
     lat: Optional[float] = None
     lng: Optional[float] = None
     media_types: list = field(default_factory=list)
+    media_urls: list = field(default_factory=list)
 
     def as_dict(self):
         return asdict(self)
@@ -53,7 +54,7 @@ class Option:
 @dataclass
 class OutboundMessage:
     to_e164: str
-    kind: str = "text"                 # text | choices | list | template
+    kind: str = "text"                 # text | choices | list | template | voice (audio at media_url)
     body: str = ""
     options: List[Option] = field(default_factory=list)
     template_ref: Optional[str] = None
@@ -62,6 +63,7 @@ class OutboundMessage:
     offer_id: Optional[str] = None
     outbox_id: Optional[str] = None
     proactive: bool = False            # business-initiated: template only, whatever the window
+    media_url: Optional[str] = None    # voice: public https URL of the audio (OGG/Opus = a WhatsApp voice note)
     send_ref: Optional[str] = None     # per-attempt key, stored BEFORE the API call; travels in the status callback URL
 
     def as_dict(self):

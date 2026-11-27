@@ -38,7 +38,8 @@ check_base() {   # prove which configuration the running app has
 }
 
 echo "== Caddy with deploy/server/Caddyfile (DOMAIN=localhost, local CA)"
-XDG_DATA_HOME="$T/caddy-data" XDG_CONFIG_HOME="$T/caddy-config" DOMAIN=localhost UPSTREAM="127.0.0.1:$APP_PORT" SITE_ROOT="$ROOT" \
+mkdir -p "$T/mroot/media"; MEDIA_NAME="$(openssl rand -hex 16).ogg"; printf 'OggS-test' > "$T/mroot/media/$MEDIA_NAME"
+XDG_DATA_HOME="$T/caddy-data" XDG_CONFIG_HOME="$T/caddy-config" DOMAIN=localhost UPSTREAM="127.0.0.1:$APP_PORT" SITE_ROOT="$ROOT" MEDIA_ROOT="$T/mroot" \
   HTTP_PORT=$HTTP_PORT HTTPS_PORT=$HTTPS_PORT \
   "$CADDY" run --config "$ROOT/deploy/server/Caddyfile" --adapter caddyfile > "$T/caddy.log" 2>&1 &
 PIDS+=("$!")
@@ -53,6 +54,12 @@ echo; echo "== run 2: no TWILIO_WEBHOOK_BASE_URL (URL rebuilt from Caddy's X-For
 start_app ""; check_base ""
 "$PY" -I "$ROOT/deploy/tests/checks.py" --public "https://localhost:$HTTPS_PORT" --local "http://127.0.0.1:$APP_PORT" --token "$TOKEN" --phone "$PHONE" || RC=1
 stop_app
+
+echo; echo "== voice-note audio served by Caddy"
+CT="$(curl -sk -o /dev/null -w '%{http_code} %{content_type}' "https://localhost:$HTTPS_PORT/media/$MEDIA_NAME")"
+[ "$CT" = "200 audio/ogg" ] && echo "PASS  /media/<32 hex>.ogg -> 200 audio/ogg" || { echo "FAIL  media served as: $CT"; RC=1; }
+for p in /media/ /media/x.ogg /media/../.env; do c="$(curl -sk -o /dev/null -w '%{http_code}' "https://localhost:$HTTPS_PORT$p")"
+  [ "$c" = 404 ] && echo "PASS  $p -> 404" || { echo "FAIL  $p -> $c"; RC=1; }; done
 
 echo; echo "== backup (sqlite_backup.py) -> gzip -> restore-check.sh"
 SETUHAUL_DB="$T/demo_world.db" "$PY" -I - "$T/backup.db" < "$ROOT/deploy/server/sqlite_backup.py" || RC=1

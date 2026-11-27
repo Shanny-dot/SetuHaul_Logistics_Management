@@ -59,7 +59,8 @@ fi
 sysctl -q -w vm.swappiness=10; echo 'vm.swappiness=10' > /etc/sysctl.d/90-setuhaul.conf
 
 echo "== folders"
-mkdir -p "$H"/{data/backups,redis,caddy/data,caddy/config,backups}
+mkdir -p "$H"/{data/backups,redis,caddy/data,caddy/config,backups,media}
+chown 10001:10001 "$H/media"
 chown -R 10001:10001 "$H/data"; chmod 700 "$H/data"
 chown -R 999:999 "$H/redis" 2>/dev/null || true
 [ -d "$H/src/.git" ] || git clone --branch "$BRANCH" --depth 50 "$REPO_URL" "$H/src"

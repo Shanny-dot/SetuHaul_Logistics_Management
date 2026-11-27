@@ -136,9 +136,9 @@ T = {
 # same guard. None of them states a dock, a time or a booking unless the caller passes evidence.
 T.update({
  "privacy_notice": {
-  "en": "SetuHaul dock assistant. We use your mobile number, your messages and your truck's trip details only to plan your dock slot and keep you safe. Messages are kept 90 days. Reply STOP to stop, or ask for a person any time.",
-  "hi-Latn": "SetuHaul dock sahayak. Aapka mobile number, message aur trip ki jaankari sirf dock slot tay karne aur aapki suraksha ke liye use hoti hai. Message 90 din rakhe jaate hain. Band karne ke liye STOP bhejiye, ya kabhi bhi insaan se baat maangiye.",
-  "hi": "SetuHaul डॉक सहायक। आपका मोबाइल नंबर, संदेश और ट्रिप की जानकारी सिर्फ़ डॉक स्लॉट तय करने और आपकी सुरक्षा के लिए उपयोग होती है। संदेश 90 दिन रखे जाते हैं। बंद करने के लिए STOP भेजिए, या कभी भी किसी व्यक्ति से बात माँगिए।"},
+  "en": "SetuHaul dock assistant. We use your mobile number, your messages and your truck's trip details only to plan your dock slot and keep you safe. Voice notes are turned into text by our speech service (ElevenLabs). Messages are kept 90 days. Reply STOP to stop, or ask for a person any time.",
+  "hi-Latn": "SetuHaul dock sahayak. Aapka mobile number, message aur trip ki jaankari sirf dock slot tay karne aur aapki suraksha ke liye use hoti hai. Voice note ko hamari speech service (ElevenLabs) text mein badalti hai. Message 90 din rakhe jaate hain. Band karne ke liye STOP bhejiye, ya kabhi bhi insaan se baat maangiye.",
+  "hi": "SetuHaul डॉक सहायक। आपका मोबाइल नंबर, संदेश और ट्रिप की जानकारी सिर्फ़ डॉक स्लॉट तय करने और आपकी सुरक्षा के लिए उपयोग होती है। वॉइस नोट को हमारी स्पीच सेवा (ElevenLabs) टेक्स्ट में बदलती है। संदेश 90 दिन रखे जाते हैं। बंद करने के लिए STOP भेजिए, या कभी भी किसी व्यक्ति से बात माँगिए।"},
  "please_type": {
   "en": "Sorry, I can only read typed messages for now. Please type your message (for example: late by 1 hour, or reaching 11:30).",
   "hi-Latn": "Maaf kijiye, abhi main sirf likha hua message padh sakta hoon. Kripya message type kijiye (jaise: 1 ghanta late, ya 11:30 tak pahunchunga).",

@@ -144,6 +144,13 @@ curl -s -X POST localhost:8000/console/holds/HLD-0001/decide -H "Authorization: 
 curl -s localhost:8000/console/outbox -H "Authorization: Bearer $TOKEN"
 ```
 
+### WhatsApp voice notes (ElevenLabs)
+- **Turn it on:** store the key with `deploy/aws/put_secrets.sh ELEVENLABS_API_KEY`, then on the server run `sudo …/load-env.sh && sudo …/update.sh --no-pull`. Optionally set `ELEVENLABS_VOICE_ID=<voice id>` in `/opt/setuhaul/settings.env`; otherwise your account's first voice is used.
+- **What drivers get:** a voice note is transcribed (ElevenLabs speech-to-text) and handled exactly like typed text. The reply comes as text (with tappable options) followed by the same words as a voice note (OGG/Opus).
+- **Without a key, or on any failure:** today's behaviour. A voice note gets "please type", and a failed spoken reply leaves the text reply in place.
+- **Reply audio files:** served from `https://<DOMAIN>/media/<random>.ogg` and deleted after 24 hours.
+- **Live WhatsApp calls:** need a WhatsApp Business number; see `docs/whatsapp_voice_calls_plan.md`.
+
 ### Driver with a dying phone, or a driver who lost their phone
 - **"Low battery, might be 10 min late"** (any message with low-battery words): the driver is never asked to pick a slot. They're told their slot is held until the grace time and to give the truck number at the gate. A coordinator gets a `DRIVER_UNREACHABLE` hand-off (HIGH when the slot no longer fits or there is none) with the options and the carrier dispatcher's phone. For 3 hours, failed messages fall back to a call to the **carrier's dispatcher**, and no check-in nudges go out. The driver's next normal message clears this.
 - **Message from an unknown number:** the sender is told their booking is safe (ask the dispatcher, or truck number and licence at the gate) and sees no booking data. The coordinator gets an `UNKNOWN_NUMBER` note with the number.

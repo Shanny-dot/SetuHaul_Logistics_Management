@@ -63,6 +63,7 @@ from fastapi.responses import JSONResponse, PlainTextResponse, Response
 from setuhaul import db, capacity, planner, world, chan_db, demo_world, outbox as OB, safety as SF, config as CFG
 from setuhaul import auth as A
 from setuhaul import links as LK
+from setuhaul import voice as VOICE
 from setuhaul.channels import ChannelRequest, get_channel
 from setuhaul.channels.twilio_wa import TwilioChannel
 from setuhaul.clock import IST, ts, iso, ampm, add, Clock
@@ -107,6 +108,9 @@ STORE = SessionStore.from_env()
 LLM = make_fallback()                      # None unless ANTHROPIC_API_KEY is set
 CHANNEL = get_channel(SETTINGS)
 SERVICE = ChannelService(lambda: db.connect(DB_PATH), STORE, CHANNEL, SETTINGS, CLOCK, llm=LLM, demo_world=DEMO_WORLD)
+SERVICE.voice = VOICE.ElevenLabs.from_env()                      # None unless ELEVENLABS_API_KEY is set
+SERVICE.media_dir = os.environ.get("SETUHAUL_MEDIA_DIR") or os.path.join(HERE, "out", "media")
+SERVICE.fetch_media = lambda url: VOICE.download_twilio_media(url, SETTINGS.twilio_account_sid, SETTINGS.twilio_auth_token)
 _WAKE = {"event": None, "loop": None}
 
 
@@ -358,7 +362,7 @@ def _decision_evidence(res):
 
 @app.get("/health")
 def health():
-    return {"ok": True, "sessions": STORE.backend, "llm_fallback": LLM is not None,
+    return {"ok": True, "sessions": STORE.backend, "llm_fallback": LLM is not None, "voice_notes": SERVICE.voice is not None,
             "db": os.path.basename(DB_PATH)}
 
 
@@ -446,6 +450,7 @@ def worker_tick():
         OB.check_delivery_sla(con, CLOCK.real_now())
         if time.time() - _last_purge["t"] > 3600:
             OB.purge_bodies(con, real)
+            VOICE.cleanup(SERVICE.media_dir)                     # reply audio lives one day
             _last_purge["t"] = time.time()
         return sent
     finally:

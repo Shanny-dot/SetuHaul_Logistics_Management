@@ -88,6 +88,7 @@ class TwilioChannel:
         elif nmedia > 0:
             m.type = "media"
             m.media_types = [g(f"MediaContentType{i}") for i in range(nmedia) if g(f"MediaContentType{i}")]
+            m.media_urls = [g(f"MediaUrl{i}") for i in range(nmedia) if g(f"MediaUrl{i}")]
         elif m.text:
             m.type = "text"
         else:
@@ -123,6 +124,9 @@ class TwilioChannel:
         p = {"from_": self.s.twilio_whatsapp_from, "to": "whatsapp:" + normalise_phone(msg.to_e164)}
         if self.s.twilio_webhook_base_url:
             p["status_callback"] = self.s.twilio_webhook_base_url + STATUS_PATH + (f"?ref={quote(msg.send_ref)}" if msg.send_ref else "")
+        if msg.kind == "voice" and msg.media_url:
+            p["media_url"] = [msg.media_url]         # audio only: WhatsApp drops text sent with audio (sent separately)
+            return p
         if msg.kind == "template":
             sid = self.s.template_sids.get(msg.template_ref or "")
             if not sid:

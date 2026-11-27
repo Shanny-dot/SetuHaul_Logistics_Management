@@ -15,7 +15,8 @@ services:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - ${SETUHAUL_HOME:-/opt/setuhaul}/caddy/data:/data     # certificates survive restarts (avoids re-issuing)
       - ${SETUHAUL_HOME:-/opt/setuhaul}/caddy/config:/config
-      - ${SETUHAUL_HOME:-/opt/setuhaul}/src:/srv/site:ro      # website files; Caddyfile serves only *.html/*.js/*.css/videos/
+      - ${SETUHAUL_HOME:-/opt/setuhaul}/src:/srv/site:ro      # website files; Caddyfile serves only *.html/*.js/*.css/*.json/videos/
+      - ${SETUHAUL_HOME:-/opt/setuhaul}/media:/srv/media:ro   # voice-note reply audio, served at /media/<random>.ogg
     depends_on: [app]
     mem_limit: 128m
     security_opt: ["no-new-privileges:true"]
@@ -26,9 +27,11 @@ services:
     env_file: ${SETUHAUL_HOME:-/opt/setuhaul}/.env
     environment:
       SETUHAUL_DB: /data/demo_world.db
+      SETUHAUL_MEDIA_DIR: /media
       REDIS_URL: redis://redis:6379/0
     volumes:
       - ${SETUHAUL_HOME:-/opt/setuhaul}/data:/data
+      - ${SETUHAUL_HOME:-/opt/setuhaul}/media:/media
     ports: ["127.0.0.1:${APP_LOCAL_PORT:-8000}:8000"]      # console, /dev, /readyz: reachable ONLY from the box (SSM session)
     depends_on: [redis]
     mem_limit: 512m

@@ -23,6 +23,7 @@ from . import nlu
 from . import offers as OF
 from . import links as LK
 from . import unreachable as U
+from . import voice as V
 from . import replies as R
 from . import safety as S
 from . import escalation as E
@@ -49,6 +50,9 @@ class ChannelService:
         self.connect, self.store, self.channel, self.s, self.clock, self.llm = connect, store, channel, settings, clock, llm
         self.demo_world = demo_world
         self.on_enqueued = None                 # app sets this to wake the outbox worker
+        self.voice = None                       # voice.ElevenLabs when ELEVENLABS_API_KEY is set (app.py)
+        self.media_dir = None                   # where reply audio is written; served at <base>/media/<name>
+        self.fetch_media = None                 # (url) -> (bytes, content type): Twilio media download
 
     # ------------------------------------------------------------ fast path (inside the webhook)
     def accept(self, msgs):
@@ -245,6 +249,20 @@ class ChannelService:
             out.append((self._text(msg.from_e164, lang, R.t("safety_hold", lang, ref=frozen)), "SAFETY_HOLD", {}, {}))
             return self._queue(con, as_of, real, trace, out)
 
+        # ---- a voice note: transcribe it (ElevenLabs) and handle the words like a typed message
+        voice_in = False
+        if (msg.type == "media" and self.voice and self.fetch_media and msg.media_urls
+                and any((t or "").startswith("audio/") for t in msg.media_types)):
+            try:
+                audio, ctype = self.fetch_media(msg.media_urls[0])
+                text, vlang = self.voice.transcribe(audio, ctype)
+                msg.text, msg.type, voice_in = text, "text", True
+                trace["voice_in"] = {"chars": len(text), "lang": vlang}
+                with write_txn(con):
+                    con.execute("UPDATE wa_inbound SET body=?, msg_type='voice' WHERE message_sid=?", (text, msg.message_id))
+            except V.VoiceError as e:
+                trace["voice_error"] = str(e)[:160]     # falls through to "please type" below
+
         # ---- types the engine cannot read
         if msg.type in ("media", "other", "location"):
             return self._non_text(con, msg, drv, contact, lang, as_of, real, trace, out)
@@ -291,6 +309,8 @@ class ChannelService:
             trace["escalation"] = uesc["escalation_id"]
             out.append((self._text(msg.from_e164, lang, text), "DRIVER_REPLY", ev, {}))
             self.store.append_history(msg.from_e164, "ai", text, ts=iso(as_of), state=res.get("state"), lang=lang, tools=res.get("tools"))
+            if voice_in:
+                self._voice_reply(out, msg, lang, text, ev, trace)
             return self._queue(con, as_of, real, trace, out)
 
         # ---- offers follow the conversation
@@ -300,10 +320,28 @@ class ChannelService:
             m = self._render(msg.from_e164, lang, res["reply"], oid, opts, cap.get("evidence") or {}, trace)
             out.append((m, "DRIVER_REPLY", cap.get("evidence") or {}, {}))
             self.store.append_history(msg.from_e164, "ai", res["reply"], ts=iso(as_of), state=res.get("state"), lang=lang, tools=res.get("tools"))
+            if voice_in:
+                self._voice_reply(out, msg, lang, res["reply"], cap.get("evidence") or {}, trace)
         self.store.save_driver(msg.from_e164, {"driver_id": did, "shipment_id": res.get("shipment_id"), "state": res.get("state"),
                                                "lang": lang, "offer_id": oid, "last_seen": iso(as_of)})
         if out:
             self._queue(con, as_of, real, trace, out)
+
+    def _voice_reply(self, out, msg, lang, text, evidence, trace):
+        """The same (already guarded) reply, spoken, sent after the text. On any failure the text alone goes out."""
+        base = self.s.twilio_webhook_base_url
+        if not (self.voice and self.media_dir and base):
+            return
+        try:
+            audio, ext, _ = self.voice.speak(text, lang)
+            name = V.save_reply_audio(self.media_dir, audio, ext)
+        except (V.VoiceError, OSError) as e:
+            trace["voice_out_error"] = str(e)[:160]
+            return
+        trace["voice_out"] = ext
+        m = OutboundMessage(to_e164=normalise_phone(msg.from_e164), kind="voice", body=text, lang=lang,
+                            media_url=f"{base}/media/{name}")
+        out.append((m, "DRIVER_VOICE_REPLY", evidence, {}))
 
     def _render(self, to, lang, body, offer_id, opts, evidence, trace):
         """Reply -> OutboundMessage. Options become buttons (<=3) or a list (4-10), ids bound to the offer."""

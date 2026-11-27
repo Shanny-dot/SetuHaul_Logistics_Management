@@ -128,7 +128,7 @@ def drain(con, channel, settings, clock, limit=20, pace=None):
         final.send_ref = f"{mid}.{d['attempts']}.{uuid.uuid4().hex[:12]}"
         with write_txn(con):                         # the reference exists BEFORE the provider can accept anything
             con.execute("""UPDATE wa_delivery SET send_ref=?, send_started_real=?, sent_body=?, updated_real=? WHERE msg_id=?""",
-                        (final.send_ref, iso(clock.real_now()), final.body or "", iso(clock.real_now()), mid))
+                        (final.send_ref, iso(clock.real_now()), "" if final.kind == "voice" else (final.body or ""), iso(clock.real_now()), mid))
         res = channel.send(final)
         real_now = clock.real_now()
         with write_txn(con):

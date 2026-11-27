@@ -8,6 +8,8 @@ Needs the twilio package (and fastapi/httpx for the HTTP tests). No network: a f
 import importlib
 import importlib.util
 import json
+import time
+import re
 import logging
 import os
 import shutil
@@ -1034,6 +1036,101 @@ class UnreachableAndLostPhone(unittest.TestCase):
         self.assertEqual(w.post("+919811122244", "I am late by one hour.")["state"], "OPTIONS_SHOWN")
         self.assertEqual(w.post(C03, "hello")["status"], "UNKNOWN_SENDER")       # the old number no longer is the driver
         self.assertTrue(w.con.execute("SELECT 1 FROM audit_log WHERE action='DRIVER_NUMBER_CHANGED'").fetchone())
+
+
+# ====================================================================== WhatsApp voice notes
+class FakeVoice:
+    """Stands in for voice.ElevenLabs: no network, records what it was asked."""
+    def __init__(self, transcript="I am late by one hour.", fail_stt=False, fail_tts=False, ogg=True):
+        self.transcript, self.fail_stt, self.fail_tts, self.ogg, self.spoken = transcript, fail_stt, fail_tts, ogg, []
+
+    def transcribe(self, audio, ctype):
+        from setuhaul import voice as V
+        if self.fail_stt:
+            raise V.VoiceError("ElevenLabs HTTP 401")
+        return self.transcript, "en"
+
+    def speak(self, text, lang):
+        from setuhaul import voice as V
+        if self.fail_tts:
+            raise V.VoiceError("ElevenLabs unreachable")
+        self.spoken.append((text, lang))
+        return (b"OggS" + b"\0" * 60, "ogg", "audio/ogg") if self.ogg else (b"ID3" + b"\0" * 60, "mp3", "audio/mpeg")
+
+
+@need_twilio
+class VoiceNotes(unittest.TestCase):
+    def world(self, **voice):
+        w = World(self)
+        w.svc.voice = FakeVoice(**voice)
+        w.svc.media_dir = os.path.join(w.dir, "media")
+        w.fetched = []
+        w.svc.fetch_media = lambda url: (w.fetched.append(url) or (b"OggS-driver-audio", "audio/ogg"))
+        return w
+
+    def note(self, w, hm="09:19"):
+        return w.post(C03, "", hm=hm, NumMedia="1", MediaContentType0="audio/ogg",
+                      MediaUrl0="https://api.twilio.com/2010-04-01/Accounts/AC0/Messages/MM1/Media/ME1")
+
+    def test_voice_note_is_transcribed_and_answered_in_text_then_voice(self):
+        w = self.world()
+        tr = self.note(w)
+        self.assertEqual((tr["state"], tr["voice_in"]["chars"], tr["voice_out"]), ("OPTIONS_SHOWN", 22, "ogg"))
+        self.assertEqual(len(w.fetched), 1)
+        kinds = [d["kind"] for d in w.deliveries(C03)]
+        self.assertEqual(kinds, ["PRIVACY_NOTICE", "DRIVER_REPLY", "DRIVER_VOICE_REPLY"])     # text first, then voice
+        text, voice = w.deliveries(C03)[1:]
+        self.assertTrue(text["payload"]["options"])                                           # the options stay tappable
+        self.assertEqual(voice["payload"]["body"], text["payload"]["body"])                    # the voice says the guarded text
+        url = voice["payload"]["media_url"]
+        self.assertRegex(url, r"^" + re.escape(BASE) + r"/media/[0-9a-f]{32}\.ogg$")
+        self.assertTrue(open(os.path.join(w.svc.media_dir, url.rsplit("/", 1)[1]), "rb").read().startswith(b"OggS"))
+        w.drain()
+        call = w.fake.calls[-1]
+        self.assertEqual((call["media_url"], "body" in call), ([url], False))                  # audio only at Twilio
+        row = w.con.execute("SELECT msg_type, body FROM wa_inbound WHERE message_sid=?", (tr["message_sid"],)).fetchone()
+        self.assertEqual(tuple(row), ("voice", "I am late by one hour."))
+
+    def test_speech_to_text_failure_falls_back_to_please_type(self):
+        w = self.world(fail_stt=True)
+        tr = self.note(w)
+        self.assertEqual(tr["status"], "UNSUPPORTED_TYPE")
+        self.assertIn("ElevenLabs HTTP 401", tr["voice_error"])
+
+    def test_text_to_speech_failure_still_sends_the_text(self):
+        w = self.world(fail_tts=True)
+        tr = self.note(w)
+        self.assertEqual(tr["state"], "OPTIONS_SHOWN")
+        self.assertEqual([d["kind"] for d in w.deliveries(C03)][-1], "DRIVER_REPLY")
+        self.assertIn("voice_out_error", tr)
+
+    def test_typed_messages_get_no_voice_and_no_key_means_old_behaviour(self):
+        w = self.world()
+        w.post(C03, "I am late by one hour.", hm="09:19")
+        self.assertNotIn("DRIVER_VOICE_REPLY", [d["kind"] for d in w.deliveries(C03)])
+        w.svc.voice = None
+        self.assertEqual(self.note(w, hm="09:20")["status"], "UNSUPPORTED_TYPE")
+
+    def test_low_battery_voice_note_gets_the_hold_message_spoken(self):
+        w = self.world(transcript="low battery, might reach 10 mins late")
+        tr = self.note(w)
+        self.assertEqual(tr["status"], "UNREACHABLE_HOLD")
+        self.assertIn("battery is low", w.svc.voice.spoken[-1][0])
+
+    def test_mp3_fallback_and_cleanup(self):
+        from setuhaul import voice as V
+        w = self.world(ogg=False)
+        self.note(w)
+        url = w.deliveries(C03)[-1]["payload"]["media_url"]
+        self.assertTrue(url.endswith(".mp3"))
+        self.assertEqual(V.cleanup(w.svc.media_dir, now=time.time() + V.MEDIA_TTL_S + 5), 1)
+
+    def test_spoken_text_and_parse_media_url(self):
+        from setuhaul import voice as V
+        self.assertEqual(V.spoken_text("Booked: Dock D2.\nSee https://x.y/z now"), "Booked: Dock D2. See  now")
+        ch = get_channel(settings(), client=FakeTwilio())
+        m = ch.parse_inbound(creq(form("SM9", C03, NumMedia="1", MediaContentType0="audio/ogg", MediaUrl0="https://api.twilio.com/m/ME1")))[0]
+        self.assertEqual((m.type, m.media_urls), ("media", ["https://api.twilio.com/m/ME1"]))
 
 
 # ====================================================================== parity

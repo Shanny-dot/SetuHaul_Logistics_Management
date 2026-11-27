@@ -19,6 +19,7 @@ echo "== build setuhaul-app:$NEW_TAG"
 docker image inspect "setuhaul-app:$NEW_TAG" >/dev/null 2>&1 || docker build -f deploy/server/Dockerfile -t "setuhaul-app:$NEW_TAG" .
 bash "$SRC/deploy/server/load-env.sh"
 
+mkdir -p "$SETUHAUL_HOME/media" && chown 10001:10001 "$SETUHAUL_HOME/media"      # voice-note reply audio
 echo "== start $NEW_TAG (previous: ${PREV_TAG:-none})"
 write_compose_env "$NEW_TAG"
 compose up -d --remove-orphans
